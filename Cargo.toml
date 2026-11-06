@@ -8,6 +8,7 @@ members = [
   "runtime",
   "suite/engine",
   "suite/devserver",
+  "suite/connectors",
   "server",
 ]
 
