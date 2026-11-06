@@ -570,6 +570,7 @@ label.f { display: grid; gap: 6px; font-size: 14px; color: var(--fg-2); }
   }
   $('as-sel').addEventListener('change', e => {
     actorId = e.target.value; try { sessionStorage.setItem('arkhon-as', actorId); } catch (_) {}
+    ['inv-msg', 'c-msg'].forEach(id => { $(id).hidden = true; }); $('sheet').hidden = true;
     load();
   });
 
@@ -577,6 +578,7 @@ label.f { display: grid; gap: 6px; font-size: 14px; color: var(--fg-2); }
   const statusWord = s => ({ invited: 'Invited', suspended: 'Paused', active: '' }[s]);
   function render() {
     $('org-name').textContent = V.company;
+    if (V.viewer) { const me = document.querySelector('.me'); me.textContent = initials(V.viewer.name); me.setAttribute('aria-label', `${V.viewer.name}, ${V.viewer.role}`); }
     $('org-sub').textContent = `${V.plan} plan · Choose who can use Arkhon and what they can do.`;
     $('seat-text').textContent = `${V.seats_used} of ${V.seats} seats in use`;
     $('meter-fill').style.width = Math.min(100, V.seats_used / V.seats * 100) + '%';
@@ -639,7 +641,7 @@ label.f { display: grid; gap: 6px; font-size: 14px; color: var(--fg-2); }
     const row = c => `<li class="conn">${tile(c.app, c.app_name)}
       <div style="min-width:0"><div class="n">${esc(c.app_name)}</div><div class="d">${esc(c.account)} · ${c.personal ? (c.mine ? 'Only you' : esc(c.shared_with)) : 'Shared with ' + esc(c.shared_with)}</div></div>
       <div class="side-s">${c.status === 'active' ? '<span class="status-s">Connected</span>' : c.status === 'paused' ? '<span class="status-s warn">Paused</span>' : '<span class="status-s warn">Sign in again</span>'}
-      ${c.status === 'needs-sign-in' ? `<button class="link" type="button" data-fix="${c.id}" style="font-size:15px">Fix</button>` : ''}
+      ${c.status === 'needs-sign-in' && c.can_disconnect ? `<button class="link" type="button" data-fix="${c.id}" style="font-size:15px">Fix</button>` : ''}
       ${c.can_disconnect ? `<button class="link" type="button" data-rm="${c.id}" style="font-size:15px">Disconnect</button>` : ''}</div></li>`;
     $('company-list').innerHTML = V.connections.filter(c => !c.personal).map(row).join('') || '<li class="conn" style="grid-template-columns:1fr;color:var(--fg-2)">No company accounts yet.</li>';
     $('mine-list').innerHTML = V.connections.filter(c => c.mine).map(row).join('') || '<li class="conn" style="grid-template-columns:1fr;color:var(--fg-2)">Nothing connected yet. Pick your email below to get started.</li>';
