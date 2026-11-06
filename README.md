@@ -21,7 +21,8 @@ Customer data never leaves the customer's machine (**N1**).
 | `portal/` | Admin and customer portals (Next.js, Phase 9) |
 | `models/` | Engine registry, data/eval/train/package pipelines |
 | `tools/` | env-check, keygen, release, trace CLIs |
-| `docs/` | Product needs, architecture, threat model, ADRs, discovery kit, gate reports |
+| `docs/` | Product needs, architecture, [threat model](docs/threat-model.md), ADRs, discovery kit, gate reports |
+| `docs/legal` | [EULA template](docs/legal/eula-template.md) (draft for attorney review, not for use as-is) |
 
 ## Developer setup
 
