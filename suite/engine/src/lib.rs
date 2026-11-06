@@ -16,13 +16,28 @@ use std::fs;
 use std::io::Write as _;
 use std::path::{Path, PathBuf};
 
+pub mod connector;
+pub mod queue;
+pub mod value;
+pub mod vault;
+
 use arkhon_org::connections::{
-    Access, App, AppPolicy, Audience, Availability, ConnError, ConnStatus, Connections, Kind,
+    Access, App, AppPolicy, Audience, Availability, ConnError, ConnStatus, Connection, Connections,
+    Kind,
 };
 use arkhon_org::{
     MemberId, MemberStatus, OrgError, Organization, Permission, Plan, Role, RoleId, Workspace,
 };
 use serde::{Deserialize, Serialize};
+
+pub use connector::SendApproval;
+pub use queue::{
+    Confidence, ItemId, ItemKind, ItemStatus, Proposal, Queue, ReviewItem, Source, Urgency,
+};
+pub use value::{MonthlyReport, Totals, ValueEvent, ValueKind, ValueSettings, WeekView};
+pub use vault::{Credential, MailLogin, Secret, TokenVault};
+
+use value::{day_number, DayValue, DAY};
 
 /// Clock abstraction so tests are deterministic.
 pub trait Clock: Send {
@@ -64,6 +79,19 @@ pub struct State {
     pub connections: Connections,
     /// Activity log, oldest first.
     pub activity: Vec<ActivityEntry>,
+    /// Review queue and remembered answers.
+    #[serde(default)]
+    pub queue: Queue,
+    /// Measured savings, oldest first.
+    #[serde(default)]
+    pub value: Vec<ValueEvent>,
+    /// Minutes-saved assumptions and hourly rate.
+    #[serde(default)]
+    pub value_settings: ValueSettings,
+    /// Example company only: pins "today" (Unix seconds) so the sample week stays put. Real
+    /// companies leave this empty and use the clock.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub example_today: Option<u64>,
 }
 
 /// Who a connection is for, as chosen in the Connect sheet.
@@ -140,6 +168,10 @@ pub enum Command {
         /// Who it's for.
         #[serde(rename = "for")]
         for_: ConnectFor,
+        /// Mailbox sign-in, for "Other email (IMAP)" only. Goes straight to the encrypted
+        /// vault; never stored in state, logged or echoed back.
+        #[serde(default, skip_serializing)]
+        credentials: Option<MailLogin>,
     },
     /// Disconnect.
     Disconnect {
@@ -150,6 +182,42 @@ pub enum Command {
     Reconnect {
         /// Connection id.
         id: u64,
+    },
+    /// Approve a queue item as Arkhon prepared it.
+    Approve {
+        /// Queue item.
+        item: ItemId,
+    },
+    /// Change the prepared text, then approve.
+    EditAndApprove {
+        /// Queue item.
+        item: ItemId,
+        /// The text to use instead.
+        text: String,
+    },
+    /// Dismiss a queue item; nothing happens.
+    Dismiss {
+        /// Queue item.
+        item: ItemId,
+    },
+    /// Answer a question Arkhon couldn't; it remembers the answer.
+    AnswerOnce {
+        /// Queue item (a knowledge gap).
+        item: ItemId,
+        /// The answer.
+        answer: String,
+    },
+    /// Change how many minutes one kind of work is assumed to save (admins).
+    SetMinutesSaved {
+        /// Kind of work.
+        kind: ValueKind,
+        /// Minutes per item.
+        minutes: u32,
+    },
+    /// Change the hourly cost used for the dollar value (admins).
+    SetHourlyRate {
+        /// Whole dollars per hour.
+        dollars: u32,
     },
 }
 
@@ -199,10 +267,32 @@ impl From<ConnError> for Refusal {
     }
 }
 
-/// The suite: state plus a clock.
+fn bad(message: impl Into<String>) -> Refusal {
+    Refusal {
+        message: message.into(),
+        forbidden: false,
+    }
+}
+
+fn forbid(message: impl Into<String>) -> Refusal {
+    Refusal {
+        message: message.into(),
+        forbidden: true,
+    }
+}
+
+enum Decision {
+    Approve,
+    Edit(String),
+    Dismiss,
+    Answer(String),
+}
+
+/// The suite: state, a clock and (optionally) the sign-in vault.
 pub struct Suite {
     state: State,
     clock: Box<dyn Clock>,
+    vault: Option<TokenVault>,
 }
 
 impl std::fmt::Debug for Suite {
@@ -217,7 +307,31 @@ impl Suite {
     /// Wrap existing state.
     #[must_use]
     pub fn new(state: State, clock: Box<dyn Clock>) -> Self {
-        Suite { state, clock }
+        Suite {
+            state,
+            clock,
+            vault: None,
+        }
+    }
+
+    /// Attach the encrypted sign-in vault (needed to connect "Other email").
+    #[must_use]
+    pub fn with_vault(mut self, vault: TokenVault) -> Self {
+        self.vault = Some(vault);
+        self
+    }
+
+    /// The sign-in vault, if attached.
+    #[must_use]
+    pub fn vault(&self) -> Option<&TokenVault> {
+        self.vault.as_ref()
+    }
+
+    /// "Now" for value metrics and the review queue: the clock, or the example company's pinned
+    /// day.
+    #[must_use]
+    pub fn today(&self) -> u64 {
+        self.state.example_today.unwrap_or_else(|| self.clock.now())
     }
 
     /// Persistable state.
@@ -302,7 +416,12 @@ impl Suite {
                     format!("{}: {}.", app.name(), policy.label())
                 })
             }
-            Command::Connect { app, account, for_ } => {
+            Command::Connect {
+                app,
+                account,
+                for_,
+                credentials,
+            } => {
                 if account.trim().is_empty() {
                     return Err(Refusal {
                         message: "Enter the account to connect, like an email address.".into(),
@@ -315,29 +434,63 @@ impl Suite {
                         forbidden: false,
                     });
                 }
-                match for_ {
+                let credential = match (app, credentials) {
+                    (App::OtherEmail, Some(login)) => {
+                        if login.imap_host.trim().is_empty()
+                            || login.smtp_host.trim().is_empty()
+                            || login.username.trim().is_empty()
+                            || login.password.is_blank()
+                        {
+                            return Err(bad(
+                                "Enter the mail servers, your sign-in name and password.",
+                            ));
+                        }
+                        Some(Credential::Mail(login))
+                    }
+                    (App::OtherEmail, None) => {
+                        return Err(bad(
+                            "Enter the mail servers, your sign-in name and password.",
+                        ))
+                    }
+                    (_, Some(_)) => {
+                        return Err(bad(format!(
+                            "{} signs in on its own page, not with a password here.",
+                            app.name()
+                        )))
+                    }
+                    (_, None) => None,
+                };
+                if credential.is_some() && self.vault.is_none() {
+                    return Err(bad(
+                        "Arkhon can't store passwords safely on this computer yet, so nothing was connected.",
+                    ));
+                }
+                let before = connections.clone();
+                let id = match for_ {
                     ConnectFor::Me => {
-                        connections.connect_personal(org, actor, app, &account, Access::Draft)?;
+                        connections.connect_personal(org, actor, app, &account, Access::Draft)?
                     }
-                    ConnectFor::Team { team } => {
-                        connections.connect_company(
-                            org,
-                            actor,
-                            app,
-                            &account,
-                            Audience::Teams([team].into()),
-                            Access::Draft,
-                        )?;
-                    }
-                    ConnectFor::Everyone => {
-                        connections.connect_company(
-                            org,
-                            actor,
-                            app,
-                            &account,
-                            Audience::Everyone,
-                            Access::Draft,
-                        )?;
+                    ConnectFor::Team { team } => connections.connect_company(
+                        org,
+                        actor,
+                        app,
+                        &account,
+                        Audience::Teams([team].into()),
+                        Access::Draft,
+                    )?,
+                    ConnectFor::Everyone => connections.connect_company(
+                        org,
+                        actor,
+                        app,
+                        &account,
+                        Audience::Everyone,
+                        Access::Draft,
+                    )?,
+                };
+                if let (Some(cred), Some(vault)) = (credential, self.vault.as_ref()) {
+                    if let Err(e) = vault.put(id, &cred) {
+                        *connections = before;
+                        return Err(bad(format!("{e} Nothing was connected.")));
                     }
                 }
                 Ok(format!(
@@ -351,6 +504,13 @@ impl Suite {
                     .map(|c| format!("{} ({})", c.app.name(), c.account))
                     .unwrap_or_default();
                 connections.disconnect(org, actor, id)?;
+                if let Some(vault) = &self.vault {
+                    if vault.remove(id).is_err() {
+                        return Ok(format!(
+                            "Disconnected {label}. Its saved sign-in couldn't be erased; reconnecting will replace it."
+                        ));
+                    }
+                }
                 Ok(format!("Disconnected {label}."))
             }
             Command::Reconnect { id } => {
@@ -368,7 +528,269 @@ impl Suite {
                 connections.mark_signed_in(id)?;
                 Ok(format!("{name} is connected again."))
             }
+            Command::Approve { item } => self.decide(actor, item, Decision::Approve),
+            Command::EditAndApprove { item, text } => {
+                self.decide(actor, item, Decision::Edit(text))
+            }
+            Command::Dismiss { item } => self.decide(actor, item, Decision::Dismiss),
+            Command::AnswerOnce { item, answer } => {
+                self.decide(actor, item, Decision::Answer(answer))
+            }
+            Command::SetMinutesSaved { kind, minutes } => {
+                self.require(actor, Permission::ManageOrganization)?;
+                if !(1..=240).contains(&minutes) {
+                    return Err(bad("Use a number of minutes between 1 and 240."));
+                }
+                self.state.value_settings.minutes.insert(kind, minutes);
+                Ok(format!(
+                    "{}: now counted as {minutes} minutes each.",
+                    kind.label()
+                ))
+            }
+            Command::SetHourlyRate { dollars } => {
+                self.require(actor, Permission::ManageOrganization)?;
+                if !(1..=1_000).contains(&dollars) {
+                    return Err(bad("Use an hourly cost between $1 and $1,000."));
+                }
+                self.state.value_settings.hourly_rate_cents = dollars * 100;
+                Ok(format!("Time saved is now valued at ${dollars} an hour."))
+            }
         }
+    }
+
+    fn require(&self, actor: MemberId, p: Permission) -> Result<(), Refusal> {
+        if self.state.org.can(actor, p) {
+            Ok(())
+        } else if self.is_active(actor) {
+            Err(OrgError::NotAllowed(p).into())
+        } else {
+            Err(OrgError::ActorInactive.into())
+        }
+    }
+
+    fn is_active(&self, id: MemberId) -> bool {
+        self.state
+            .org
+            .member(id)
+            .is_some_and(|m| m.status == MemberStatus::Active)
+    }
+
+    /// Whether `actor` may decide `item`: its assignee, an approver on its team, or an admin.
+    fn may_decide(&self, actor: MemberId, item: &ReviewItem) -> Result<(), Refusal> {
+        let org = &self.state.org;
+        if !self.is_active(actor) {
+            return Err(OrgError::ActorInactive.into());
+        }
+        if item.assignee == actor || org.can(actor, Permission::ManageOrganization) {
+            return Ok(());
+        }
+        if self.team_approver(actor, item) {
+            return Ok(());
+        }
+        let who = self.name_of(item.assignee);
+        Err(forbid(match &item.team {
+            Some(t) => format!(
+                "This is waiting for {who}. Only they, an approver on {t}, or an admin can decide it."
+            ),
+            None => format!("This is waiting for {who}. Only they or an admin can decide it."),
+        }))
+    }
+
+    fn team_approver(&self, actor: MemberId, item: &ReviewItem) -> bool {
+        let org = &self.state.org;
+        item.team.as_deref().is_some_and(|t| {
+            org.can(actor, Permission::ApproveForTeam)
+                && org.team(t).is_some_and(|t| t.members.contains(&actor))
+        })
+    }
+
+    /// Whether `actor` may let `item` go out through its connection.
+    fn connection_ok(&self, actor: MemberId, item: &ReviewItem) -> Result<(), Refusal> {
+        let Some(id) = item.connection else {
+            return Ok(());
+        };
+        let conns = &self.state.connections;
+        let c: &Connection = conns.get(id).ok_or_else(|| {
+            bad("The account this would go through is no longer connected, so it can't be sent.")
+        })?;
+        let label = format!("{} ({})", c.app.name(), c.account);
+        if c.status != ConnStatus::Active {
+            return Err(bad(format!(
+                "{label} needs attention before anything can go out through it."
+            )));
+        }
+        if !conns
+            .usable_by(&self.state.org, actor)
+            .iter()
+            .any(|u| u.id == id)
+        {
+            return Err(forbid(format!(
+                "This would go out through {label}, which you can't use. Ask someone who can to approve it."
+            )));
+        }
+        if c.access == Access::Read {
+            return Err(forbid(format!(
+                "{label} is connected read-only, so Arkhon can't send or change anything through it."
+            )));
+        }
+        Ok(())
+    }
+
+    fn decide(&mut self, actor: MemberId, id: ItemId, d: Decision) -> Result<String, Refusal> {
+        let item = self
+            .state
+            .queue
+            .get(id)
+            .cloned()
+            .ok_or_else(|| bad("That item is no longer waiting."))?;
+        if item.status != ItemStatus::Waiting {
+            return Err(bad("Someone already handled this one."));
+        }
+        let gap = item.kind == ItemKind::KnowledgeGap;
+        match &d {
+            Decision::Answer(_) if !gap => {
+                return Err(bad(
+                    "This one doesn't ask a question. Approve or dismiss it.",
+                ))
+            }
+            Decision::Approve | Decision::Edit(_) if gap => {
+                return Err(bad(
+                    "Arkhon didn't find an answer to this. Answer it once instead.",
+                ))
+            }
+            Decision::Edit(t) | Decision::Answer(t) if t.trim().is_empty() => {
+                return Err(bad("Write the text first."))
+            }
+            Decision::Edit(_) if item.draft.is_none() => {
+                return Err(bad("There's no text to edit on this one."))
+            }
+            _ => {}
+        }
+        self.may_decide(actor, &item)?;
+        if !matches!(d, Decision::Dismiss) {
+            self.connection_ok(actor, &item)?;
+        }
+        let now = self.today();
+        let (status, text, msg) = match d {
+            Decision::Approve => (
+                ItemStatus::Approved,
+                item.draft.clone(),
+                format!("{}: {}.", item.kind.done_word(), item.title),
+            ),
+            Decision::Edit(t) => (
+                ItemStatus::Edited,
+                Some(t.trim().to_owned()),
+                format!(
+                    "{} with your changes: {}.",
+                    item.kind.done_word(),
+                    item.title
+                ),
+            ),
+            Decision::Dismiss => (
+                ItemStatus::Dismissed,
+                None,
+                format!("Dismissed: {}. Nothing was sent.", item.title),
+            ),
+            Decision::Answer(a) => {
+                let q = item.question.clone().unwrap_or_else(|| item.title.clone());
+                self.state.queue.remember(&q, a.trim(), actor, now);
+                (
+                    ItemStatus::Approved,
+                    Some(a.trim().to_owned()),
+                    "Thanks. Arkhon will use your answer from now on.".to_owned(),
+                )
+            }
+        };
+        if let Some(it) = self.state.queue.get_mut(id) {
+            it.status = status;
+            it.final_text = text;
+            it.decided_by = Some(actor);
+            it.decided_at = Some(now);
+        }
+        if matches!(status, ItemStatus::Approved | ItemStatus::Edited) {
+            let kind = match item.kind {
+                ItemKind::DraftReply | ItemKind::SendQuote => Some(ValueKind::DraftAccepted),
+                ItemKind::FileBill => Some(ValueKind::DocumentFiled),
+                ItemKind::MeetingNotes => Some(ValueKind::MeetingSummarized),
+                ItemKind::KnowledgeGap => None, // answering costs time; reuse saves it later
+            };
+            let reused = item
+                .sources
+                .iter()
+                .filter(|s| s.reference.starts_with("knowledge:"))
+                .count();
+            for k in kind
+                .into_iter()
+                .chain(std::iter::repeat_n(ValueKind::AnswerReused, reused))
+            {
+                self.state.value.push(ValueEvent {
+                    at: now,
+                    kind: k,
+                    member: item.assignee,
+                    item: Some(id),
+                });
+            }
+        }
+        Ok(msg)
+    }
+
+    /// Add work a workflow prepared to the review queue. Logged as done by Arkhon.
+    ///
+    /// # Errors
+    /// Bad input when the person, team or connection doesn't exist.
+    pub fn propose(&mut self, p: Proposal) -> Result<ItemId, Refusal> {
+        if self.state.org.member(p.assignee).is_none() {
+            return Err(bad("That person isn't in the company."));
+        }
+        if let Some(t) = &p.team {
+            if self.state.org.team(t).is_none() {
+                return Err(ConnError::UnknownTeam(t.clone()).into());
+            }
+        }
+        if let Some(c) = p.connection {
+            if self.state.connections.get(c).is_none() {
+                return Err(ConnError::UnknownConnection.into());
+            }
+        }
+        let action = format!(
+            "Prepared \u{201c}{}\u{201d} for {}",
+            p.title,
+            self.name_of(p.assignee)
+        );
+        let now = self.today();
+        let id = self.state.queue.propose(p, now);
+        self.state.activity.push(ActivityEntry {
+            at: self.clock.now(),
+            actor: "Arkhon".into(),
+            action,
+            refused: None,
+        });
+        Ok(id)
+    }
+
+    /// Permission for a connector to send an approved item (see [`connector`]).
+    ///
+    /// # Errors
+    /// When the item doesn't exist, isn't approved, or doesn't go out through a connection.
+    pub fn approval_for_send(&self, item: ItemId) -> Result<SendApproval, Refusal> {
+        let it = self
+            .state
+            .queue
+            .get(item)
+            .ok_or_else(|| bad("That item doesn't exist."))?;
+        if !matches!(it.status, ItemStatus::Approved | ItemStatus::Edited) {
+            return Err(forbid(
+                "Nothing is sent until someone approves it in Needs you.",
+            ));
+        }
+        let (Some(connection), Some(text)) = (it.connection, it.final_text.clone()) else {
+            return Err(bad("This item doesn't send anything."));
+        };
+        Ok(SendApproval {
+            item,
+            connection,
+            text,
+        })
     }
 
     fn name_of(&self, id: MemberId) -> String {
@@ -391,7 +813,9 @@ impl Suite {
             Command::SetAppPolicy { app, policy } => {
                 format!("Set {} to \"{}\"", app.name(), policy.label())
             }
-            Command::Connect { app, account, for_ } => {
+            Command::Connect {
+                app, account, for_, ..
+            } => {
                 let f = match for_ {
                     ConnectFor::Me => "themselves".to_owned(),
                     ConnectFor::Team { team } => team.clone(),
@@ -401,7 +825,24 @@ impl Suite {
             }
             Command::Disconnect { id } => format!("Disconnect {}", self.conn_label(*id)),
             Command::Reconnect { id } => format!("Reconnect {}", self.conn_label(*id)),
+            Command::Approve { item } => format!("Approve {}", self.item_label(*item)),
+            Command::EditAndApprove { item, .. } => {
+                format!("Edit and approve {}", self.item_label(*item))
+            }
+            Command::Dismiss { item } => format!("Dismiss {}", self.item_label(*item)),
+            Command::AnswerOnce { item, .. } => format!("Answer {}", self.item_label(*item)),
+            Command::SetMinutesSaved { kind, minutes } => {
+                format!("Count \"{}\" as {minutes} minutes each", kind.label())
+            }
+            Command::SetHourlyRate { dollars } => format!("Value time at ${dollars} an hour"),
         }
+    }
+
+    fn item_label(&self, id: ItemId) -> String {
+        self.state.queue.get(id).map_or_else(
+            || "an item".into(),
+            |i| format!("\u{201c}{}\u{201d}", i.title),
+        )
     }
 
     fn conn_label(&self, id: u64) -> String {
@@ -541,7 +982,208 @@ impl Suite {
                 .into_iter()
                 .map(|w| workspace_label(w).to_owned())
                 .collect(),
+            needs_you: self.needs_you(viewer),
+            this_week: self.this_week(viewer),
         }
+    }
+
+    /// Waiting items for `viewer`: assigned to them, or on a team they approve for. Urgent
+    /// first, then oldest. At most three are listed; `total` counts all.
+    #[must_use]
+    pub fn needs_you(&self, viewer: MemberId) -> NeedsYouView {
+        if !self.is_active(viewer) {
+            return NeedsYouView {
+                total: 0,
+                items: Vec::new(),
+            };
+        }
+        let mut mine: Vec<&ReviewItem> = self
+            .state
+            .queue
+            .items
+            .iter()
+            .filter(|i| i.status == ItemStatus::Waiting)
+            .filter(|i| i.assignee == viewer || self.team_approver(viewer, i))
+            .collect();
+        mine.sort_by_key(|i| (i.urgency, i.created_at, i.id));
+        NeedsYouView {
+            total: mine.len(),
+            items: mine
+                .into_iter()
+                .take(3)
+                .map(|i| self.item_view(viewer, i))
+                .collect(),
+        }
+    }
+
+    fn item_view(&self, viewer: MemberId, i: &ReviewItem) -> ItemView {
+        let blocked = self
+            .may_decide(viewer, i)
+            .and_then(|()| self.connection_ok(viewer, i))
+            .err()
+            .map(|r| r.message);
+        ItemView {
+            id: i.id,
+            kind: i.kind,
+            workspace: workspace_label(i.workspace).to_owned(),
+            title: i.title.clone(),
+            summary: i.summary.clone(),
+            draft: i.draft.clone(),
+            question: i.question.clone(),
+            sources: i.sources.clone(),
+            confidence: i.confidence,
+            confidence_label: i.confidence.label().to_owned(),
+            urgency: i.urgency,
+            created_at: i.created_at,
+            assignee: self.name_of(i.assignee),
+            team: i.team.clone(),
+            connection: i.connection.and_then(|c| {
+                self.state
+                    .connections
+                    .get(c)
+                    .map(|c| format!("{} ({})", c.app.name(), c.account))
+            }),
+            action: i.kind.verb().to_owned(),
+            done_word: i.kind.done_word().to_owned(),
+            can_approve: blocked.is_none(),
+            blocked,
+        }
+    }
+
+    /// Events the viewer may see: everyone's with company reports, otherwise their own.
+    fn visible_value(&self, viewer: MemberId) -> (bool, Vec<&ValueEvent>) {
+        let company = self.state.org.can(viewer, Permission::ViewCompanyReports);
+        let active = self.is_active(viewer);
+        (
+            company,
+            self.state
+                .value
+                .iter()
+                .filter(|e| active && (company || e.member == viewer))
+                .collect(),
+        )
+    }
+
+    fn day_values(&self, events: &[&ValueEvent], first: u64, last: u64) -> Vec<DayValue> {
+        let s = &self.state.value_settings;
+        (first..=last)
+            .map(|d| {
+                let minutes: u64 = events
+                    .iter()
+                    .filter(|e| day_number(e.at) == d)
+                    .map(|e| u64::from(s.minutes_for(e.kind)))
+                    .sum();
+                DayValue {
+                    date: value::iso_date(d),
+                    label: value::weekday_letter(d).to_owned(),
+                    weekday: value::weekday_name(d).to_owned(),
+                    minutes,
+                    hours: value::hours(minutes),
+                }
+            })
+            .collect()
+    }
+
+    fn totals(&self, events: &[&ValueEvent], first: u64, last: u64) -> Totals {
+        let s = &self.state.value_settings;
+        let mut t = Totals::default();
+        for e in events {
+            let d = day_number(e.at);
+            if (first..=last).contains(&d) {
+                t.add(e.kind, s.minutes_for(e.kind));
+            }
+        }
+        t.finish(s);
+        t
+    }
+
+    /// Home's "This week": the last 7 days ending today, measured from approvals only.
+    #[must_use]
+    pub fn this_week(&self, viewer: MemberId) -> WeekView {
+        let (company, events) = self.visible_value(viewer);
+        let today = day_number(self.today());
+        let first = today.saturating_sub(13);
+        let days = self.day_values(&events, first, today);
+        let totals = self.totals(&events, today.saturating_sub(6), today);
+        let prev: u64 = days.iter().take(7).map(|d| d.minutes).sum();
+        WeekView {
+            scope: if company { "company" } else { "you" }.to_owned(),
+            hours: totals.hours,
+            dollars: totals.dollars,
+            hourly_rate: self.state.value_settings.hourly_rate_cents / 100,
+            totals,
+            previous_hours: value::hours(prev),
+            days,
+            example: self.state.example_today.is_some(),
+        }
+    }
+
+    /// Monthly value report as data (the UI exports it as JSON).
+    ///
+    /// # Errors
+    /// Bad input for an impossible month; forbidden for people without access.
+    pub fn monthly_report(
+        &self,
+        viewer: MemberId,
+        year: i64,
+        month: u32,
+    ) -> Result<MonthlyReport, Refusal> {
+        if !(1..=12).contains(&month) || !(1970..=9999).contains(&year) {
+            return Err(bad("Pick a month like 2026-11."));
+        }
+        if !self.is_active(viewer) {
+            return Err(OrgError::ActorInactive.into());
+        }
+        let (company, events) = self.visible_value(viewer);
+        let first = value::days_from_civil(year, month, 1);
+        let (ny, nm) = if month == 12 {
+            (year + 1, 1)
+        } else {
+            (year, month + 1)
+        };
+        let last = value::days_from_civil(ny, nm, 1) - 1;
+        let s = &self.state.value_settings;
+        let mut by_person: Vec<value::PersonValue> = Vec::new();
+        if company {
+            let mut ids: Vec<MemberId> = events.iter().map(|e| e.member).collect();
+            ids.sort_unstable();
+            ids.dedup();
+            for id in ids {
+                let theirs: Vec<&ValueEvent> =
+                    events.iter().copied().filter(|e| e.member == id).collect();
+                let totals = self.totals(&theirs, first, last);
+                if totals.minutes > 0 {
+                    by_person.push(value::PersonValue {
+                        name: self.name_of(id),
+                        totals,
+                    });
+                }
+            }
+            by_person.sort_by_key(|p| std::cmp::Reverse(p.totals.minutes));
+        }
+        Ok(MonthlyReport {
+            company: self.state.org.name.clone(),
+            month: format!("{year:04}-{month:02}"),
+            scope: if company { "company" } else { "you" }.to_owned(),
+            person: (!company).then(|| self.name_of(viewer)),
+            hourly_rate: s.hourly_rate_cents / 100,
+            assumptions: ValueKind::ALL
+                .iter()
+                .map(|k| value::Assumption {
+                    kind: *k,
+                    label: k.label().to_owned(),
+                    minutes_each: s.minutes_for(*k),
+                })
+                .collect(),
+            totals: self.totals(&events, first, last),
+            by_person,
+            days: self.day_values(&events, first, last),
+            method:
+                "Counted only from work a person approved in Arkhon. Each approved item counts \
+                     the minutes listed under assumptions; your admin can change them."
+                    .to_owned(),
+            example: self.state.example_today.is_some(),
+        })
     }
 
     /// The activity log, newest first, if the viewer may see it.
@@ -583,6 +1225,63 @@ pub struct View {
     pub apps: Vec<AppView>,
     /// Workspaces the viewer can open.
     pub workspaces: Vec<String>,
+    /// Home: work waiting for the viewer.
+    pub needs_you: NeedsYouView,
+    /// Home: time given back in the last 7 days.
+    pub this_week: WeekView,
+}
+
+/// Home's "Needs you".
+#[derive(Debug, Clone, Serialize)]
+pub struct NeedsYouView {
+    /// Everything waiting for the viewer.
+    pub total: usize,
+    /// Up to three, urgent first.
+    pub items: Vec<ItemView>,
+}
+
+/// A queue item as shown on Home.
+#[derive(Debug, Clone, Serialize)]
+#[allow(clippy::struct_field_names)]
+pub struct ItemView {
+    /// Id (send with approve/dismiss commands).
+    pub id: ItemId,
+    /// Kind.
+    pub kind: ItemKind,
+    /// Workspace label.
+    pub workspace: String,
+    /// Title.
+    pub title: String,
+    /// Summary.
+    pub summary: String,
+    /// Prepared text.
+    pub draft: Option<String>,
+    /// Question (knowledge gaps).
+    pub question: Option<String>,
+    /// Citations.
+    pub sources: Vec<Source>,
+    /// Confidence key.
+    pub confidence: Confidence,
+    /// Confidence in words.
+    pub confidence_label: String,
+    /// Urgency.
+    pub urgency: Urgency,
+    /// When proposed.
+    pub created_at: u64,
+    /// Who it's for.
+    pub assignee: String,
+    /// Team.
+    pub team: Option<String>,
+    /// Account it would go out through, in words.
+    pub connection: Option<String>,
+    /// Primary button label.
+    pub action: String,
+    /// Word shown once done.
+    pub done_word: String,
+    /// Whether the viewer can approve it right now.
+    pub can_approve: bool,
+    /// Why not, in words.
+    pub blocked: Option<String>,
 }
 
 /// What the viewer may do (drives which controls are shown).
@@ -934,24 +1633,26 @@ pub fn demo_state() -> (State, DemoIds) {
     c.set_policy(&org, owner, App::Jobber, AppPolicy::TeamAccounts)
         .expect("seed");
     let team = |t: &str| Audience::Teams(BTreeSet::from([t.to_owned()]));
-    c.connect_company(
-        &org,
-        admin,
-        App::Outlook,
-        "service@coastline.com",
-        team("Front office"),
-        Access::Draft,
-    )
-    .expect("seed");
-    c.connect_company(
-        &org,
-        owner,
-        App::QuickBooks,
-        "Coastline Mechanical books",
-        Audience::Roles([RoleId::Owner, RoleId::Admin].into()),
-        Access::Draft,
-    )
-    .expect("seed");
+    let service = c
+        .connect_company(
+            &org,
+            admin,
+            App::Outlook,
+            "service@coastline.com",
+            team("Front office"),
+            Access::Draft,
+        )
+        .expect("seed");
+    let books = c
+        .connect_company(
+            &org,
+            owner,
+            App::QuickBooks,
+            "Coastline Mechanical books",
+            Audience::Roles([RoleId::Owner, RoleId::Admin].into()),
+            Access::Draft,
+        )
+        .expect("seed");
     c.connect_company(
         &org,
         admin,
@@ -972,14 +1673,15 @@ pub fn demo_state() -> (State, DemoIds) {
         )
         .expect("seed");
     c.mark_needs_sign_in(drive).expect("seed");
-    c.connect_personal(
-        &org,
-        owner,
-        App::Outlook,
-        "dana@coastline.com",
-        Access::Draft,
-    )
-    .expect("seed");
+    let dana_mail = c
+        .connect_personal(
+            &org,
+            owner,
+            App::Outlook,
+            "dana@coastline.com",
+            Access::Draft,
+        )
+        .expect("seed");
     c.connect_personal(
         &org,
         owner,
@@ -988,14 +1690,34 @@ pub fn demo_state() -> (State, DemoIds) {
         Access::Read,
     )
     .expect("seed");
-    c.connect_personal(&org, tech, App::Gmail, "tia@coastline.com", Access::Draft)
+    let tia_mail = c
+        .connect_personal(&org, tech, App::Gmail, "tia@coastline.com", Access::Draft)
         .expect("seed");
+
+    let today = demo_today();
+    let queue = demo_queue(
+        today,
+        &DemoQueueIds {
+            owner,
+            dispatcher,
+            tech,
+            service,
+            books,
+            dana_mail,
+            tia_mail,
+        },
+    );
+    let value = demo_value(today, &[owner, admin, dispatcher, tech, sam, jon, manager]);
 
     (
         State {
             org,
             connections: c,
             activity: Vec::new(),
+            queue,
+            value,
+            value_settings: ValueSettings::default(),
+            example_today: Some(today),
         },
         DemoIds {
             owner,
@@ -1007,5 +1729,232 @@ pub fn demo_state() -> (State, DemoIds) {
     )
 }
 
+/// The example company's pinned "today": Friday 6 November 2026, 9:00 UTC.
+#[must_use]
+pub fn demo_today() -> u64 {
+    value::days_from_civil(2026, 11, 6) * DAY + 9 * 3_600
+}
+
+struct DemoQueueIds {
+    owner: MemberId,
+    dispatcher: MemberId,
+    tech: MemberId,
+    service: u64,
+    books: u64,
+    dana_mail: u64,
+    tia_mail: u64,
+}
+
+fn src(label: &str, reference: &str) -> Source {
+    Source {
+        label: label.into(),
+        reference: reference.into(),
+    }
+}
+
+/// Example review queue (sample data).
+#[allow(clippy::too_many_lines)] // linear seed script
+fn demo_queue(today: u64, ids: &DemoQueueIds) -> Queue {
+    let mut q = Queue::default();
+    let hour = 3_600;
+    q.propose(
+        Proposal {
+            workspace: Workspace::Inbox,
+            kind: ItemKind::DraftReply,
+            title: "Reply to Marisol Vega".into(),
+            summary:
+                "Her AC is blowing warm. Arkhon offered today's 1\u{2013}3 pm slot and confirmed \
+                      her unit is under warranty."
+                    .into(),
+            draft: Some(
+                "Hi Marisol,\n\nSorry to hear the AC is blowing warm. We can come out today \
+                 between 1 and 3 pm. Your unit was installed in May 2024, so the visit and any \
+                 covered parts are under warranty.\n\nDana\nCoastline Mechanical"
+                    .into(),
+            ),
+            question: None,
+            sources: vec![
+                src(
+                    "Price list 2026",
+                    r"file:\\office-nas\jobs\price-list-2026.pdf#p2",
+                ),
+                src(
+                    "Job #4471, Vega residence",
+                    r"file:\\office-nas\jobs\4471\invoice.pdf",
+                ),
+                src(
+                    "Warranty policy",
+                    r"file:\\office-nas\jobs\policies\warranty.docx",
+                ),
+            ],
+            confidence: Confidence::High,
+            urgency: Urgency::Urgent,
+            assignee: ids.owner,
+            team: None,
+            connection: Some(ids.dana_mail),
+        },
+        today - hour,
+    );
+    q.propose(
+        Proposal {
+            workspace: Workspace::Docs,
+            kind: ItemKind::FileBill,
+            title: "File a Ferguson bill for $2,418.36".into(),
+            summary: "It matches purchase order 1187 exactly and belongs to the Harbor Dental job."
+                .into(),
+            draft: None,
+            question: None,
+            sources: vec![
+                src("Ferguson invoice 88213", "mail:service@coastline.com/88213"),
+                src("Purchase order 1187", r"file:\\office-nas\jobs\po\1187.pdf"),
+            ],
+            confidence: Confidence::High,
+            urgency: Urgency::Normal,
+            assignee: ids.owner,
+            team: None,
+            connection: Some(ids.books),
+        },
+        today - 3 * hour,
+    );
+    q.propose(
+        Proposal {
+            workspace: Workspace::Knowledge,
+            kind: ItemKind::KnowledgeGap,
+            title: "A customer asked about Mitsubishi units".into(),
+            summary: "Your files don't say whether you service them, so Arkhon didn't guess. \
+                      Answer once and it will remember."
+                .into(),
+            draft: None,
+            question: Some("Do we service Mitsubishi mini-split units?".into()),
+            sources: Vec::new(),
+            confidence: Confidence::NotFound,
+            urgency: Urgency::Normal,
+            assignee: ids.owner,
+            team: None,
+            connection: None,
+        },
+        today - 2 * hour,
+    );
+    q.propose(
+        Proposal {
+            workspace: Workspace::Growth,
+            kind: ItemKind::SendQuote,
+            title: "Send the Ortiz furnace quote".into(),
+            summary: "Replacement furnace, $6,450 installed, using this year's price list.".into(),
+            draft: Some(
+                "Hi Mr. Ortiz,\n\nAttached is the quote we discussed: a new 96% furnace, \
+                 installed, for $6,450. It's good for 30 days.\n\nDana"
+                    .into(),
+            ),
+            question: None,
+            sources: vec![src(
+                "Price list 2026",
+                r"file:\\office-nas\jobs\price-list-2026.pdf#p5",
+            )],
+            confidence: Confidence::Medium,
+            urgency: Urgency::Low,
+            assignee: ids.owner,
+            team: None,
+            connection: Some(ids.dana_mail),
+        },
+        today - 20 * hour,
+    );
+    q.propose(
+        Proposal {
+            workspace: Workspace::Desk,
+            kind: ItemKind::DraftReply,
+            title: "Confirm Harbor Dental's maintenance visit".into(),
+            summary:
+                "They asked to move Tuesday's visit to Thursday morning; Thursday 8 am is open."
+                    .into(),
+            draft: Some(
+                "Hi Priya,\n\nThursday at 8 am works. We'll see you then.\n\nCoastline Mechanical"
+                    .into(),
+            ),
+            question: None,
+            sources: vec![src("Dispatch calendar", "calendar:service@coastline.com")],
+            confidence: Confidence::High,
+            urgency: Urgency::Normal,
+            assignee: ids.dispatcher,
+            team: Some("Front office".into()),
+            connection: Some(ids.service),
+        },
+        today - 2 * hour,
+    );
+    q.propose(
+        Proposal {
+            workspace: Workspace::Meetings,
+            kind: ItemKind::MeetingNotes,
+            title: "Share notes from the Bayview Apartments walk-through".into(),
+            summary: "Six units need new condensate lines; Arkhon listed parts and next steps."
+                .into(),
+            draft: Some(
+                "Notes from Thursday's walk-through at Bayview Apartments:\n- Units 2B, 2C, 3A, \
+                 3D, 4A and 4C need new condensate lines.\n- Parts list attached.\n- Next: quote \
+                 to the property manager by Monday."
+                    .into(),
+            ),
+            question: None,
+            sources: vec![src("Walk-through recording", "meeting:2026-11-05-bayview")],
+            confidence: Confidence::Medium,
+            urgency: Urgency::Normal,
+            assignee: ids.tech,
+            team: Some("Field techs".into()),
+            connection: Some(ids.tia_mail),
+        },
+        today - 16 * hour,
+    );
+    q
+}
+
+/// Example history: two weeks of approved work (sample data, marked `item: None`).
+fn demo_value(today: u64, people: &[MemberId]) -> Vec<ValueEvent> {
+    // Per day, oldest first: (drafts, documents, meetings, answers reused).
+    const DAYS: [(u32, u32, u32, u32); 14] = [
+        (6, 4, 0, 0),
+        (4, 2, 0, 1),
+        (14, 9, 1, 2),
+        (18, 12, 1, 3),
+        (20, 14, 2, 2),
+        (17, 11, 1, 3),
+        (15, 8, 1, 2),
+        (5, 3, 0, 1),
+        (3, 2, 0, 0),
+        (17, 11, 1, 3),
+        (21, 14, 2, 4),
+        (31, 16, 3, 5),
+        (24, 13, 2, 4),
+        (19, 10, 1, 3),
+    ];
+    let start = day_number(today) - 13;
+    let mut out = Vec::new();
+    let mut who = 0usize;
+    for (i, (drafts, docs, meetings, answers)) in (0u64..).zip(DAYS) {
+        let day = (start + i) * DAY;
+        let kinds = [
+            (ValueKind::DraftAccepted, drafts),
+            (ValueKind::DocumentFiled, docs),
+            (ValueKind::MeetingSummarized, meetings),
+            (ValueKind::AnswerReused, answers),
+        ];
+        let mut minute = 8 * 60;
+        for (kind, n) in kinds {
+            for _ in 0..n {
+                out.push(ValueEvent {
+                    at: day + minute * 60,
+                    kind,
+                    member: people[who % people.len()],
+                    item: None,
+                });
+                who += 1;
+                minute += 7;
+            }
+        }
+    }
+    out
+}
+
 #[cfg(test)]
 mod tests;
+#[cfg(test)]
+mod tests_work;

@@ -202,6 +202,7 @@ fn connect_flows() {
             app: App::Outlook,
             account: "tia@coastline.com".into(),
             for_: ConnectFor::Me,
+            credentials: None,
         },
     )
     .unwrap();
@@ -212,6 +213,7 @@ fn connect_flows() {
                 app: App::QuickBooks,
                 account: "x".into(),
                 for_: ConnectFor::Me,
+                credentials: None,
             },
         )
         .unwrap_err();
@@ -225,6 +227,7 @@ fn connect_flows() {
                 for_: ConnectFor::Team {
                     team: "Front office".into(),
                 },
+                credentials: None,
             },
         )
         .unwrap_err();
@@ -236,6 +239,7 @@ fn connect_flows() {
                 app: App::Gmail,
                 account: "  ".into(),
                 for_: ConnectFor::Me,
+                credentials: None,
             },
         )
         .unwrap_err();
@@ -246,6 +250,7 @@ fn connect_flows() {
             app: App::Xero,
             account: "Coastline".into(),
             for_: ConnectFor::Everyone,
+            credentials: None,
         },
     )
     .unwrap();
@@ -346,7 +351,8 @@ fn commands_round_trip_as_json() {
             account: "x".into(),
             for_: ConnectFor::Team {
                 team: "Field techs".into()
-            }
+            },
+            credentials: None,
         }
     );
 }

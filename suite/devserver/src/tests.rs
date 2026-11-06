@@ -177,3 +177,92 @@ fn embedded_preview_snapshot_matches_the_engine() {
         "snapshot is stale; regenerate it"
     );
 }
+
+#[tokio::test]
+async fn approving_from_home_updates_needs_you_and_this_week() {
+    let (app, ids) = app();
+    let (_, v) = send(&app, req("GET", "/api/view", Some(ids.owner), None)).await;
+    assert_eq!(v["needs_you"]["total"], 4);
+    let first = &v["needs_you"]["items"][0];
+    assert_eq!(first["title"], "Reply to Marisol Vega");
+    let drafts = v["this_week"]["totals"]["drafts"].as_u64().unwrap();
+    let cmd = format!(r#"{{"command":"approve","item":{}}}"#, first["id"]);
+    // Someone else can't approve Dana's item.
+    let (s, _) = send(
+        &app,
+        req("POST", "/api/command", Some(ids.tech), Some(&cmd)),
+    )
+    .await;
+    assert_eq!(s, StatusCode::FORBIDDEN);
+    let (s, v) = send(
+        &app,
+        req("POST", "/api/command", Some(ids.owner), Some(&cmd)),
+    )
+    .await;
+    assert_eq!(s, StatusCode::OK, "{v}");
+    assert_eq!(v["view"]["needs_you"]["total"], 3);
+    assert_eq!(v["view"]["this_week"]["totals"]["drafts"], drafts + 1);
+}
+
+#[tokio::test]
+async fn monthly_report_is_scoped_to_the_viewer() {
+    let (app, ids) = app();
+    let (s, r) = send(
+        &app,
+        req("GET", "/api/report?month=2026-11", Some(ids.owner), None),
+    )
+    .await;
+    assert_eq!(s, StatusCode::OK);
+    assert_eq!(r["scope"], "company");
+    assert_eq!(r["days"].as_array().unwrap().len(), 30);
+    let (_, r) = send(&app, req("GET", "/api/report", Some(ids.tech), None)).await;
+    assert_eq!(r["scope"], "you");
+    assert_eq!(r["month"], "2026-11");
+    let (s, _) = send(
+        &app,
+        req("GET", "/api/report?month=nope", Some(ids.owner), None),
+    )
+    .await;
+    assert_eq!(s, StatusCode::BAD_REQUEST);
+}
+
+#[tokio::test]
+async fn mail_passwords_go_to_the_vault_and_are_never_echoed() {
+    let dir = tempfile::tempdir().unwrap();
+    let (state, ids) = demo_state();
+    let vault = arkhon_engine::TokenVault::new(
+        dir.path().join("vault.json"),
+        Box::new(arkhon_engine::vault::DevFileKeyProvider::new(
+            dir.path().join("vault.dev-key"),
+        )),
+    );
+    let store = Store::new(dir.path().join("org.json"));
+    let s = AppState::new(
+        Suite::new(state, Box::new(SystemClock)).with_vault(vault),
+        Some(store.clone()),
+        ids.owner,
+    );
+    let app = router(
+        s,
+        PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../app/design"),
+        PORT,
+    );
+    let secret = "correct-horse-battery-staple";
+    let cmd = format!(
+        r#"{{"command":"connect","app":"other-email","account":"dana@example.com","for":{{"type":"me"}},
+            "credentials":{{"imap_host":"imap.example.com","smtp_host":"smtp.example.com","username":"dana","password":"{secret}"}}}}"#
+    );
+    let (s, v) = send(
+        &app,
+        req("POST", "/api/command", Some(ids.owner), Some(&cmd)),
+    )
+    .await;
+    assert_eq!(s, StatusCode::OK, "{v}");
+    assert!(!v.to_string().contains(secret));
+    let (_, log) = send(&app, req("GET", "/api/activity", Some(ids.owner), None)).await;
+    assert!(!log.to_string().contains(secret));
+    let saved = std::fs::read_to_string(store.path()).unwrap();
+    assert!(!saved.contains(secret));
+    let vault = std::fs::read_to_string(dir.path().join("vault.json")).unwrap();
+    assert!(!vault.contains(secret));
+}

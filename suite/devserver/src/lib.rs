@@ -7,6 +7,7 @@
 //! | GET | `/api/view` | — | [`arkhon_engine::View`] for the acting person |
 //! | POST | `/api/command` | [`arkhon_engine::Command`] | `{ "message": "..." }` and the new view |
 //! | GET | `/api/activity` | — | activity log (admins) |
+//! | GET | `/api/report?month=YYYY-MM` | — | [`arkhon_engine::MonthlyReport`] (own numbers unless the viewer sees company reports) |
 //! | GET | `/api/people` | — | `[{id, name, role}]` for the dev "View as" switcher |
 //!
 //! **Dev-only identity:** the acting person is chosen with the `x-arkhon-as` header (a member id).
@@ -23,7 +24,7 @@ use std::path::PathBuf;
 use std::sync::Arc;
 
 use arkhon_engine::{Command, Refusal, Store, Suite};
-use axum::extract::{Request, State};
+use axum::extract::{Query, Request, State};
 use axum::http::{header, HeaderMap, StatusCode};
 use axum::middleware::{self, Next};
 use axum::response::{IntoResponse, Response};
@@ -59,6 +60,7 @@ pub fn router(state: AppState, static_dir: PathBuf, port: u16) -> Router {
         .route("/api/view", get(view))
         .route("/api/command", post(command))
         .route("/api/activity", get(activity))
+        .route("/api/report", get(report))
         .route("/api/people", get(people))
         .with_state(state);
     Router::new()
@@ -155,6 +157,38 @@ async fn activity(State(s): State<AppState>, headers: HeaderMap) -> Response {
     let suite = s.suite.lock().await;
     match suite.activity(actor(&headers, s.default_actor)) {
         Ok(log) => Json(log).into_response(),
+        Err(r) => refusal(&r),
+    }
+}
+
+/// `?month=YYYY-MM`; defaults to the current month.
+#[derive(serde::Deserialize)]
+struct ReportQuery {
+    month: Option<String>,
+}
+
+async fn report(
+    State(s): State<AppState>,
+    headers: HeaderMap,
+    Query(query): Query<ReportQuery>,
+) -> Response {
+    let suite = s.suite.lock().await;
+    let (this_year, this_month, _) =
+        arkhon_engine::value::civil(suite.today() / arkhon_engine::value::DAY);
+    let (year, month) = match query.month.as_deref() {
+        None => (this_year, this_month),
+        Some(text) => {
+            let parsed = text
+                .split_once('-')
+                .and_then(|(a, b)| Some((a.parse().ok()?, b.parse().ok()?)));
+            match parsed {
+                Some(ym) => ym,
+                None => return err(StatusCode::BAD_REQUEST, "Pick a month like 2026-11."),
+            }
+        }
+    };
+    match suite.monthly_report(actor(&headers, s.default_actor), year, month) {
+        Ok(r) => Json(r).into_response(),
         Err(r) => refusal(&r),
     }
 }
