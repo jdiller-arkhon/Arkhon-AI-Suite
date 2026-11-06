@@ -1,6 +1,6 @@
 # Arkhon Suite design language
 
-`dashboard.html` is the reference prototype (v2) for the Command (home) screen, and `tokens.css` is
+`dashboard.html` is the reference prototype (v3) for the Command (home) screen, and `tokens.css` is
 what the Tauri app imports in Phase 5.
 
 ## Source
@@ -9,28 +9,21 @@ The tokens come from arkhonindustries.com. Its live `:root` CSS variables were c
 five-color chart palette, a 0.875rem radius, the brand easing curve and timings, and the
 SF Pro/Geist type stack. Nothing here is invented beyond the dark-console extension described below.
 
-## Direction (v2, 2026-11-06)
-The owner asked for a look much closer to modern developer and AI products: monochrome,
-hairline-bordered, dense, with a conversational composer as the centerpiece. We borrow that
-*design language* only, with no third-party logos, names or assets. Arkhon's own identity comes
-through the brand tokens, Geist type, and the chrome mark.
+## Direction (v3, 2026-11-06): calm and plain-language
+Owner direction: lots of empty space, nothing cluttered, and as non-technical and easy to use as possible.
 
-| Element | Role |
-|---|---|
-| Top bar: mark / company switcher, underline workspace tabs | Navigation (N3: one suite) |
-| **Composer** ("Ask about your jobs, customers, bills or files…") with a scope chip and an "On this PC" indicator | Ask the company (N2: no blank-chat expertise, thanks to suggestions; N1) |
-| Grounded answer card with citations | N4 |
-| One-box metric strip with hairline dividers | Value Dashboard (N5) and cloud bytes = 0 (N1) |
-| Dense review-queue rows: tag, title, state dot, mono citations, Approve | N9, N4 |
-| **Skyline** chart (the mark's antenna bars, chrome on peak and today) | Hours returned (N5) |
-| Network log | Privacy Center preview (N1) |
+**Principles**
+1. **One idea per band, lots of air.** Home has three bands: greeting + ask box, *Needs you*, *This week*. Each band is separated by 64px or more.
+2. **At most three items in "Needs you".** Everything else is handled quietly or lives in its workspace.
+3. **No jargon.** No engine names, bytes, TPM, logs, mono type or file paths on the main screens. "Everything stayed on this computer" replaces network stats. Sources read as "Based on your price list and warranty policy".
+4. **Big, friendly controls.** 44px+ pill buttons, 17px base type, verbs that say what happens ("Send", "File it", "Answer").
+5. **Honest states.** Urgent, Matches order and Not sure pills. "Not sure" means Arkhon didn't guess (N4).
+6. **Technical detail is still there, one click away.** The Privacy Center, sources and activity history sit behind links for those who want them.
 
-## Rules
-- Pure black/white surfaces, neutral greys, 1px hairlines. Color is used only for state (ok/warn/bad/info).
-- The chrome gradient appears only on the mark, avatars, and the highlighted data points.
-- Numbers, citations and logs use Geist Mono with tabular figures.
-- Example data is always labelled. The composer answer in the prototype is a canned example.
-- Motion: a 4px rise on load and bar growth. Both are disabled under `prefers-reduced-motion`.
+**Company settings (People · Roles · Teams)** use the rules in `crates/arkhon-org` (ADR-0005):
+the seat meter, invites that hold a seat, the plain-language role cards with ✓/– lists, custom roles
+(Business+), and teams that add tools without new roles. The prototype mirrors the last-owner and
+seat-limit rules and their exact error sentences.
 
 ## Open questions
 - An official vector logo. The prototype redraws the mark as SVG from `brand/arkhon-mark-mist.png`. Replace it with the master SVG when one is available.

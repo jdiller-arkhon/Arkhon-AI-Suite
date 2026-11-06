@@ -2,178 +2,200 @@
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&display=swap">
 <style>
-/* Layout: developer-console chrome (top bar + underline tabs, hairline grids, dense rows)
-   wrapped around an assistant composer as the page's center of gravity. Monochrome;
-   color is reserved for state. The Arkhon chrome mark + skyline are the only flourish. */
+/* Layout: one calm column, wide margins, one idea per band. Home = greeting, ask box,
+   "needs you" (max 3), "this week" in a sentence. Company settings = People / Roles / Teams.
+   Graphite + mist from the Arkhon brand; color only for status. */
 :root {
-  --bg: #ffffff; --bg-2: #fafafa; --bg-3: #f2f2f2;
-  --line: #eaeaea; --line-2: #d4d4d4;
-  --fg: #171717; --fg-2: #666666; --fg-3: #8f8f8f;
-  --inv: #171717; --inv-fg: #ffffff;
-  --ok: #1f8a4c; --warn: #b25d00; --bad: #d1242f; --info: #0068d6;
+  --bg: #f5f5f7; --card: #ffffff; --soft: #f0f0f2; --line: #e6e6e9;
+  --fg: #1d1d1f; --fg-2: #6e6e73; --fg-3: #a1a1a6;
+  --ink: #2b2b2e; --ink-fg: #ffffff;
+  --ok: #2f7a55; --ok-bg: #e8f3ed; --warn: #b45309; --warn-bg: #fdf1e3; --bad: #d92d20; --bad-bg: #fdecea;
+  --focus: #0071e3;
   --chrome-a: #d6d8dd; --chrome-b: #5f636c; --chrome-c: #1d1f24;
-  --ring: 0 0 0 1px var(--line), 0 1px 2px rgba(0,0,0,.04), 0 8px 24px -12px rgba(0,0,0,.12);
+  --shadow: 0 1px 2px rgba(0,0,0,.04), 0 12px 32px -16px rgba(0,0,0,.12);
   --font: "Geist", -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
-  --mono: "Geist Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --r: 22px;
   --ease: cubic-bezier(.22,1,.36,1);
 }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
-  --bg: #000000; --bg-2: #0a0a0a; --bg-3: #1a1a1a;
-  --line: #1f1f1f; --line-2: #2e2e2e;
-  --fg: #ededed; --fg-2: #a1a1a1; --fg-3: #707070;
-  --inv: #ededed; --inv-fg: #0a0a0a;
-  --ok: #3fb950; --warn: #f0a33a; --bad: #ff6166; --info: #52a8ff;
+  --bg: #000000; --card: #141416; --soft: #1c1c1f; --line: #2a2a2e;
+  --fg: #f5f5f7; --fg-2: #a1a1a6; --fg-3: #6e6e73;
+  --ink: #f5f5f7; --ink-fg: #111113;
+  --ok: #4fbf86; --ok-bg: rgba(79,191,134,.14); --warn: #f0a33a; --warn-bg: rgba(240,163,58,.14); --bad: #ff6b61; --bad-bg: rgba(255,107,97,.14);
+  --focus: #2997ff;
   --chrome-a: #f4f5f7; --chrome-b: #8d939e; --chrome-c: #3a3d44;
-  --ring: 0 0 0 1px var(--line-2), 0 16px 40px -16px rgba(0,0,0,.8);
+  --shadow: 0 0 0 1px var(--line);
   color-scheme: dark;
 } }
 :root[data-theme="dark"] {
-  --bg: #000000; --bg-2: #0a0a0a; --bg-3: #1a1a1a;
-  --line: #1f1f1f; --line-2: #2e2e2e;
-  --fg: #ededed; --fg-2: #a1a1a1; --fg-3: #707070;
-  --inv: #ededed; --inv-fg: #0a0a0a;
-  --ok: #3fb950; --warn: #f0a33a; --bad: #ff6166; --info: #52a8ff;
+  --bg: #000000; --card: #141416; --soft: #1c1c1f; --line: #2a2a2e;
+  --fg: #f5f5f7; --fg-2: #a1a1a6; --fg-3: #6e6e73;
+  --ink: #f5f5f7; --ink-fg: #111113;
+  --ok: #4fbf86; --ok-bg: rgba(79,191,134,.14); --warn: #f0a33a; --warn-bg: rgba(240,163,58,.14); --bad: #ff6b61; --bad-bg: rgba(255,107,97,.14);
+  --focus: #2997ff;
   --chrome-a: #f4f5f7; --chrome-b: #8d939e; --chrome-c: #3a3d44;
-  --ring: 0 0 0 1px var(--line-2), 0 16px 40px -16px rgba(0,0,0,.8);
+  --shadow: 0 0 0 1px var(--line);
   color-scheme: dark;
 }
 
 * { box-sizing: border-box; }
 [hidden] { display: none !important; }
-body { margin: 0; background: var(--bg); color: var(--fg); font: 400 14px/1.5 var(--font); -webkit-font-smoothing: antialiased; }
-button, input, textarea { font: inherit; color: inherit; }
+body { margin: 0; background: var(--bg); color: var(--fg); font: 400 17px/1.5 var(--font); -webkit-font-smoothing: antialiased; letter-spacing: -.01em; }
+button, input, select, textarea { font: inherit; color: inherit; letter-spacing: inherit; }
 button { cursor: pointer; }
-a { color: inherit; }
-:focus-visible { outline: 2px solid var(--info); outline-offset: 2px; border-radius: 6px; }
-.mono { font-family: var(--mono); font-variant-numeric: tabular-nums; }
-.wrap { max-width: 1200px; margin: 0 auto; padding-left: max(24px, env(safe-area-inset-left, 0px)); padding-right: max(24px, env(safe-area-inset-right, 0px)); }
+:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; border-radius: 10px; }
+.wrap { max-width: 880px; margin: 0 auto; padding-left: max(24px, env(safe-area-inset-left, 0px)); padding-right: max(24px, env(safe-area-inset-right, 0px)); }
 .grow { flex: 1; }
 
-/* ---------- Top bar ---------- */
+/* ---------- Header ---------- */
 body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--bg); }
-header.bar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--bg); border-bottom: 1px solid var(--line); }
-.bar-row { display: flex; align-items: center; gap: 10px; height: 56px; }
-.mark { width: 26px; height: 22px; flex: none; }
-.slash { color: var(--line-2); font-size: 20px; font-weight: 300; }
-.crumb { display: inline-flex; align-items: center; gap: 8px; padding: 4px 8px; border-radius: 8px; border: 0; background: none; font-weight: 500; }
-.crumb:hover { background: var(--bg-3); }
-.avatar { width: 20px; height: 20px; border-radius: 50%; background: linear-gradient(135deg, var(--chrome-a), var(--chrome-c)); flex: none; }
-.badge { font: 500 11px var(--mono); border: 1px solid var(--line-2); color: var(--fg-2); border-radius: 999px; padding: 1px 8px; }
-.status { display: inline-flex; align-items: center; gap: 7px; font-size: 13px; color: var(--fg-2); }
-.dot { width: 8px; height: 8px; border-radius: 50%; background: var(--ok); flex: none; display: inline-block; }
-.dot.warn { background: var(--warn); } .dot.bad { background: var(--bad); } .dot.idle { background: var(--fg-3); }
-.btn { height: 32px; padding: 0 12px; border-radius: 6px; border: 1px solid var(--line-2); background: var(--bg); font-weight: 500; font-size: 13px;
-  display: inline-flex; align-items: center; gap: 6px; transition: background .15s; white-space: nowrap; }
-.btn:hover { background: var(--bg-3); }
-.btn.primary { background: var(--inv); color: var(--inv-fg); border-color: var(--inv); }
-.btn.primary:hover { opacity: .88; }
-.btn.sm { height: 28px; font-size: 12.5px; padding: 0 10px; }
-.tabs { display: flex; gap: 2px; overflow-x: auto; scrollbar-width: none; margin-bottom: -1px; }
-.tabs a { position: relative; padding: 8px 12px 12px; color: var(--fg-2); text-decoration: none; font-size: 14px; white-space: nowrap; border-radius: 6px; }
-.tabs a:hover { color: var(--fg); }
-.tabs a[aria-current="page"] { color: var(--fg); }
-.tabs a[aria-current="page"]::after { content: ""; position: absolute; left: 12px; right: 12px; bottom: 0; height: 2px; background: var(--fg); }
-.tabs .n { font: 500 11px var(--mono); color: var(--fg-3); margin-left: 4px; }
+header { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: color-mix(in srgb, var(--bg) 82%, transparent); backdrop-filter: saturate(180%) blur(20px); -webkit-backdrop-filter: saturate(180%) blur(20px); }
+.hdr { display: flex; align-items: center; gap: 28px; height: 64px; }
+.logo { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--fg); font-weight: 600; font-size: 15px; letter-spacing: .14em; }
+.logo svg { width: 28px; height: 24px; }
+.links { display: flex; gap: 24px; }
+.links a { color: var(--fg-2); text-decoration: none; font-size: 15px; }
+.links a:hover, .links a[aria-current="page"] { color: var(--fg); }
+.me { width: 34px; height: 34px; border-radius: 50%; border: 0; background: linear-gradient(135deg, var(--chrome-a), var(--chrome-c)); color: var(--ink-fg); font-weight: 600; font-size: 13px; }
 
-/* ---------- Composer (assistant-first) ---------- */
-.hero { padding-block: 56px 36px; display: grid; justify-items: center; gap: 22px; text-align: center; }
-.hero h1 { margin: 0; font-size: clamp(26px, 4vw, 34px); font-weight: 600; letter-spacing: -.035em; text-wrap: balance; display: flex; align-items: center; gap: 12px; }
-.hero h1 svg { width: 34px; height: 30px; }
-.composer { width: 100%; max-width: 720px; border-radius: 18px; background: var(--bg); box-shadow: var(--ring); text-align: left; transition: box-shadow .2s; }
-.composer:focus-within { box-shadow: 0 0 0 1px var(--fg-3), 0 16px 40px -16px rgba(0,0,0,.25); }
-.composer textarea { width: 100%; min-height: 64px; border: 0; background: transparent; resize: none; padding: 18px 20px 6px; font-size: 16px; outline: none; }
-.composer textarea::placeholder { color: var(--fg-3); }
-.composer-row { display: flex; align-items: center; gap: 8px; padding: 8px 10px 10px 12px; flex-wrap: wrap; }
-.ghost { height: 30px; border-radius: 8px; border: 1px solid var(--line); background: none; padding: 0 10px; font-size: 12.5px; color: var(--fg-2); display: inline-flex; align-items: center; gap: 6px; }
-.ghost:hover { color: var(--fg); background: var(--bg-3); }
-.ghost svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 1.6; }
-.send { width: 32px; height: 32px; border-radius: 9px; border: 0; background: var(--inv); color: var(--inv-fg); display: grid; place-items: center; }
-.send:disabled { opacity: .3; cursor: default; }
-.send svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 2; }
-.local { font: 500 11.5px var(--mono); color: var(--fg-3); display: inline-flex; align-items: center; gap: 6px; }
-.suggest { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; max-width: 760px; }
-.suggest button { border: 1px solid var(--line); background: var(--bg); border-radius: 999px; padding: 6px 14px; font-size: 13px; color: var(--fg-2); }
-.suggest button:hover { color: var(--fg); border-color: var(--line-2); }
-.answer { width: 100%; max-width: 720px; text-align: left; border: 1px solid var(--line); border-radius: 14px; padding: 16px 18px; display: grid; gap: 10px; background: var(--bg-2); }
-.answer p { margin: 0; max-width: 66ch; }
-.answer .who { font: 500 11.5px var(--mono); color: var(--fg-3); display: flex; gap: 8px; align-items: center; }
+/* ---------- Shared ---------- */
+.band { padding-block: 64px 0; }
+.band:last-of-type { padding-block-end: 112px; }
+h1 { margin: 0; font-size: clamp(36px, 6vw, 56px); line-height: 1.06; font-weight: 700; letter-spacing: -.035em; text-wrap: balance; }
+h2 { margin: 0; font-size: clamp(26px, 3.6vw, 32px); line-height: 1.15; font-weight: 600; letter-spacing: -.025em; text-wrap: balance; }
+.lede { margin: 12px 0 0; font-size: 21px; color: var(--fg-2); max-width: 36ch; text-wrap: pretty; }
+.head { display: flex; align-items: end; gap: 16px; flex-wrap: wrap; margin-bottom: 28px; }
+.head p { margin: 6px 0 0; color: var(--fg-2); }
+.link { border: 0; background: none; color: var(--focus); font-size: 17px; padding: 0; }
+.link:hover { text-decoration: underline; }
+.card { background: var(--card); border-radius: var(--r); box-shadow: var(--shadow); }
+.btn { height: 44px; padding: 0 22px; border-radius: 999px; border: 0; background: var(--soft); font-weight: 500; font-size: 15px; white-space: nowrap; transition: transform .2s var(--ease), opacity .2s; }
+.btn:hover { opacity: .85; }
+.btn:active { transform: scale(.97); }
+.btn.primary { background: var(--ink); color: var(--ink-fg); }
+.example { display: inline-block; font-size: 13px; color: var(--warn); background: var(--warn-bg); border-radius: 999px; padding: 3px 12px; }
 
-/* ---------- Sections ---------- */
-.section { padding-block: 0 40px; display: grid; gap: 14px; }
-.sec-head { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
-.sec-head h2 { margin: 0; font-size: 20px; font-weight: 600; letter-spacing: -.02em; }
-.sec-head p { margin: 0; color: var(--fg-2); font-size: 13.5px; }
-.example { font: 500 11px var(--mono); color: var(--warn); border: 1px dashed currentColor; border-radius: 999px; padding: 1px 8px; }
+/* ---------- Home ---------- */
+.hello { padding-block: 72px 0; text-align: center; display: grid; justify-items: center; gap: 16px; }
+.hello .lede { margin: 0; max-width: 30ch; }
+.ask { width: 100%; max-width: 680px; margin-top: 28px; display: flex; align-items: center; gap: 8px; padding: 8px 8px 8px 24px; border-radius: 999px; background: var(--card); box-shadow: var(--shadow); }
+.ask:focus-within { box-shadow: 0 0 0 3px color-mix(in srgb, var(--focus) 35%, transparent); }
+.ask input { flex: 1; min-width: 0; border: 0; outline: 0; background: none; font-size: 18px; height: 48px; }
+.ask input::placeholder { color: var(--fg-3); }
+.ask button { width: 48px; height: 48px; border-radius: 50%; border: 0; background: var(--ink); color: var(--ink-fg); display: grid; place-items: center; flex: none; }
+.ask button:disabled { opacity: .25; cursor: default; }
+.ask svg { width: 20px; height: 20px; stroke: currentColor; fill: none; stroke-width: 2; }
+.ideas { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; max-width: 680px; }
+.ideas button { border: 0; background: var(--card); box-shadow: var(--shadow); border-radius: 999px; padding: 10px 18px; font-size: 15px; color: var(--fg-2); }
+.ideas button:hover { color: var(--fg); }
+.reply { width: 100%; max-width: 680px; text-align: left; padding: 28px 32px; display: grid; gap: 14px; }
+.reply p { margin: 0; font-size: 18px; max-width: 58ch; }
+.reply .src { font-size: 14px; color: var(--fg-2); }
 
-.metrics { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
-.metric { padding: 18px 20px; display: grid; gap: 6px; align-content: start; min-width: 0; }
-.metric + .metric { border-left: 1px solid var(--line); }
-.metric .k { font-size: 13px; color: var(--fg-2); display: flex; align-items: center; gap: 6px; }
-.metric .v { font: 600 30px/1.1 var(--font); letter-spacing: -.035em; font-variant-numeric: tabular-nums; }
-.metric .v small { font-size: 14px; font-weight: 500; color: var(--fg-2); letter-spacing: 0; }
-.metric .d { font: 500 12px var(--mono); color: var(--ok); }
-.metric .d.flat { color: var(--fg-3); }
+.needs { display: grid; gap: 14px; }
+.task { padding: 26px 28px; display: grid; grid-template-columns: auto minmax(0,1fr) auto; gap: 20px; align-items: center; transition: opacity .4s var(--ease); }
+.task .ico { width: 48px; height: 48px; border-radius: 14px; display: grid; place-items: center; background: var(--soft); flex: none; }
+.task .ico svg { width: 22px; height: 22px; stroke: var(--fg); fill: none; stroke-width: 1.6; }
+.task h3 { margin: 0; font-size: 19px; font-weight: 600; letter-spacing: -.015em; }
+.task p { margin: 4px 0 0; color: var(--fg-2); font-size: 16px; max-width: 52ch; }
+.task .why { margin-top: 8px; font-size: 14px; color: var(--fg-3); }
+.task .acts { display: flex; gap: 10px; }
+.task.done { opacity: .5; }
+.task.done .acts { display: none; }
+.pill-s { display: inline-block; font-size: 13px; font-weight: 500; border-radius: 999px; padding: 2px 10px; margin-left: 8px; vertical-align: 2px; }
+.pill-s.warn { color: var(--warn); background: var(--warn-bg); }
+.pill-s.ok { color: var(--ok); background: var(--ok-bg); }
+.pill-s.bad { color: var(--bad); background: var(--bad-bg); }
 
-.cols { display: grid; grid-template-columns: minmax(0,1.6fr) minmax(0,1fr); gap: 24px; align-items: start; }
-.box { border: 1px solid var(--line); border-radius: 12px; overflow: hidden; background: var(--bg); }
-.box-head { display: flex; align-items: center; gap: 10px; padding: 12px 16px; border-bottom: 1px solid var(--line); background: var(--bg-2); font-size: 13px; color: var(--fg-2); flex-wrap: wrap; }
-.box-head b { color: var(--fg); font-weight: 500; }
-.filter { display: inline-flex; border: 1px solid var(--line); border-radius: 7px; overflow: hidden; }
-.filter button { border: 0; background: none; padding: 3px 10px; font-size: 12px; color: var(--fg-2); }
-.filter button[aria-pressed="true"] { background: var(--bg-3); color: var(--fg); }
+.week { padding: 44px 44px 36px; display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 40px; align-items: end; }
+.week .big { font-size: clamp(56px, 9vw, 88px); font-weight: 700; letter-spacing: -.05em; line-height: .95; font-variant-numeric: tabular-nums; }
+.week .big small { font-size: .32em; font-weight: 600; color: var(--fg-2); letter-spacing: -.01em; }
+.week p { margin: 14px 0 0; color: var(--fg-2); font-size: 19px; }
+.week svg { width: 100%; height: auto; display: block; }
+.facts { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 14px; margin-top: 14px; }
+.fact { padding: 24px 26px; }
+.fact b { display: block; font-size: 30px; font-weight: 600; letter-spacing: -.03em; font-variant-numeric: tabular-nums; }
+.fact span { color: var(--fg-2); font-size: 15px; }
+.private { display: flex; align-items: center; gap: 14px; padding: 22px 28px; margin-top: 14px; }
+.private .shield { width: 40px; height: 40px; border-radius: 12px; background: var(--ok-bg); display: grid; place-items: center; flex: none; }
+.private .shield svg { width: 20px; height: 20px; stroke: var(--ok); fill: none; stroke-width: 1.8; }
+.private p { margin: 0; color: var(--fg-2); font-size: 15px; }
+.private b { color: var(--fg); font-weight: 600; }
 
-.rows { list-style: none; margin: 0; padding: 0; }
-.r { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 16px; padding: 14px 16px; border-bottom: 1px solid var(--line); transition: background .15s, opacity .3s var(--ease); }
-.r:last-child { border-bottom: 0; }
-.r:hover { background: var(--bg-2); }
-.r-main { display: grid; gap: 4px; min-width: 0; }
-.r-top { display: flex; align-items: center; gap: 8px; min-width: 0; }
-.r-title { font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
-.r-sub { color: var(--fg-2); font-size: 13px; }
-.r-meta { display: flex; gap: 6px 14px; flex-wrap: wrap; font: 400 12px var(--mono); color: var(--fg-3); align-items: center; }
-.r-meta a { text-decoration: none; border-bottom: 1px dotted var(--fg-3); }
-.r-meta a:hover { color: var(--fg); }
-.tag { font: 500 11px var(--mono); padding: 1px 7px; border-radius: 5px; background: var(--bg-3); color: var(--fg-2); flex: none; }
-.state { font: 500 12px var(--font); display: inline-flex; align-items: center; gap: 6px; color: var(--fg-2); }
-.r-act { display: flex; align-items: center; gap: 6px; }
-.r.done { opacity: .5; } .r.done .r-act { display: none; }
-.done-note { font: 500 12px var(--mono); color: var(--ok); }
+/* ---------- Settings ---------- */
+.seg { display: inline-flex; padding: 4px; border-radius: 999px; background: var(--soft); gap: 2px; }
+.seg a { padding: 8px 20px; border-radius: 999px; color: var(--fg-2); text-decoration: none; font-size: 15px; font-weight: 500; }
+.seg a[aria-current="page"] { background: var(--card); color: var(--fg); box-shadow: 0 1px 3px rgba(0,0,0,.12); }
+.seats { padding: 28px 32px; display: grid; gap: 14px; }
+.seats .row { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+.seats .row b { font-size: 22px; font-weight: 600; letter-spacing: -.02em; }
+.meter { height: 8px; border-radius: 999px; background: var(--soft); overflow: hidden; }
+.meter i { display: block; height: 100%; border-radius: inherit; background: var(--ink); transition: width .5s var(--ease); }
+.invite { padding: 28px 32px; display: grid; gap: 18px; }
+.invite .fields { display: grid; grid-template-columns: minmax(0,1.2fr) minmax(0,1fr) auto; gap: 12px; align-items: end; }
+label.f { display: grid; gap: 6px; font-size: 14px; color: var(--fg-2); }
+.f input, .f select, .who select { height: 46px; border-radius: 12px; border: 1px solid var(--line); background: var(--card); padding: 0 14px; font-size: 16px; color: var(--fg); min-width: 0; width: 100%; }
+.role-hint { font-size: 14px; color: var(--fg-2); margin: 0; }
+.msg { font-size: 15px; border-radius: 12px; padding: 12px 16px; margin: 0; }
+.msg.err { color: var(--bad); background: var(--bad-bg); }
+.msg.ok { color: var(--ok); background: var(--ok-bg); }
 
-.sky { padding: 16px; display: grid; gap: 10px; }
-.sky svg { width: 100%; height: auto; display: block; }
-.sky-legend { display: flex; justify-content: space-between; gap: 8px; font: 400 11.5px var(--mono); color: var(--fg-3); flex-wrap: wrap; }
+.people { list-style: none; margin: 0; padding: 8px 0; }
+.who { display: grid; grid-template-columns: auto minmax(0,1fr) 190px auto; gap: 16px; align-items: center; padding: 16px 28px; }
+.who + .who { border-top: 1px solid var(--line); }
+.av { width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; font-weight: 600; font-size: 15px; background: var(--soft); color: var(--fg-2); flex: none; }
+.who .n { font-weight: 600; }
+.who .e { color: var(--fg-2); font-size: 15px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.who .st { font-size: 14px; color: var(--fg-3); min-width: 74px; text-align: right; }
+.who .st.inv { color: var(--warn); }
+.who .st.paused { color: var(--bad); }
+.more { border: 0; background: none; width: 34px; height: 34px; border-radius: 50%; color: var(--fg-2); font-size: 20px; line-height: 1; }
+.more:hover { background: var(--soft); }
 
-.logs { list-style: none; margin: 0; padding: 4px 0; font: 400 12px/1.5 var(--mono); }
-.logs li { display: grid; grid-template-columns: 44px 8px minmax(0,1fr) auto; gap: 10px; align-items: center; padding: 6px 16px; color: var(--fg-2); }
-.logs li:hover { background: var(--bg-2); }
-.logs b { color: var(--fg); font-weight: 400; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.logs .dot { width: 6px; height: 6px; }
-.side { display: grid; gap: 24px; min-width: 0; }
+.roles { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 14px; }
+.role { padding: 30px 30px 26px; display: grid; gap: 10px; align-content: start; }
+.role h3 { margin: 0; font-size: 21px; font-weight: 600; letter-spacing: -.02em; display: flex; align-items: center; gap: 10px; }
+.role .count { font-size: 14px; color: var(--fg-3); font-weight: 400; }
+.role p { margin: 0; color: var(--fg-2); font-size: 16px; }
+.role ul { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 8px; font-size: 15px; }
+.role li { display: flex; gap: 10px; align-items: baseline; }
+.role li::before { content: "✓"; color: var(--ok); font-weight: 600; }
+.role li.no { color: var(--fg-3); }
+.role li.no::before { content: "–"; color: var(--fg-3); }
+.role.custom { border: 1.5px dashed var(--line); box-shadow: none; background: transparent; }
 
-footer { border-top: 1px solid var(--line); }
-footer .wrap { padding-block: 18px; display: flex; gap: 16px; flex-wrap: wrap; align-items: center; font: 400 12px var(--mono); color: var(--fg-3); }
+.teams { display: grid; gap: 14px; }
+.team { padding: 28px 30px; display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 16px; align-items: center; }
+.team h3 { margin: 0; font-size: 19px; font-weight: 600; }
+.team p { margin: 4px 0 0; color: var(--fg-2); font-size: 15px; }
+.faces { display: flex; }
+.faces .av { width: 36px; height: 36px; font-size: 13px; border: 2px solid var(--card); margin-left: -8px; }
+.chips { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+.chip { font-size: 14px; padding: 4px 12px; border-radius: 999px; background: var(--soft); color: var(--fg-2); }
 
 @media (prefers-reduced-motion: no-preference) {
-  .bar-in { animation: in .5s var(--ease) both; }
-  @keyframes in { from { transform: translateY(4px); opacity: .001; } }
-  .barr { transform-box: fill-box; transform-origin: bottom; animation: grow .8s var(--ease) both; }
-  @keyframes grow { from { transform: scaleY(.04); } }
+  .view:not([hidden]) { animation: fade .5s var(--ease) both; }
+  @keyframes fade { from { opacity: .001; transform: translateY(8px); } }
 }
-@media (max-width: 960px) {
-  .cols { grid-template-columns: minmax(0,1fr); }
-  .metrics { grid-template-columns: repeat(2, minmax(0,1fr)); }
-  .metric:nth-child(3) { border-left: 0; }
-  .metric:nth-child(n+3) { border-top: 1px solid var(--line); }
-}
-@media (max-width: 560px) {
+@media (max-width: 720px) {
   .wrap { padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
-  .hide-sm { display: none; }
-  .hero { padding-block: 32px 28px; }
-  .r { grid-template-columns: minmax(0,1fr); }
-  .r-title { white-space: normal; }
-  .metric .v { font-size: 24px; }
+  .links { gap: 16px; } .links .hide-sm { display: none; }
+  .hdr { gap: 16px; }
+  .hello { padding-block: 40px 0; }
+  .band { padding-block: 48px 0; }
+  .task { grid-template-columns: minmax(0,1fr); padding: 22px; }
+  .task .ico { display: none; }
+  .week { grid-template-columns: minmax(0,1fr); padding: 30px 24px; gap: 24px; }
+  .facts { grid-template-columns: minmax(0,1fr); }
+  .invite .fields { grid-template-columns: minmax(0,1fr); }
+  .who { grid-template-columns: auto minmax(0,1fr) auto; padding: 16px 20px; }
+  .who select { grid-column: 2 / -1; }
+  .who .st { display: none; }
+  .roles { grid-template-columns: minmax(0,1fr); }
+  .team { grid-template-columns: minmax(0,1fr); }
+  .seats, .invite { padding: 24px; }
 }
 </style>
 
@@ -198,192 +220,290 @@ footer .wrap { padding-block: 18px; display: flex; gap: 16px; flex-wrap: wrap; a
   </defs>
 </svg>
 
-<header class="bar">
-  <div class="wrap">
-    <div class="bar-row">
-      <svg class="mark" role="img" aria-label="Arkhon"><use href="#mark"/></svg>
-      <span class="slash" aria-hidden="true">/</span>
-      <button class="crumb" type="button" id="org"><span class="avatar"></span>Coastline Mechanical<span class="badge hide-sm">Business</span></button>
-      <span class="grow"></span>
-      <span class="status hide-sm"><span class="dot"></span>Running locally · Core</span>
-      <button class="btn hide-sm" type="button" id="btn-privacy">Privacy</button>
-      <span class="avatar" title="Dana Ruiz" style="width:28px;height:28px"></span>
-    </div>
-    <nav class="tabs" aria-label="Workspaces">
-      <a href="#overview" aria-current="page">Overview</a>
-      <a href="#inbox">Inbox<span class="n">6</span></a>
-      <a href="#docs">Docs<span class="n">3</span></a>
-      <a href="#desk">Desk<span class="n">2</span></a>
-      <a href="#knowledge">Knowledge</a>
-      <a href="#meetings">Meetings</a>
-      <a href="#growth">Growth</a>
-      <a href="#insights">Insights</a>
-      <a href="#value">Value</a>
+<header>
+  <div class="wrap hdr">
+    <a class="logo" href="#home"><svg role="img" aria-label="Arkhon"><use href="#mark"/></svg>ARKHON</a>
+    <nav class="links" aria-label="Main">
+      <a href="#home" data-nav="home">Home</a>
+      <a href="#people" data-nav="settings">Company</a>
+      <a href="#home" class="hide-sm" data-nav="help">Help</a>
     </nav>
+    <span class="grow"></span>
+    <button class="me" type="button" aria-label="Dana Ruiz, Owner">DR</button>
   </div>
 </header>
 
-<main id="overview">
-  <section class="wrap hero bar-in">
-    <h1><svg aria-hidden="true"><use href="#mark"/></svg>Good morning, Dana</h1>
-    <form class="composer" id="ask">
-      <textarea id="q" rows="2" aria-label="Ask Arkhon" placeholder="Ask about your jobs, customers, bills or files…"></textarea>
-      <div class="composer-row">
-        <button class="ghost" type="button" aria-label="Attach a file"><svg viewBox="0 0 16 16"><path d="M10.5 4.5 5.8 9.2a1.5 1.5 0 0 0 2.1 2.1l5-5a3 3 0 0 0-4.2-4.2l-5 5a4.5 4.5 0 0 0 6.4 6.4L13 10.5"/></svg></button>
-        <button class="ghost" type="button" id="scope"><svg viewBox="0 0 16 16"><path d="M2 4h12M4 8h8M6 12h4"/></svg>All workspaces</button>
-        <span class="grow"></span>
-        <span class="local"><span class="dot"></span>On this PC</span>
-        <button class="send" type="submit" id="send" aria-label="Ask" disabled><svg viewBox="0 0 16 16"><path d="M8 13V3M3.5 7.5 8 3l4.5 4.5"/></svg></button>
-      </div>
+<!-- ================= HOME ================= -->
+<main class="view" id="v-home">
+  <section class="wrap hello">
+    <span class="example">Example company · sample data</span>
+    <h1>Good morning, Dana.</h1>
+    <p class="lede">Three things need you today. Everything else is handled.</p>
+    <form class="ask" id="ask">
+      <input id="q" type="text" autocomplete="off" aria-label="Ask Arkhon anything" placeholder="Ask anything about your business">
+      <button type="submit" id="send" aria-label="Ask" disabled><svg viewBox="0 0 20 20"><path d="M10 16V4M5 9l5-5 5 5"/></svg></button>
     </form>
-    <div class="suggest" id="suggest">
-      <button type="button">Which invoices are past 30 days?</button>
-      <button type="button">Summarize yesterday's emergency calls</button>
-      <button type="button">Draft a follow-up for the Ortiz quote</button>
-      <button type="button">What's our warranty on compressors?</button>
+    <div class="ideas" id="ideas">
+      <button type="button">Who hasn't paid yet?</button>
+      <button type="button">What's on tomorrow?</button>
+      <button type="button">Write a follow-up for the Ortiz quote</button>
     </div>
-    <div class="answer" id="answer" hidden>
-      <div class="who"><svg width="16" height="14" aria-hidden="true"><use href="#mark"/></svg>Arkhon · Core · local</div>
-      <p id="answer-text"></p>
-      <div class="r-meta" id="answer-cites"></div>
+    <div class="card reply" id="reply" hidden>
+      <p id="reply-text"></p>
+      <span class="src" id="reply-src"></span>
     </div>
   </section>
 
-  <section class="wrap section" aria-labelledby="wk">
-    <div class="sec-head"><h2 id="wk">This week</h2><p>Measured on this PC from what your team approved.</p><span class="example">Example data</span></div>
-    <div class="metrics">
-      <div class="metric"><span class="k">Hours returned</span><span class="v">14.6<small> h</small></span><span class="d">+3.1 h vs last week</span></div>
-      <div class="metric"><span class="k">Estimated value</span><span class="v">$847</span><span class="d flat">at $58/h · adjustable</span></div>
-      <div class="metric"><span class="k">Drafts sent as written</span><span class="v">86<small>%</small></span><span class="d">+4 pts</span></div>
-      <div class="metric"><span class="k"><span class="dot"></span>Data sent to cloud AI</span><span class="v">0<small> bytes</small></span><span class="d flat">2 license check-ins · metadata</span></div>
+  <section class="wrap band" aria-labelledby="needs-h">
+    <div class="head"><div><h2 id="needs-h">Needs you</h2><p>Nothing goes out until you say so.</p></div><span class="grow"></span><span id="left" style="color:var(--fg-2)">3 left</span></div>
+    <div class="needs" id="needs">
+      <article class="card task">
+        <span class="ico"><svg viewBox="0 0 24 24"><path d="M3 6h18v12H3z M3 6l9 7 9-7"/></svg></span>
+        <div>
+          <h3>Reply to Marisol Vega<span class="pill-s warn">Urgent</span></h3>
+          <p>Her AC is blowing warm. Arkhon offered today's 1–3 pm slot and confirmed her unit is under warranty.</p>
+          <div class="why">Based on your price list, her past job and your warranty policy</div>
+        </div>
+        <div class="acts"><button class="btn" type="button">Read</button><button class="btn primary" type="button" data-done="Sent">Send</button></div>
+      </article>
+      <article class="card task">
+        <span class="ico"><svg viewBox="0 0 24 24"><path d="M6 3h9l4 4v14H6z M14 3v5h5 M9 13h7 M9 17h5"/></svg></span>
+        <div>
+          <h3>File a Ferguson bill for $2,418.36<span class="pill-s ok">Matches order</span></h3>
+          <p>It matches purchase order 1187 exactly and belongs to the Harbor Dental job.</p>
+          <div class="why">Ready to add to QuickBooks</div>
+        </div>
+        <div class="acts"><button class="btn" type="button">Look</button><button class="btn primary" type="button" data-done="Filed">File it</button></div>
+      </article>
+      <article class="card task">
+        <span class="ico"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1.6V14 M12 17.5v.01"/></svg></span>
+        <div>
+          <h3>A customer asked about Mitsubishi units<span class="pill-s bad">Not sure</span></h3>
+          <p>Your files don't say whether you service them, so Arkhon didn't guess. Answer once and it will remember.</p>
+        </div>
+        <div class="acts"><button class="btn primary" type="button" data-done="Answered">Answer</button></div>
+      </article>
     </div>
   </section>
 
-  <section class="wrap section">
-    <div class="cols">
-      <div class="box">
-        <div class="box-head">
-          <b>Review queue</b><span id="q-left" class="mono">4 waiting</span>
-          <span class="grow"></span>
-          <div class="filter" role="group" aria-label="Filter">
-            <button type="button" aria-pressed="true">All</button><button type="button" aria-pressed="false">Urgent</button>
-          </div>
-        </div>
-        <ul class="rows" id="queue">
-          <li class="r" data-urgent="1">
-            <div class="r-main">
-              <div class="r-top"><span class="tag">inbox</span><span class="r-title">Reply to Marisol Vega: “AC blowing warm, 2 kids at home”</span></div>
-              <div class="r-sub">Offers today's 1–3 pm slot, waives the $129 diagnostic with repair, confirms parts warranty on her 2019 Carrier.</div>
-              <div class="r-meta"><span class="state"><span class="dot warn"></span>Urgent</span><span>high confidence</span><a href="#">Service-Pricing-2026.pdf p.2</a><a href="#">Job #4471</a><a href="#">Warranty-Policy.docx</a></div>
-            </div>
-            <div class="r-act"><button class="btn sm" type="button">Edit</button><button class="btn sm primary" type="button" data-act="Sent">Approve &amp; send</button></div>
-          </li>
-          <li class="r">
-            <div class="r-main">
-              <div class="r-top"><span class="tag">docs</span><span class="r-title">Ferguson INV-88213 · $2,418.36 → QuickBooks</span></div>
-              <div class="r-sub">14 lines extracted, matches PO-1187 exactly. Coded to Job 4502, Materials – HVAC.</div>
-              <div class="r-meta"><span class="state"><span class="dot"></span>Ready</span><span>fields 14/14 valid</span><a href="#">scan_2026-11-05_0912.pdf</a><a href="#">PO-1187</a></div>
-            </div>
-            <div class="r-act"><button class="btn sm" type="button">Open</button><button class="btn sm primary" type="button" data-act="Posted as draft bill">Approve &amp; post</button></div>
-          </li>
-          <li class="r">
-            <div class="r-main">
-              <div class="r-top"><span class="tag">growth</span><span class="r-title">Quote Q-2291 · 16 SEER2 heat pump · Ortiz residence</span></div>
-              <div class="r-sub">$11,840 installed from your 2026 price book. Rebate marked as estimated, not guaranteed.</div>
-              <div class="r-meta"><span class="state"><span class="dot"></span>Ready</span><span>high confidence</span><a href="#">Price-Book-2026.xlsx</a><a href="#">Site notes Nov 3</a></div>
-            </div>
-            <div class="r-act"><button class="btn sm" type="button">Edit</button><button class="btn sm primary" type="button" data-act="Sent">Approve &amp; send</button></div>
-          </li>
-          <li class="r">
-            <div class="r-main">
-              <div class="r-top"><span class="tag">desk</span><span class="r-title">“Do you service Mitsubishi ductless in Irvine?”</span></div>
-              <div class="r-sub">Not found in your data. Arkhon drafted a holding reply instead of guessing. Answer once and it's reused.</div>
-              <div class="r-meta"><span class="state"><span class="dot bad"></span>Needs you</span><span>searched 1,284 docs</span></div>
-            </div>
-            <div class="r-act"><button class="btn sm" type="button">Answer once</button><button class="btn sm" type="button" data-act="Holding reply sent">Send holding reply</button></div>
-          </li>
-        </ul>
+  <section class="wrap band" aria-labelledby="week-h">
+    <div class="head"><div><h2 id="week-h">This week</h2></div></div>
+    <div class="card week">
+      <div>
+        <div class="big">14.6<small> hours</small></div>
+        <p>given back to your team. That's about <b style="color:var(--fg)">$847</b> of time.</p>
       </div>
-
-      <div class="side">
-        <div class="box">
-          <div class="box-head"><b>Hours returned</b><span>last 14 days</span></div>
-          <div class="sky">
-            <svg viewBox="0 0 320 140" role="img" aria-label="Hours returned per day over 14 days, peaking at 3.4 hours" id="sky"></svg>
-            <div class="sky-legend"><span>Oct 24</span><span>antenna = zero send-errors</span><span>Nov 6</span></div>
-          </div>
-        </div>
-        <div class="box">
-          <div class="box-head"><b>Network</b><span>every connection today</span><span class="grow"></span><a href="#" class="mono" style="font-size:12px">View all</a></div>
-          <ul class="logs">
-            <li><span>09:14</span><span class="dot"></span><b>outlook.office365.com</b><span>your mail</span></li>
-            <li><span>09:02</span><span class="dot"></span><b>quickbooks.api.intuit.com</b><span>your books</span></li>
-            <li><span>08:30</span><span class="dot idle"></span><b>license.arkhon.ai</b><span>license only</span></li>
-            <li><span>07:55</span><span class="dot"></span><b>graph.microsoft.com</b><span>your files</span></li>
-          </ul>
-        </div>
-      </div>
+      <svg id="sky" viewBox="0 0 300 120" role="img" aria-label="Hours saved each day this week and last, highest on Wednesday at 3.4 hours"></svg>
+    </div>
+    <div class="facts">
+      <div class="card fact"><b>212</b><span>emails written for you</span></div>
+      <div class="card fact"><b>96</b><span>bills and receipts filed</span></div>
+      <div class="card fact"><b>7</b><span>meetings written up</span></div>
+    </div>
+    <div class="card private">
+      <span class="shield"><svg viewBox="0 0 24 24"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z M8.5 12l2.5 2.5 4.5-5"/></svg></span>
+      <p><b>Everything stayed on this computer.</b> No customer information was sent anywhere. <button class="link" type="button" style="font-size:15px">See what connected</button></p>
     </div>
   </section>
 </main>
 
-<footer><div class="wrap"><span>Arkhon Suite 0.1</span><span>Core engine · TPM-bound</span><span>Updates through Aug 2027</span><span class="grow"></span><span><span class="dot" style="margin-right:6px"></span>All systems local</span></div></footer>
+<!-- ================= COMPANY SETTINGS ================= -->
+<main class="view" id="v-settings" hidden>
+  <section class="wrap band" style="padding-block-start:56px">
+    <h1 style="font-size:clamp(34px,5vw,48px)">Coastline Mechanical</h1>
+    <p class="lede" style="max-width:none">Business plan · Choose who can use Arkhon and what they can do.</p>
+    <nav class="seg" aria-label="Company settings" style="margin-top:28px">
+      <a href="#people" data-tab="people">People</a>
+      <a href="#roles" data-tab="roles">Roles</a>
+      <a href="#teams" data-tab="teams">Teams</a>
+    </nav>
+  </section>
+
+  <!-- People -->
+  <section class="wrap band tab" id="t-people" style="padding-block-start:32px">
+    <div style="display:grid;gap:14px">
+      <div class="card seats">
+        <div class="row"><b id="seat-text">8 of 10 seats in use</b><span class="grow"></span><button class="link" type="button" id="add-seats">Add seats</button></div>
+        <div class="meter" role="meter" aria-label="Seats in use" aria-valuemin="0" id="meter"><i id="meter-fill"></i></div>
+      </div>
+      <form class="card invite" id="invite">
+        <h2 style="font-size:22px">Invite someone</h2>
+        <div class="fields">
+          <label class="f">Email<input id="inv-email" type="email" placeholder="name@coastline.com" autocomplete="off"></label>
+          <label class="f">Role<select id="inv-role"></select></label>
+          <button class="btn primary" type="submit" style="height:46px">Send invite</button>
+        </div>
+        <p class="role-hint" id="inv-hint"></p>
+        <p class="msg" id="inv-msg" hidden></p>
+      </form>
+      <div class="card"><ul class="people" id="people"></ul></div>
+    </div>
+  </section>
+
+  <!-- Roles -->
+  <section class="wrap band tab" id="t-roles" style="padding-block-start:32px" hidden>
+    <div class="roles" id="roles"></div>
+  </section>
+
+  <!-- Teams -->
+  <section class="wrap band tab" id="t-teams" style="padding-block-start:32px" hidden>
+    <div class="head"><p style="margin:0;max-width:52ch">Teams give a group extra tools without a new role. Everyone on a team can use what the team can use.</p></div>
+    <div class="teams" id="teams"></div>
+  </section>
+</main>
 
 <script>
 (() => {
-  const data = [0.6,1.1,0.9,1.8,2.2,0.4,0.2,1.4,2.0,1.7,3.4,2.6,1.9,1.2];
-  const clean = [1,1,1,0,1,1,1,1,1,1,1,1,0,1];
-  const W = 320, top = 14, base = 120, max = 4, n = data.length, gx = 22;
-  const step = (W - gx) / n, bw = step * 0.4, y = v => base - (v / max) * (base - top);
-  const svg = document.getElementById('sky'), ns = 'http://www.w3.org/2000/svg';
-  const add = (tag, a) => { const el = document.createElementNS(ns, tag);
-    for (const k in a) { const v = a[k]; if ((k === 'fill' || k === 'stroke') && String(v).startsWith('var(')) el.style[k] = v; else el.setAttribute(k, v); }
-    svg.appendChild(el); return el; };
-  [0,1,2,3,4].forEach(v => {
-    add('line', { x1: gx, x2: W, y1: y(v), y2: y(v), stroke: 'var(--line)' });
-    add('text', { x: 0, y: y(v) + 3, fill: 'var(--fg-3)', 'font-size': 9, 'font-family': 'Geist Mono, monospace' }).textContent = v + 'h';
-  });
-  const peak = data.indexOf(Math.max(...data));
-  data.forEach((v, i) => {
-    const x = gx + i * step + (step - bw) / 2, hi = i === peak || i === n - 1;
-    const r = add('rect', { x, y: y(v), width: bw, height: base - y(v), rx: 1, class: 'barr', fill: hi ? 'url(#chrome)' : 'var(--line-2)' });
-    r.style.animationDelay = i * 30 + 'ms';
-    if (clean[i]) {
-      add('line', { x1: x + bw / 2, x2: x + bw / 2, y1: y(v) - 8, y2: y(v) - 1, stroke: 'var(--fg-3)' });
-      add('circle', { cx: x + bw / 2, cy: y(v) - 9, r: 1.5, fill: hi ? 'var(--fg)' : 'var(--fg-3)' });
-    }
-  });
-  add('text', { x: gx + peak * step + step / 2, y: y(data[peak]) - 15, 'text-anchor': 'middle', fill: 'var(--fg)', 'font-size': 10, 'font-family': 'Geist Mono, monospace' }).textContent = '3.4h';
+  /* ---------- Routing (#home, #people, #roles, #teams) ---------- */
+  const tabs = ['people', 'roles', 'teams'];
+  function route() {
+    const h = (location.hash || '#home').slice(1);
+    const settings = tabs.includes(h);
+    document.getElementById('v-home').hidden = settings;
+    document.getElementById('v-settings').hidden = !settings;
+    document.querySelectorAll('[data-nav]').forEach(a =>
+      a.toggleAttribute('aria-current', (a.dataset.nav === 'settings') === settings && a.dataset.nav !== 'help'));
+    document.querySelectorAll('[data-nav]').forEach(a => { if (a.hasAttribute('aria-current')) a.setAttribute('aria-current', 'page'); });
+    tabs.forEach(t => {
+      document.getElementById('t-' + t).hidden = t !== h;
+      const a = document.querySelector(`[data-tab="${t}"]`);
+      t === h ? a.setAttribute('aria-current', 'page') : a.removeAttribute('aria-current');
+    });
+    window.scrollTo(0, 0);
+  }
+  addEventListener('hashchange', route);
 
-  const left = document.getElementById('q-left');
-  const refresh = () => { const k = document.querySelectorAll('.r:not(.done)').length; left.textContent = k ? k + ' waiting' : 'All clear'; };
-  document.getElementById('queue').addEventListener('click', e => {
-    const b = e.target.closest('button[data-act]'); if (!b) return;
-    const r = b.closest('.r'); r.classList.add('done');
-    const s = document.createElement('span'); s.className = 'done-note';
-    s.textContent = '✓ ' + b.dataset.act + ' · logged ' + new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    r.querySelector('.r-meta').prepend(s); refresh();
+  /* ---------- Home ---------- */
+  const W = 300, base = 104, top = 16, max = 4;
+  const days = [1.1,2.0,3.4,2.6,1.9,1.4,2.2], prev = [0.9,1.6,1.8,2.0,1.5,0.6,1.1];
+  const names = ['M','T','W','T','F','S','S'];
+  const ns = 'http://www.w3.org/2000/svg', sky = document.getElementById('sky');
+  const add = (t, a) => { const e = document.createElementNS(ns, t);
+    for (const k in a) { const v = a[k]; if ((k === 'fill' || k === 'stroke') && String(v).startsWith('var(')) e.style[k] = v; else e.setAttribute(k, v); }
+    sky.appendChild(e); return e; };
+  const step = W / 7, bw = 18, y = v => base - v / max * (base - top);
+  days.forEach((v, i) => {
+    const cx = i * step + step / 2;
+    add('rect', { x: cx - bw / 2 - 3, y: y(prev[i]), width: 6, height: base - y(prev[i]), rx: 3, fill: 'var(--soft)' });
+    add('rect', { x: cx - bw / 2 + 5, y: y(v), width: bw - 4, height: base - y(v), rx: 5, fill: i === 2 ? 'url(#chrome)' : 'var(--fg-3)', opacity: i === 2 ? 1 : .45 });
+    add('text', { x: cx, y: 118, 'text-anchor': 'middle', 'font-size': 11, fill: 'var(--fg-3)', 'font-family': 'Geist, sans-serif' }).textContent = names[i];
   });
-  document.querySelector('.filter').addEventListener('click', e => {
-    const b = e.target.closest('button'); if (!b) return;
-    document.querySelectorAll('.filter button').forEach(x => x.setAttribute('aria-pressed', x === b));
-    const urgent = b.textContent === 'Urgent';
-    document.querySelectorAll('.r').forEach(r => { r.hidden = urgent && !r.dataset.urgent; });
+  add('text', { x: 2 * step + step / 2 + 2, y: y(3.4) - 6, 'text-anchor': 'middle', 'font-size': 11, 'font-weight': 600, fill: 'var(--fg)', 'font-family': 'Geist, sans-serif' }).textContent = '3.4 h';
+
+  const left = document.getElementById('left');
+  document.getElementById('needs').addEventListener('click', e => {
+    const b = e.target.closest('[data-done]'); if (!b) return;
+    const t = b.closest('.task'); t.classList.add('done');
+    t.querySelector('h3').insertAdjacentHTML('beforeend', `<span class="pill-s ok">${b.dataset.done}</span>`);
+    const n = document.querySelectorAll('.task:not(.done)').length;
+    left.textContent = n ? n + ' left' : "You're all caught up";
   });
 
-  const q = document.getElementById('q'), send = document.getElementById('send'), form = document.getElementById('ask');
-  q.addEventListener('input', () => { send.disabled = !q.value.trim(); });
-  q.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); form.requestSubmit(); } });
-  document.getElementById('suggest').addEventListener('click', e => {
-    const b = e.target.closest('button'); if (!b) return; q.value = b.textContent; send.disabled = false; form.requestSubmit();
+  const q = document.getElementById('q'), send = document.getElementById('send'), ask = document.getElementById('ask');
+  q.addEventListener('input', () => send.disabled = !q.value.trim());
+  document.getElementById('ideas').addEventListener('click', e => {
+    const b = e.target.closest('button'); if (!b) return; q.value = b.textContent; send.disabled = false; ask.requestSubmit();
   });
-  form.addEventListener('submit', e => {
+  ask.addEventListener('submit', e => {
     e.preventDefault(); if (!q.value.trim()) return;
-    document.getElementById('answer').hidden = false;
-    document.getElementById('answer-text').textContent =
-      'Example answer: 3 invoices are past 30 days, totaling $6,912.40. Harbor Dental ($4,180.00, 41 days) is the largest. I drafted reminders for all three; they are waiting in your review queue.';
-    document.getElementById('answer-cites').innerHTML =
-      '<a href="#">QuickBooks · A/R aging · Nov 6</a><a href="#">INV-3310</a><a href="#">INV-3324</a><a href="#">INV-3341</a>';
+    document.getElementById('reply').hidden = false;
+    document.getElementById('reply-text').textContent = 'Example answer: Three customers owe you $6,912.40 in total. Harbor Dental is the biggest at $4,180, now 41 days late. I wrote friendly reminders for all three. They are waiting for you under Needs you.';
+    document.getElementById('reply-src').textContent = 'From your QuickBooks invoices, updated this morning';
   });
+
+  /* ---------- Company settings (mirrors crates/arkhon-org rules) ---------- */
+  const ROLES = {
+    Owner:   { desc: 'Runs the account, including plan and billing.', can: ['Everything an admin can do', 'Manage plan and billing', 'Add or remove owners'], cannot: [] },
+    Admin:   { desc: 'Runs Arkhon day to day for the company.', can: ['Invite and remove people', "Change people's roles", 'Connect company accounts', 'Install updates and industry packs'], cannot: ['Billing', 'Changing owners'] },
+    Manager: { desc: 'Leads a team and signs off on their work.', can: ['Approve work for their team', 'See company time-saved reports', 'Manage teams'], cannot: ['Inviting people'] },
+    Member:  { desc: 'Uses Arkhon for their own work.', can: ['Email, company answers and documents', 'Anything their team adds'], cannot: ['Company settings'] },
+    Dispatcher: { custom: true, desc: 'Custom role. Schedules jobs and answers customers.', can: ['Approve work for their team', 'Customer replies and scheduling'], cannot: ['Inviting people', 'Billing'] },
+  };
+  let seats = 10;
+  const people = [
+    { n: 'Dana Ruiz', e: 'dana@coastline.com', r: 'Owner', s: 'Active' },
+    { n: 'Ari Patel', e: 'ari@coastline.com', r: 'Admin', s: 'Active' },
+    { n: 'Max Okafor', e: 'max@coastline.com', r: 'Manager', s: 'Active' },
+    { n: 'Lena Cho', e: 'lena@coastline.com', r: 'Dispatcher', s: 'Active' },
+    { n: 'Tia Alvarez', e: 'tia@coastline.com', r: 'Member', s: 'Active' },
+    { n: 'Sam Brooks', e: 'sam@coastline.com', r: 'Member', s: 'Active' },
+    { n: 'Rae Kim', e: 'rae@coastline.com', r: 'Member', s: 'Invited' },
+    { n: 'Jon Weiss', e: 'jon@coastline.com', r: 'Member', s: 'Active' },
+    { n: 'Pat Doyle', e: 'pat@coastline.com', r: 'Member', s: 'Paused' },
+  ];
+  const TEAMS = [
+    { n: 'Front office', d: 'Answers customers and sends quotes.', ws: ['Customer replies', 'Quotes & marketing'], who: ['Lena Cho', 'Ari Patel', 'Rae Kim'] },
+    { n: 'Field techs', d: 'Out on jobs. Gets meeting notes and job documents.', ws: ['Meeting notes', 'Documents'], who: ['Tia Alvarez', 'Sam Brooks', 'Jon Weiss', 'Max Okafor'] },
+  ];
+  const used = () => people.filter(p => p.s !== 'Paused').length;
+  const owners = () => people.filter(p => p.r === 'Owner' && p.s === 'Active').length;
+  const initials = n => n.split(' ').map(w => w[0]).join('');
+  const msg = document.getElementById('inv-msg');
+  const say = (text, ok) => { msg.hidden = false; msg.className = 'msg ' + (ok ? 'ok' : 'err'); msg.textContent = text; };
+
+  function roleOptions(sel) { return Object.keys(ROLES).map(r => `<option${r === sel ? ' selected' : ''}>${r}</option>`).join(''); }
+  function renderSeats() {
+    const u = used();
+    document.getElementById('seat-text').textContent = `${u} of ${seats} seats in use`;
+    document.getElementById('meter-fill').style.width = Math.min(100, u / seats * 100) + '%';
+    const m = document.getElementById('meter'); m.setAttribute('aria-valuemax', seats); m.setAttribute('aria-valuenow', u);
+  }
+  function renderPeople() {
+    document.getElementById('people').innerHTML = people.map((p, i) => `
+      <li class="who">
+        <span class="av">${initials(p.n)}</span>
+        <div style="min-width:0"><div class="n">${p.n}${i === 0 ? ' <span style="color:var(--fg-3);font-weight:400">(you)</span>' : ''}</div><div class="e">${p.e}</div></div>
+        <select data-i="${i}" aria-label="Role for ${p.n}">${roleOptions(p.r)}</select>
+        <span class="st ${p.s === 'Invited' ? 'inv' : p.s === 'Paused' ? 'paused' : ''}">${p.s === 'Active' ? '' : p.s}</span>
+      </li>`).join('');
+    renderSeats(); if (typeof renderRoles === 'function') renderRoles();
+  }
+  document.getElementById('people').addEventListener('change', e => {
+    const s = e.target.closest('select[data-i]'); if (!s) return;
+    const p = people[+s.dataset.i];
+    if (p.r === 'Owner' && s.value !== 'Owner' && p.s === 'Active' && owners() === 1) {
+      s.value = 'Owner';
+      say('Your company needs at least one owner. Make someone else an owner first.', false);
+      return;
+    }
+    p.r = s.value; renderRoles(); say(`${p.n} is now ${/^[AEIOU]/.test(p.r) ? 'an' : 'a'} ${p.r}.`, true);
+  });
+
+  const invRole = document.getElementById('inv-role'), hint = document.getElementById('inv-hint');
+  invRole.innerHTML = roleOptions('Member');
+  const showHint = () => hint.textContent = ROLES[invRole.value].desc;
+  invRole.addEventListener('change', showHint); showHint();
+  document.getElementById('invite').addEventListener('submit', e => {
+    e.preventDefault();
+    const email = document.getElementById('inv-email').value.trim().toLowerCase();
+    if (!/^[^\s@]+@[^\s@.]+(\.[^\s@.]+)+$/.test(email)) return say('Enter a valid email address.', false);
+    if (people.some(p => p.e === email)) return say('That email is already in your company.', false);
+    if (used() >= seats) return say(`All ${seats} seats are in use. Add seats or remove someone first.`, false);
+    const name = email.split('@')[0].replace(/[._-]+/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+    people.push({ n: name, e: email, r: invRole.value, s: 'Invited' });
+    document.getElementById('inv-email').value = '';
+    renderPeople(); say(`Invite sent to ${email}. It holds a seat until they join.`, true);
+  });
+  document.getElementById('add-seats').addEventListener('click', () => { seats += 5; renderSeats(); say(`Added 5 seats. You now have ${seats}.`, true); });
+
+  function renderRoles() { document.getElementById('roles').innerHTML = Object.entries(ROLES).map(([name, r]) => {
+    const n = people.filter(p => p.r === name).length;
+    return `<article class="card role${r.custom ? ' custom' : ''}">
+      <h3>${name}<span class="count">${n} ${n === 1 ? 'person' : 'people'}</span></h3>
+      <p>${r.desc}</p>
+      <ul>${r.can.map(c => `<li>${c}</li>`).join('')}${r.cannot.map(c => `<li class="no">${c}</li>`).join('')}</ul>
+    </article>`;
+  }).join('') + `<article class="card role custom" style="place-content:center;text-align:center;justify-items:center;min-height:200px">
+      <h3>Make a custom role</h3><p>Pick exactly what someone can do. Billing always stays with owners.</p>
+      <button class="btn" type="button" style="margin-top:8px">New role</button></article>`; }
+
+  document.getElementById('teams').innerHTML = TEAMS.map(t => `
+    <article class="card team">
+      <div><h3>${t.n}</h3><p>${t.d}</p><div class="chips">${t.ws.map(w => `<span class="chip">${w}</span>`).join('')}</div></div>
+      <div class="faces" aria-label="${t.who.length} people">${t.who.map(w => `<span class="av" title="${w}">${initials(w)}</span>`).join('')}</div>
+    </article>`).join('') + `<button class="btn" type="button" style="justify-self:start;margin-top:6px">New team</button>`;
+
+  renderPeople();
+  route();
 })();
 </script>

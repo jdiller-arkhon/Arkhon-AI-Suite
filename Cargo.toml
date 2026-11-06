@@ -4,6 +4,7 @@ members = [
   "crates/arkhon-license",
   "crates/arkhon-tpm",
   "crates/arkhon-crypto",
+  "crates/arkhon-org",
   "runtime",
   "suite/engine",
   "server",

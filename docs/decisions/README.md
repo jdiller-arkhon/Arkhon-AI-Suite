@@ -9,3 +9,4 @@ access date. Template: Context → Decision → Consequences → Sources.
 | [0002](0002-repository-and-branching.md) | Repository location and branching | Accepted |
 | [0003](0003-launch-industry-pack.md) | Launch Industry Pack: Trades & field services | Accepted |
 | [0004](0004-hardware-neutral-support.md) | Hardware-neutral support (no single reference machine) | Accepted |
+| [0005](0005-organizations-and-roles.md) | Organizations, roles and administration | Accepted |
