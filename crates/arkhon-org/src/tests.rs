@@ -59,7 +59,7 @@ fn builtin_role_permissions() {
     assert!(manager.has(Permission::ApproveForTeam));
     assert!(!manager.has(Permission::ManageMembers));
     let member = Role::builtin(&RoleId::Member).unwrap();
-    assert!(member.permissions.is_empty());
+    assert_eq!(member.permissions.len(), 0);
     assert!(Role::builtin(&RoleId::Custom("x".into())).is_none());
 }
 
@@ -252,7 +252,7 @@ fn suspension_frees_seat_and_removes_access() {
     let a = active(&mut o, owner, "Ana", RoleId::Admin);
     o.suspend(owner, a).unwrap();
     assert!(!o.can(a, Permission::ManageMembers));
-    assert!(o.workspaces_for(a).is_empty());
+    assert_eq!(o.workspaces_for(a).len(), 0);
     assert_eq!(o.seats_used(), 1);
     let b = o
         .invite(owner, "Bo", "bo@coastline.com", RoleId::Member)
@@ -325,7 +325,7 @@ fn removal_cleans_team_membership() {
     o.upsert_team(owner, "Field", BTreeSet::new()).unwrap();
     o.add_to_team(owner, "Field", t).unwrap();
     o.remove(owner, t).unwrap();
-    assert!(o.team("Field").unwrap().members.is_empty());
+    assert_eq!(o.team("Field").unwrap().members.len(), 0);
     assert_eq!(
         o.add_to_team(owner, "Nope", owner).unwrap_err(),
         OrgError::UnknownTeam
@@ -352,7 +352,7 @@ fn errors_read_as_plain_language() {
         .to_string()
         .contains("at least one owner"));
     for p in Permission::ALL {
-        assert!(!p.label().is_empty());
+        assert_ne!(p.label(), "");
     }
 }
 

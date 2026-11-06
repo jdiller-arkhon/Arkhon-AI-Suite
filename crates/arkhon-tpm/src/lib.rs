@@ -10,6 +10,6 @@ pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 mod tests {
     #[test]
     fn version_is_set() {
-        assert!(!super::VERSION.is_empty());
+        assert_ne!(super::VERSION, "");
     }
 }

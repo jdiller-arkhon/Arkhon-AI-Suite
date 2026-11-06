@@ -88,8 +88,7 @@ async fn guard(req: Request, next: Next, port: u16) -> Response {
     if let Some(origin) = req.headers().get(header::ORIGIN) {
         let ok = origin
             .to_str()
-            .ok()
-            .is_some_and(|o| allowed_hosts.iter().any(|h| o == format!("http://{h}")));
+            .is_ok_and(|o| allowed_hosts.iter().any(|h| o == format!("http://{h}")));
         if !ok {
             return err(
                 StatusCode::FORBIDDEN,

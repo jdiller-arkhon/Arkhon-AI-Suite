@@ -805,7 +805,8 @@ mod tests {
         assert_eq!(c.policy(App::QuickBooks), AppPolicy::AdminsOnly);
         assert_eq!(App::ALL.len(), 20);
         for a in App::ALL {
-            assert!(!a.name().is_empty() && !a.category().label().is_empty());
+            assert_ne!(a.name(), "");
+            assert_ne!(a.category().label(), "");
         }
         assert_eq!(App::QuickBooks.availability(), Availability::Phase6);
         assert_eq!(App::Jobber.availability(), Availability::Planned);
@@ -851,7 +852,7 @@ mod tests {
             )
             .unwrap();
         assert!(c.usable_by(&f.org, f.owner).iter().any(|x| x.id == qb));
-        assert!(c.usable_by(&f.org, f.tech).is_empty());
+        assert_eq!(c.usable_by(&f.org, f.tech).len(), 0);
         let shared = c
             .connect_company(
                 &f.org,
@@ -962,7 +963,7 @@ mod tests {
         c.set_policy(&f.org, f.admin, App::Gmail, AppPolicy::Off)
             .unwrap();
         assert_eq!(c.get(id).unwrap().status, ConnStatus::Paused);
-        assert!(c.usable_by(&f.org, f.tech).is_empty());
+        assert_eq!(c.usable_by(&f.org, f.tech).len(), 0);
         assert_eq!(
             c.connect_personal(&f.org, f.tech, App::Gmail, "other@co.com", Access::Read)
                 .unwrap_err(),
@@ -984,9 +985,9 @@ mod tests {
             .connect_personal(&f.org, f.disp, App::Gmail, "lena@co.com", Access::Read)
             .unwrap();
         f.org.suspend(f.owner, f.tech).unwrap();
-        assert!(c.sync_people(&f.org).is_empty());
+        assert_eq!(c.sync_people(&f.org).len(), 0);
         assert_eq!(c.get(t).unwrap().status, ConnStatus::Paused);
-        assert!(c.usable_by(&f.org, f.tech).is_empty());
+        assert_eq!(c.usable_by(&f.org, f.tech).len(), 0);
         f.org.restore(f.owner, f.tech).unwrap();
         c.sync_people(&f.org);
         assert_eq!(c.get(t).unwrap().status, ConnStatus::Active);
@@ -1062,7 +1063,7 @@ mod tests {
             .connect_personal(&f.org, f.tech, App::Gmail, "tia@co.com", Access::Read)
             .unwrap();
         c.mark_needs_sign_in(id).unwrap();
-        assert!(c.usable_by(&f.org, f.tech).is_empty());
+        assert_eq!(c.usable_by(&f.org, f.tech).len(), 0);
     }
 
     #[test]
