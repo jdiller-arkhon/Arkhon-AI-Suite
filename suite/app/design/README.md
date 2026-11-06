@@ -25,6 +25,12 @@ the seat meter, invites that hold a seat, the plain-language role cards with ✓
 (Business+), and teams that add tools without new roles. The prototype mirrors the last-owner and
 seat-limit rules and their exact error sentences.
 
+## Wiring (2026-11-06)
+Company settings (People, Roles, Teams, Connections, Activity) is wired to the engine:
+- `cargo run -p arkhon-suite-dev` serves this page and the engine's API. Every button sends a command, and the engine's rules decide.
+- Opened without the server (for example a shared preview link), the page shows a read-only snapshot exported from the engine (`--dump-view`).
+- The Home screen ("Needs you", "This week") is still sample content. It gets wired when the review queue and value metrics are built in Phase 5.
+
 ## Open questions
 - An official vector logo. The prototype redraws the mark as SVG from `brand/arkhon-mark-mist.png`. Replace it with the master SVG when one is available.
 - Whether Geist is the licensed brand face or only a fallback (the site lists SF Pro Text first; Geist is OFL).

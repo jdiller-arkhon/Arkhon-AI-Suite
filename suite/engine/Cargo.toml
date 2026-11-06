@@ -1,6 +1,6 @@
 [package]
 name = "arkhon-engine"
-description = "Suite engine: workflows, review queue, retrieval index, value metrics, audit log."
+description = "Suite engine: organization, connections, activity log and persistence behind one command API."
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
@@ -9,3 +9,8 @@ publish.workspace = true
 
 [lints]
 workspace = true
+
+[dependencies]
+arkhon-org = { path = "../../crates/arkhon-org", features = ["serde"] }
+serde = { version = "1.0.229", features = ["derive"] }
+serde_json = "1.0.154"

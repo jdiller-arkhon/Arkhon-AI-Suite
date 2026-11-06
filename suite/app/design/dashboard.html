@@ -1,3 +1,4 @@
+<meta charset="utf-8">
 <title>Arkhon Command</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -177,7 +178,14 @@ label.f { display: grid; gap: 6px; font-size: 14px; color: var(--fg-2); }
 .chip { font-size: 14px; padding: 4px 12px; border-radius: 999px; background: var(--soft); color: var(--fg-2); }
 
 
+.viewas { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding: 14px 20px; margin-bottom: 28px; font-size: 14px; color: var(--fg-2); }
+.viewas label { font-weight: 600; color: var(--fg); }
+.viewas select { height: 38px; border-radius: 10px; border: 1px solid var(--line); background: var(--card); color: var(--fg); padding: 0 10px; font-size: 15px; max-width: 100%; }
+.more-sel { height: 32px; border-radius: 9px; border: 1px solid var(--line); background: var(--card); color: var(--fg-2); font-size: 13px; margin-left: 8px; }
+.who .st { min-width: 0; display: inline-flex; align-items: center; justify-content: end; }
+
 /* ---------- Connections ---------- */
+.log .d { white-space: normal; }
 .conn-list { list-style: none; margin: 0; padding: 8px 0; }
 .conn { display: grid; grid-template-columns: auto minmax(0,1fr) auto; gap: 16px; align-items: center; padding: 16px 28px; }
 .conn + .conn { border-top: 1px solid var(--line); }
@@ -360,13 +368,17 @@ label.f { display: grid; gap: 6px; font-size: 14px; color: var(--fg-2); }
 <!-- ================= COMPANY SETTINGS ================= -->
 <main class="view" id="v-settings" hidden>
   <section class="wrap band" style="padding-block-start:56px">
-    <h1 style="font-size:clamp(34px,5vw,48px)">Coastline Mechanical</h1>
-    <p class="lede" style="max-width:none">Business plan · Choose who can use Arkhon and what they can do.</p>
+    <div class="card viewas" id="viewas" hidden><label for="as-sel">Viewing as</label><select id="as-sel"></select><span>Development only: see exactly what each person can do.</span></div>
+    <p class="example" id="preview-note" hidden style="margin-bottom:16px">Preview: read-only snapshot from the Arkhon engine</p>
+    <h1 style="font-size:clamp(34px,5vw,48px)" id="org-name">Coastline Mechanical</h1>
+    <p class="lede" style="max-width:none" id="org-sub">Business plan · Choose who can use Arkhon and what they can do.</p>
+    <p style="margin:10px 0 0;color:var(--fg-3);font-size:15px" id="ws-line"></p>
     <nav class="seg" aria-label="Company settings" style="margin-top:28px">
       <a href="#people" data-tab="people">People</a>
       <a href="#roles" data-tab="roles">Roles</a>
       <a href="#teams" data-tab="teams">Teams</a>
       <a href="#connections" data-tab="connections">Connections</a>
+      <a href="#activity" data-tab="activity" id="activity-tab">Activity</a>
     </nav>
   </section>
 
@@ -428,6 +440,11 @@ label.f { display: grid; gap: 6px; font-size: 14px; color: var(--fg-2); }
     <div class="sub-h"><h2>Your accounts</h2><p>Only you can use these.</p></div>
     <div class="card"><ul class="conn-list" id="mine-list"></ul></div>
 
+    <div id="others-wrap" hidden>
+      <div class="sub-h"><h2>Staff accounts</h2><p>People's own accounts. Admins can disconnect them.</p></div>
+      <div class="card"><ul class="conn-list" id="others-list"></ul></div>
+    </div>
+
     <div class="sub-h"><h2>App library</h2><p>Choose what people can connect. Staff can connect their own email and calendar by default.</p></div>
     <div class="lib-tools">
       <input class="search" id="lib-q" type="search" placeholder="Search apps" aria-label="Search apps">
@@ -435,12 +452,19 @@ label.f { display: grid; gap: 6px; font-size: 14px; color: var(--fg-2); }
     </div>
     <div class="lib" id="lib"></div>
   </section>
+
+  <!-- Activity -->
+  <section class="wrap band tab" id="t-activity" style="padding-block-start:32px" hidden>
+    <p style="margin:0 0 28px;color:var(--fg-2);max-width:56ch">Every change to people, roles and connections, including attempts that weren't allowed.</p>
+    <div class="card"><ul class="conn-list log" id="activity"></ul></div>
+  </section>
 </main>
 
+<script type="application/json" id="snapshot">{"company":"Coastline Mechanical","plan":"Business","seats":10,"seats_used":8,"viewer":{"id":1,"name":"Dana Ruiz","email":"dana@coastline.com","role":"Owner","status":"active"},"can":{"manage_people":true,"assign_roles":true,"manage_billing":true,"manage_connections":true,"view_activity":true},"people":[{"id":1,"name":"Dana Ruiz","email":"dana@coastline.com","role":"Owner","status":"active"},{"id":2,"name":"Ari Patel","email":"ari@coastline.com","role":"Admin","status":"active"},{"id":3,"name":"Max Okafor","email":"max@coastline.com","role":"Manager","status":"active"},{"id":4,"name":"Lena Cho","email":"lena@coastline.com","role":"Dispatcher","status":"active"},{"id":5,"name":"Tia Alvarez","email":"tia@coastline.com","role":"Member","status":"active"},{"id":6,"name":"Sam Brooks","email":"sam@coastline.com","role":"Member","status":"active"},{"id":7,"name":"Rae Kim","email":"rae@coastline.com","role":"Member","status":"invited"},{"id":8,"name":"Jon Weiss","email":"jon@coastline.com","role":"Member","status":"active"},{"id":9,"name":"Pat Doyle","email":"pat@coastline.com","role":"Member","status":"suspended"}],"roles":[{"name":"Owner","description":"Runs the account, including plan and billing.","can":["Manage plan and billing","Change company settings","Invite and remove people","Change people's roles","Create custom roles","Manage teams","Connect company accounts","Turn on company automations","Approve work for their team","See company time-saved reports","See everyone's activity history","Install updates and industry packs"],"workspaces":["Email","Customer replies","Documents","Company answers","Meeting notes","Quotes & marketing","Reports","Coding & IT"],"people":1,"custom":false},{"name":"Admin","description":"Runs Arkhon day to day for the company.","can":["Change company settings","Invite and remove people","Change people's roles","Create custom roles","Manage teams","Connect company accounts","Turn on company automations","Approve work for their team","See company time-saved reports","See everyone's activity history","Install updates and industry packs"],"workspaces":["Email","Customer replies","Documents","Company answers","Meeting notes","Quotes & marketing","Reports","Coding & IT"],"people":1,"custom":false},{"name":"Manager","description":"Leads a team and signs off on their work.","can":["Manage teams","Approve work for their team","See company time-saved reports"],"workspaces":["Email","Customer replies","Documents","Company answers","Meeting notes","Quotes & marketing","Reports","Coding & IT"],"people":1,"custom":false},{"name":"Member","description":"Uses Arkhon for their own work.","can":[],"workspaces":["Email","Documents","Company answers"],"people":5,"custom":false},{"name":"Dispatcher","description":"A role your company created.","can":["Approve work for their team"],"workspaces":["Email","Customer replies","Company answers","Quotes & marketing"],"people":1,"custom":true}],"teams":[{"name":"Field techs","members":["Max Okafor","Tia Alvarez","Sam Brooks","Jon Weiss"],"workspaces":["Documents","Meeting notes"],"is_member":false},{"name":"Front office","members":["Ari Patel","Lena Cho","Rae Kim"],"workspaces":["Customer replies","Quotes & marketing"],"is_member":false}],"connections":[{"id":1,"app":"outlook","app_name":"Outlook","account":"service@coastline.com","mine":false,"personal":false,"shared_with":"Front office","connected_by":"Ari Patel","status":"active","can_disconnect":true},{"id":2,"app":"quick-books","app_name":"QuickBooks Online","account":"coastline mechanical books","mine":false,"personal":false,"shared_with":"Owners and Admins","connected_by":"Dana Ruiz","status":"active","can_disconnect":true},{"id":3,"app":"local-folder","app_name":"Folder or network drive","account":"\\\\office-nas\\jobs","mine":false,"personal":false,"shared_with":"Everyone","connected_by":"Ari Patel","status":"active","can_disconnect":true},{"id":4,"app":"google-drive","app_name":"Google Drive","account":"price books & manuals","mine":false,"personal":false,"shared_with":"Everyone","connected_by":"Ari Patel","status":"needs-sign-in","can_disconnect":true},{"id":5,"app":"outlook","app_name":"Outlook","account":"dana@coastline.com","mine":true,"personal":true,"shared_with":"Only Dana Ruiz","connected_by":"Dana Ruiz","status":"active","can_disconnect":true},{"id":6,"app":"google-calendar","app_name":"Google Calendar","account":"dana@coastline.com","mine":true,"personal":true,"shared_with":"Only Dana Ruiz","connected_by":"Dana Ruiz","status":"active","can_disconnect":true},{"id":7,"app":"gmail","app_name":"Gmail","account":"tia@coastline.com","mine":false,"personal":true,"shared_with":"Only Tia Alvarez","connected_by":"Tia Alvarez","status":"active","can_disconnect":true}],"apps":[{"app":"outlook","name":"Outlook","category":"Email & calendar","policy":"own-accounts","available":true,"connected":2,"can_connect_me":true,"can_connect_team":true,"can_connect_everyone":true},{"app":"one-drive","name":"OneDrive & SharePoint","category":"Files","policy":"own-accounts","available":true,"connected":0,"can_connect_me":true,"can_connect_team":true,"can_connect_everyone":true},{"app":"microsoft-teams","name":"Microsoft Teams","category":"Chat & meetings","policy":"admins-only","available":false,"connected":0,"can_connect_me":true,"can_connect_team":true,"can_connect_everyone":true},{"app":"gmail","name":"Gmail","category":"Email & calendar","policy":"own-accounts","available":true,"connected":1,"can_connect_me":true,"can_connect_team":true,"can_connect_everyone":true},{"app":"google-calendar","name":"Google Calendar","category":"Email & calendar","policy":"own-accounts","available":true,"connected":1,"can_connect_me":true,"can_connect_team":true,"can_connect_everyone":true},{"app":"google-drive","name":"Google Drive","category":"Files","policy":"own-accounts","available":true,"connected":1,"can_connect_me":true,"can_connect_team":true,"can_connect_everyone":true},{"app":"other-email","name":"Other email (IMAP)","category":"Email & calendar","policy":"own-accounts","available":true,"connected":0,"can_connect_me":true,"can_connect_team":true,"can_connect_everyone":true},{"app":"local-folder","name":"Folder or network drive","category":"Files","policy":"admins-only","available":true,"connected":1,"can_connect_me":true,"can_connect_team":true,"can_connect_everyone":true},{"app":"dropbox","name":"Dropbox","category":"Files","policy":"admins-only","available":false,"connected":0,"can_connect_me":true,"can_connect_team":true,"can_connect_everyone":true},{"app":"quick-books","name":"QuickBooks Online","category":"Accounting","policy":"admins-only","available":true,"connected":1,"can_connect_me":true,"can_connect_team":true,"can_connect_everyone":true},{"app":"xero","name":"Xero","category":"Accounting","policy":"admins-only","available":true,"connected":0,"can_connect_me":true,"can_connect_team":true,"can_connect_everyone":true},{"app":"hub-spot","name":"HubSpot","category":"Customers & sales","policy":"admins-only","available":true,"connected":0,"can_connect_me":true,"can_connect_team":true,"can_connect_everyone":true},{"app":"service-titan","name":"ServiceTitan","category":"Jobs & scheduling","policy":"admins-only","available":false,"connected":0,"can_connect_me":true,"can_connect_team":true,"can_connect_everyone":true},{"app":"jobber","name":"Jobber","category":"Jobs & scheduling","policy":"team-accounts","available":false,"connected":0,"can_connect_me":true,"can_connect_team":true,"can_connect_everyone":true},{"app":"housecall-pro","name":"Housecall Pro","category":"Jobs & scheduling","policy":"admins-only","available":false,"connected":0,"can_connect_me":true,"can_connect_team":true,"can_connect_everyone":true},{"app":"stripe","name":"Stripe","category":"Payments","policy":"admins-only","available":false,"connected":0,"can_connect_me":true,"can_connect_team":true,"can_connect_everyone":true},{"app":"square","name":"Square","category":"Payments","policy":"admins-only","available":false,"connected":0,"can_connect_me":true,"can_connect_team":true,"can_connect_everyone":true},{"app":"slack","name":"Slack","category":"Chat & meetings","policy":"admins-only","available":false,"connected":0,"can_connect_me":true,"can_connect_team":true,"can_connect_everyone":true},{"app":"zoom","name":"Zoom","category":"Chat & meetings","policy":"admins-only","available":false,"connected":0,"can_connect_me":true,"can_connect_team":true,"can_connect_everyone":true},{"app":"docu-sign","name":"DocuSign","category":"Signatures","policy":"admins-only","available":false,"connected":0,"can_connect_me":true,"can_connect_team":true,"can_connect_everyone":true}],"workspaces":["Email","Customer replies","Documents","Company answers","Meeting notes","Quotes & marketing","Reports","Coding & IT"]}</script>
 <script>
 (() => {
   /* ---------- Routing (#home, #people, #roles, #teams) ---------- */
-  const tabs = ['people', 'roles', 'teams', 'connections'];
+  const tabs = ['people', 'roles', 'teams', 'connections', 'activity'];
   function route() {
     const h = (location.hash || '#home').slice(1);
     const settings = tabs.includes(h);
@@ -496,198 +520,200 @@ label.f { display: grid; gap: 6px; font-size: 14px; color: var(--fg-2); }
     document.getElementById('reply-src').textContent = 'From your QuickBooks invoices, updated this morning';
   });
 
-  /* ---------- Company settings (mirrors crates/arkhon-org rules) ---------- */
-  const ROLES = {
-    Owner:   { desc: 'Runs the account, including plan and billing.', can: ['Everything an admin can do', 'Manage plan and billing', 'Add or remove owners'], cannot: [] },
-    Admin:   { desc: 'Runs Arkhon day to day for the company.', can: ['Invite and remove people', "Change people's roles", 'Connect company accounts', 'Install updates and industry packs'], cannot: ['Billing', 'Changing owners'] },
-    Manager: { desc: 'Leads a team and signs off on their work.', can: ['Approve work for their team', 'See company time-saved reports', 'Manage teams'], cannot: ['Inviting people'] },
-    Member:  { desc: 'Uses Arkhon for their own work.', can: ['Email, company answers and documents', 'Anything their team adds'], cannot: ['Company settings'] },
-    Dispatcher: { custom: true, desc: 'Custom role. Schedules jobs and answers customers.', can: ['Approve work for their team', 'Customer replies and scheduling'], cannot: ['Inviting people', 'Billing'] },
-  };
-  let seats = 10;
-  const people = [
-    { n: 'Dana Ruiz', e: 'dana@coastline.com', r: 'Owner', s: 'Active' },
-    { n: 'Ari Patel', e: 'ari@coastline.com', r: 'Admin', s: 'Active' },
-    { n: 'Max Okafor', e: 'max@coastline.com', r: 'Manager', s: 'Active' },
-    { n: 'Lena Cho', e: 'lena@coastline.com', r: 'Dispatcher', s: 'Active' },
-    { n: 'Tia Alvarez', e: 'tia@coastline.com', r: 'Member', s: 'Active' },
-    { n: 'Sam Brooks', e: 'sam@coastline.com', r: 'Member', s: 'Active' },
-    { n: 'Rae Kim', e: 'rae@coastline.com', r: 'Member', s: 'Invited' },
-    { n: 'Jon Weiss', e: 'jon@coastline.com', r: 'Member', s: 'Active' },
-    { n: 'Pat Doyle', e: 'pat@coastline.com', r: 'Member', s: 'Paused' },
-  ];
-  const TEAMS = [
-    { n: 'Front office', d: 'Answers customers and sends quotes.', ws: ['Customer replies', 'Quotes & marketing'], who: ['Lena Cho', 'Ari Patel', 'Rae Kim'] },
-    { n: 'Field techs', d: 'Out on jobs. Gets meeting notes and job documents.', ws: ['Meeting notes', 'Documents'], who: ['Tia Alvarez', 'Sam Brooks', 'Jon Weiss', 'Max Okafor'] },
-  ];
-  const used = () => people.filter(p => p.s !== 'Paused').length;
-  const owners = () => people.filter(p => p.r === 'Owner' && p.s === 'Active').length;
-  const initials = n => n.split(' ').map(w => w[0]).join('');
-  const msg = document.getElementById('inv-msg');
-  const say = (text, ok) => { msg.hidden = false; msg.className = 'msg ' + (ok ? 'ok' : 'err'); msg.textContent = text; };
+  /* ---------- Company settings: wired to the engine (suite/engine via suite/devserver) ----------
+     Live mode: served by `arkhon-suite-dev`, every action is a Command to /api/command and the
+     engine's rules decide. Preview mode (no server, e.g. a shared link): renders a snapshot the
+     engine exported, read-only. The page holds no permission rules of its own. */
+  const $ = id => document.getElementById(id);
+  const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const COLORS = { outlook: '#0f6cbd', gmail: '#c5221f', 'google-calendar': '#1a73e8', 'other-email': '#5f6368', 'one-drive': '#0364b8',
+    'google-drive': '#188038', 'local-folder': '#3a3d44', dropbox: '#0061fe', 'quick-books': '#2ca01c', xero: '#13b5ea', 'hub-spot': '#ff5c35',
+    'service-titan': '#1f3a60', jobber: '#2f7a55', 'housecall-pro': '#0b5cff', stripe: '#635bff', square: '#1d1d1f', 'microsoft-teams': '#5b5fc7',
+    slack: '#611f69', zoom: '#0b5cff', 'docu-sign': '#d4a000' };
+  const POLICIES = [['off', 'Off'], ['admins-only', 'Admins only'], ['own-accounts', 'Everyone: own accounts'], ['team-accounts', 'Everyone: own + team accounts']];
+  let V = null, live = false, actorId = null, cat = 'All', pending = null, activeMsg = null;
+  try { actorId = sessionStorage.getItem('arkhon-as'); } catch (_) {}
 
-  function roleOptions(sel) { return Object.keys(ROLES).map(r => `<option${r === sel ? ' selected' : ''}>${r}</option>`).join(''); }
-  function renderSeats() {
-    const u = used();
-    document.getElementById('seat-text').textContent = `${u} of ${seats} seats in use`;
-    document.getElementById('meter-fill').style.width = Math.min(100, u / seats * 100) + '%';
-    const m = document.getElementById('meter'); m.setAttribute('aria-valuemax', seats); m.setAttribute('aria-valuenow', u);
+  function say(text, ok) {
+    const el = activeMsg || $('inv-msg');
+    el.hidden = false; el.className = 'msg ' + (ok ? 'ok' : 'err'); el.textContent = text;
   }
-  function renderPeople() {
-    document.getElementById('people').innerHTML = people.map((p, i) => `
-      <li class="who">
-        <span class="av">${initials(p.n)}</span>
-        <div style="min-width:0"><div class="n">${p.n}${i === 0 ? ' <span style="color:var(--fg-3);font-weight:400">(you)</span>' : ''}</div><div class="e">${p.e}</div></div>
-        <select data-i="${i}" aria-label="Role for ${p.n}">${roleOptions(p.r)}</select>
-        <span class="st ${p.s === 'Invited' ? 'inv' : p.s === 'Paused' ? 'paused' : ''}">${p.s === 'Active' ? '' : p.s}</span>
-      </li>`).join('');
-    renderSeats(); if (typeof renderRoles === 'function') renderRoles();
-  }
-  document.getElementById('people').addEventListener('change', e => {
-    const s = e.target.closest('select[data-i]'); if (!s) return;
-    const p = people[+s.dataset.i];
-    if (p.r === 'Owner' && s.value !== 'Owner' && p.s === 'Active' && owners() === 1) {
-      s.value = 'Owner';
-      say('Your company needs at least one owner. Make someone else an owner first.', false);
-      return;
+  function headers(extra) { return Object.assign({ 'x-arkhon-as': String(actorId ?? '') }, extra || {}); }
+  async function load() {
+    try {
+      const r = await fetch('/api/view', { headers: headers() });
+      if (!r.ok) throw new Error();
+      V = await r.json(); live = true;
+      if (actorId == null) actorId = V.viewer.id;
+    } catch (_) {
+      V = JSON.parse($('snapshot').textContent); live = false;
     }
-    p.r = s.value; renderRoles(); say(`${p.n} is now ${/^[AEIOU]/.test(p.r) ? 'an' : 'a'} ${p.r}.`, true);
-  });
-
-  const invRole = document.getElementById('inv-role'), hint = document.getElementById('inv-hint');
-  invRole.innerHTML = roleOptions('Member');
-  const showHint = () => hint.textContent = ROLES[invRole.value].desc;
-  invRole.addEventListener('change', showHint); showHint();
-  document.getElementById('invite').addEventListener('submit', e => {
-    e.preventDefault();
-    const email = document.getElementById('inv-email').value.trim().toLowerCase();
-    if (!/^[^\s@]+@[^\s@.]+(\.[^\s@.]+)+$/.test(email)) return say('Enter a valid email address.', false);
-    if (people.some(p => p.e === email)) return say('That email is already in your company.', false);
-    if (used() >= seats) return say(`All ${seats} seats are in use. Add seats or remove someone first.`, false);
-    const name = email.split('@')[0].replace(/[._-]+/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
-    people.push({ n: name, e: email, r: invRole.value, s: 'Invited' });
-    document.getElementById('inv-email').value = '';
-    renderPeople(); say(`Invite sent to ${email}. It holds a seat until they join.`, true);
-  });
-  document.getElementById('add-seats').addEventListener('click', () => { seats += 5; renderSeats(); say(`Added 5 seats. You now have ${seats}.`, true); });
-
-  function renderRoles() { document.getElementById('roles').innerHTML = Object.entries(ROLES).map(([name, r]) => {
-    const n = people.filter(p => p.r === name).length;
-    return `<article class="card role${r.custom ? ' custom' : ''}">
-      <h3>${name}<span class="count">${n} ${n === 1 ? 'person' : 'people'}</span></h3>
-      <p>${r.desc}</p>
-      <ul>${r.can.map(c => `<li>${c}</li>`).join('')}${r.cannot.map(c => `<li class="no">${c}</li>`).join('')}</ul>
-    </article>`;
-  }).join('') + `<article class="card role custom" style="place-content:center;text-align:center;justify-items:center;min-height:200px">
-      <h3>Make a custom role</h3><p>Pick exactly what someone can do. Billing always stays with owners.</p>
-      <button class="btn" type="button" style="margin-top:8px">New role</button></article>`; }
-
-  document.getElementById('teams').innerHTML = TEAMS.map(t => `
-    <article class="card team">
-      <div><h3>${t.n}</h3><p>${t.d}</p><div class="chips">${t.ws.map(w => `<span class="chip">${w}</span>`).join('')}</div></div>
-      <div class="faces" aria-label="${t.who.length} people">${t.who.map(w => `<span class="av" title="${w}">${initials(w)}</span>`).join('')}</div>
-    </article>`).join('') + `<button class="btn" type="button" style="justify-self:start;margin-top:6px">New team</button>`;
-
-
-  /* ---------- Connections (mirrors crates/arkhon-org/src/connections.rs) ---------- */
-  const POL = { off: 'Off', admins: 'Admins only', own: 'Everyone: own accounts', team: 'Everyone: own + team accounts' };
-  const APPS = [
-    ['Outlook','Email & calendar','own','now','#0f6cbd'], ['Gmail','Email & calendar','own','now','#c5221f'],
-    ['Google Calendar','Email & calendar','own','now','#1a73e8'], ['Other email','Email & calendar','own','now','#5f6368'],
-    ['OneDrive & SharePoint','Files','own','now','#0364b8'], ['Google Drive','Files','own','now','#188038'],
-    ['Folder or network drive','Files','admins','now','#3a3d44'], ['Dropbox','Files','admins','soon','#0061fe'],
-    ['QuickBooks Online','Accounting','admins','now','#2ca01c'], ['Xero','Accounting','admins','now','#13b5ea'],
-    ['HubSpot','Customers & sales','admins','now','#ff5c35'],
-    ['ServiceTitan','Jobs & scheduling','admins','soon','#1f3a60'], ['Jobber','Jobs & scheduling','team','soon','#2f7a55'],
-    ['Housecall Pro','Jobs & scheduling','admins','soon','#0b5cff'],
-    ['Stripe','Payments','admins','soon','#635bff'], ['Square','Payments','admins','soon','#1d1d1f'],
-    ['Microsoft Teams','Chat & meetings','own','soon','#5b5fc7'], ['Slack','Chat & meetings','admins','soon','#611f69'],
-    ['Zoom','Chat & meetings','own','soon','#0b5cff'], ['DocuSign','Signatures','admins','soon','#d4a000'],
-  ].map(([n, c, p, a, col]) => ({ n, c, p, a, col }));
-  const app = n => APPS.find(a => a.n === n);
-  const conns = [
-    { app: 'Outlook', acct: 'service@coastline.com', kind: 'company', who: 'Front office', by: 'Ari Patel', st: 'ok' },
-    { app: 'QuickBooks Online', acct: 'Coastline Mechanical books', kind: 'company', who: 'Owners and admins', by: 'Dana Ruiz', st: 'ok' },
-    { app: 'Folder or network drive', acct: '\\\\office-nas\\Jobs', kind: 'company', who: 'Everyone', by: 'Ari Patel', st: 'ok' },
-    { app: 'Google Drive', acct: 'Price books & manuals', kind: 'company', who: 'Everyone', by: 'Ari Patel', st: 'warn' },
-    { app: 'Outlook', acct: 'dana@coastline.com', kind: 'mine', st: 'ok' },
-    { app: 'Google Calendar', acct: 'dana@coastline.com', kind: 'mine', st: 'ok' },
-  ];
-  const tile = a => `<span class="tile" style="background:${a.col}" aria-hidden="true">${a.n[0]}</span>`;
-  const cmsg = document.getElementById('c-msg');
-  const csay = (t, ok) => { cmsg.hidden = false; cmsg.className = 'msg ' + (ok ? 'ok' : 'err'); cmsg.textContent = t; };
-  function renderConns() {
-    const row = (c, i) => { const a = app(c.app); return `<li class="conn">${tile(a)}
-      <div style="min-width:0"><div class="n">${a.n}</div><div class="d">${c.acct}${c.kind === 'company' ? ` · Shared with ${c.who}` : ''}</div></div>
-      <div class="side-s">${c.st === 'ok' ? '<span class="status-s">Connected</span>' : '<span class="status-s warn">Sign in again</span>'}
-      <button class="link" type="button" data-rm="${i}" style="font-size:15px">${c.st === 'ok' ? 'Disconnect' : 'Fix'}</button></div></li>`; };
-    document.getElementById('company-list').innerHTML = conns.map((c, i) => c.kind === 'company' ? row(c, i) : '').join('');
-    const mine = conns.map((c, i) => c.kind === 'mine' ? row(c, i) : '').join('');
-    document.getElementById('mine-list').innerHTML = mine || '<li class="conn" style="grid-template-columns:1fr;color:var(--fg-2)">Nothing connected yet. Pick your email below to get started.</li>';
+    render();
   }
-  ['company-list', 'mine-list'].forEach(id => document.getElementById(id).addEventListener('click', e => {
-    const b = e.target.closest('[data-rm]'); if (!b) return;
-    const c = conns[+b.dataset.rm];
-    if (c.st !== 'ok') { c.st = 'ok'; csay(`${c.app} is connected again.`, true); }
-    else { conns.splice(+b.dataset.rm, 1); csay(`Disconnected ${c.app} (${c.acct}).`, true); }
-    renderConns(); renderLib();
-  }));
+  async function run(cmd, msgEl) {
+    activeMsg = msgEl;
+    if (!live) return say('This is a preview. Run the Arkhon dev server on your computer to make changes.', false);
+    try {
+      const r = await fetch('/api/command', { method: 'POST', headers: headers({ 'content-type': 'application/json' }), body: JSON.stringify(cmd) });
+      const body = await r.json();
+      if (!r.ok) { say(body.error || 'That didn’t work. Try again.', false); await load(); return false; }
+      V = body.view; render(); say(body.message, true); return true;
+    } catch (_) { say('Arkhon isn’t responding. Check that it’s running and try again.', false); return false; }
+  }
 
-  let cat = 'All';
-  const cats = ['All', ...new Set(APPS.map(a => a.c))];
-  document.getElementById('cats').innerHTML = cats.map(c => `<button type="button" aria-pressed="${c === cat}">${c}</button>`).join('');
-  document.getElementById('cats').addEventListener('click', e => {
-    const b = e.target.closest('button'); if (!b) return; cat = b.textContent;
-    document.querySelectorAll('#cats button').forEach(x => x.setAttribute('aria-pressed', x === b)); renderLib();
+  async function renderViewAs() {
+    const bar = $('viewas');
+    if (!live) { bar.hidden = true; $('preview-note').hidden = false; return; }
+    $('preview-note').hidden = true; bar.hidden = false;
+    const people = await (await fetch('/api/people')).json();
+    $('as-sel').innerHTML = people.map(p => `<option value="${p.id}"${String(p.id) === String(actorId) ? ' selected' : ''}>${esc(p.name)} · ${esc(p.role)}</option>`).join('');
+  }
+  $('as-sel').addEventListener('change', e => {
+    actorId = e.target.value; try { sessionStorage.setItem('arkhon-as', actorId); } catch (_) {}
+    load();
   });
-  document.getElementById('lib-q').addEventListener('input', renderLib);
+
+  const initials = n => n.split(' ').map(w => w[0]).join('').slice(0, 2);
+  const statusWord = s => ({ invited: 'Invited', suspended: 'Paused', active: '' }[s]);
+  function render() {
+    $('org-name').textContent = V.company;
+    $('org-sub').textContent = `${V.plan} plan · Choose who can use Arkhon and what they can do.`;
+    $('seat-text').textContent = `${V.seats_used} of ${V.seats} seats in use`;
+    $('meter-fill').style.width = Math.min(100, V.seats_used / V.seats * 100) + '%';
+    $('meter').setAttribute('aria-valuemax', V.seats); $('meter').setAttribute('aria-valuenow', V.seats_used);
+    $('add-seats').hidden = !V.can.manage_billing;
+    $('invite').hidden = !V.can.manage_people;
+    $('activity-tab').hidden = !V.can.view_activity;
+    const roleNames = V.roles.map(r => r.name);
+    $('inv-role').innerHTML = roleNames.filter(n => n !== 'Owner' || V.viewer.role === 'Owner').map(n => `<option${n === 'Member' ? ' selected' : ''}>${esc(n)}</option>`).join('');
+    showHint();
+    $('people').innerHTML = V.people.map(p => {
+      const you = V.viewer && p.id === V.viewer.id;
+      const roleCtl = V.can.assign_roles
+        ? `<select data-role="${p.id}" aria-label="Role for ${esc(p.name)}">${roleNames.map(n => `<option${n === p.role ? ' selected' : ''}>${esc(n)}</option>`).join('')}</select>`
+        : `<span style="color:var(--fg-2)">${esc(p.role)}</span>`;
+      const actions = V.can.manage_people && !you
+        ? `<select class="more-sel" data-act="${p.id}" aria-label="More for ${esc(p.name)}"><option value="">More</option>${p.status === 'suspended' ? '<option value="restore">Restore access</option>' : '<option value="suspend">Pause access</option>'}${p.status === 'invited' ? '<option value="accept-invite">Mark as joined</option>' : ''}<option value="remove">Remove</option></select>`
+        : '';
+      return `<li class="who"><span class="av">${esc(initials(p.name))}</span>
+        <div style="min-width:0"><div class="n">${esc(p.name)}${you ? ' <span style="color:var(--fg-3);font-weight:400">(you)</span>' : ''}</div><div class="e">${esc(p.email)}</div></div>
+        ${roleCtl}
+        <span class="st ${p.status === 'invited' ? 'inv' : p.status === 'suspended' ? 'paused' : ''}">${statusWord(p.status)}${actions ? ' ' + actions : ''}</span></li>`;
+    }).join('');
+    $('roles').innerHTML = V.roles.map(r => `<article class="card role${r.custom ? ' custom' : ''}">
+        <h3>${esc(r.name)}<span class="count">${r.people} ${r.people === 1 ? 'person' : 'people'}</span></h3>
+        <p>${esc(r.description)}</p>
+        <ul>${r.can.map(c => `<li>${esc(c)}</li>`).join('') || '<li class="no">No company settings</li>'}</ul>
+        <div class="chips">${r.workspaces.map(w => `<span class="chip">${esc(w)}</span>`).join('')}</div></article>`).join('');
+    $('teams').innerHTML = V.teams.map(t => `<article class="card team">
+        <div><h3>${esc(t.name)}${t.is_member ? ' <span class="pill-s ok">You’re on this team</span>' : ''}</h3><p>${t.members.length} people</p>
+        <div class="chips">${t.workspaces.map(w => `<span class="chip">${esc(w)}</span>`).join('')}</div></div>
+        <div class="faces">${t.members.map(m => `<span class="av" title="${esc(m)}">${esc(initials(m))}</span>`).join('')}</div></article>`).join('');
+    renderConns(); renderLib();
+    $('ws-line').textContent = 'You can use: ' + V.workspaces.join(', ') + '.';
+    renderViewAs();
+    if (!$('t-activity').hidden) loadActivity();
+  }
+
+  const showHint = () => {
+    const r = V && V.roles.find(x => x.name === $('inv-role').value);
+    $('inv-hint').textContent = r ? r.description : '';
+  };
+  $('inv-role').addEventListener('change', showHint);
+  $('invite').addEventListener('submit', async e => {
+    e.preventDefault();
+    const email = $('inv-email').value.trim();
+    if (await run({ command: 'invite', email, role: $('inv-role').value }, $('inv-msg'))) $('inv-email').value = '';
+  });
+  $('add-seats').addEventListener('click', () => run({ command: 'set-seats', seats: V.seats + 5 }, $('inv-msg')));
+  $('people').addEventListener('change', e => {
+    const r = e.target.closest('[data-role]');
+    if (r) return run({ command: 'set-role', member: +r.dataset.role, role: r.value }, $('inv-msg'));
+    const a = e.target.closest('[data-act]');
+    if (a && a.value) run({ command: a.value, member: +a.dataset.act }, $('inv-msg'));
+  });
+
+  /* Connections */
+  const tile = (key, name) => `<span class="tile" style="background:${COLORS[key] || '#3a3d44'}" aria-hidden="true">${esc(name[0])}</span>`;
+  function renderConns() {
+    const row = c => `<li class="conn">${tile(c.app, c.app_name)}
+      <div style="min-width:0"><div class="n">${esc(c.app_name)}</div><div class="d">${esc(c.account)} · ${c.personal ? (c.mine ? 'Only you' : esc(c.shared_with)) : 'Shared with ' + esc(c.shared_with)}</div></div>
+      <div class="side-s">${c.status === 'active' ? '<span class="status-s">Connected</span>' : c.status === 'paused' ? '<span class="status-s warn">Paused</span>' : '<span class="status-s warn">Sign in again</span>'}
+      ${c.status === 'needs-sign-in' ? `<button class="link" type="button" data-fix="${c.id}" style="font-size:15px">Fix</button>` : ''}
+      ${c.can_disconnect ? `<button class="link" type="button" data-rm="${c.id}" style="font-size:15px">Disconnect</button>` : ''}</div></li>`;
+    $('company-list').innerHTML = V.connections.filter(c => !c.personal).map(row).join('') || '<li class="conn" style="grid-template-columns:1fr;color:var(--fg-2)">No company accounts yet.</li>';
+    $('mine-list').innerHTML = V.connections.filter(c => c.mine).map(row).join('') || '<li class="conn" style="grid-template-columns:1fr;color:var(--fg-2)">Nothing connected yet. Pick your email below to get started.</li>';
+    const others = V.connections.filter(c => c.personal && !c.mine);
+    $('others-wrap').hidden = !others.length;
+    $('others-list').innerHTML = others.map(row).join('');
+  }
+  ['company-list', 'mine-list', 'others-list'].forEach(id => $(id).addEventListener('click', e => {
+    const rm = e.target.closest('[data-rm]'), fix = e.target.closest('[data-fix]');
+    if (rm) run({ command: 'disconnect', id: +rm.dataset.rm }, $('c-msg'));
+    if (fix) run({ command: 'reconnect', id: +fix.dataset.fix }, $('c-msg'));
+  }));
   function renderLib() {
-    const q = document.getElementById('lib-q').value.trim().toLowerCase();
-    document.getElementById('lib').innerHTML = APPS.filter(a => (cat === 'All' || a.c === cat) && (!q || a.n.toLowerCase().includes(q))).map(a => {
-      const n = conns.filter(c => c.app === a.n).length;
-      return `<article class="card app">
-        <div class="top">${tile(a)}<div style="min-width:0"><div class="n">${a.n}</div><div class="c">${n ? `${n} connected` : a.c}</div></div></div>
-        <div class="bottom">
-          <select data-pol="${a.n}" aria-label="Who can connect ${a.n}">${Object.entries(POL).map(([k, v]) => `<option value="${k}"${k === a.p ? ' selected' : ''}>${v}</option>`).join('')}</select>
-          ${a.a === 'soon' ? '<span class="soon">Coming soon</span>' : a.p === 'off' ? '<span class="soon">Turned off</span>' : `<button class="btn" type="button" data-connect="${a.n}">Connect</button>`}
-        </div></article>`;
+    const cats = ['All', ...new Set(V.apps.map(a => a.category))];
+    $('cats').innerHTML = cats.map(c => `<button type="button" aria-pressed="${c === cat}">${esc(c)}</button>`).join('');
+    const q = $('lib-q').value.trim().toLowerCase();
+    $('lib').innerHTML = V.apps.filter(a => (cat === 'All' || a.category === cat) && (!q || a.name.toLowerCase().includes(q))).map(a => {
+      const canAny = a.can_connect_me || a.can_connect_team || a.can_connect_everyone;
+      const rule = V.can.manage_connections
+        ? `<select data-pol="${a.app}" aria-label="Who can connect ${esc(a.name)}">${POLICIES.map(([k, v]) => `<option value="${k}"${k === a.policy ? ' selected' : ''}>${v}</option>`).join('')}</select>`
+        : `<span class="soon">${esc(POLICIES.find(p => p[0] === a.policy)[1])}</span>`;
+      const btn = !a.available ? '<span class="soon">Coming soon</span>'
+        : a.policy === 'off' ? '<span class="soon">Turned off</span>'
+        : canAny ? `<button class="btn" type="button" data-connect="${a.app}">Connect</button>`
+        : '<span class="soon">Ask an admin</span>';
+      return `<article class="card app"><div class="top">${tile(a.app, a.name)}<div style="min-width:0"><div class="n">${esc(a.name)}</div><div class="c">${a.connected ? a.connected + ' connected' : esc(a.category)}</div></div></div>
+        <div class="bottom">${rule}${btn}</div></article>`;
     }).join('') || '<p style="color:var(--fg-2)">No apps match. Try another word.</p>';
   }
-  document.getElementById('lib').addEventListener('change', e => {
-    const s = e.target.closest('[data-pol]'); if (!s) return;
-    const a = app(s.dataset.pol); a.p = s.value;
-    const paused = conns.filter(c => c.app === a.n);
-    paused.forEach(c => c.st = a.p === 'off' ? 'warn' : 'ok');
-    csay(a.p === 'off' ? `${a.n} is turned off. ${paused.length ? 'Its connections are paused.' : ''}` : `${a.n}: ${POL[a.p]}.`, true);
-    renderConns(); renderLib();
+  $('cats').addEventListener('click', e => { const b = e.target.closest('button'); if (b) { cat = b.textContent; renderLib(); } });
+  $('lib-q').addEventListener('input', renderLib);
+  $('lib').addEventListener('change', e => {
+    const s = e.target.closest('[data-pol]'); if (s) run({ command: 'set-app-policy', app: s.dataset.pol, policy: s.value }, $('c-msg'));
   });
-
-  const sheet = document.getElementById('sheet'); let pending = null;
-  document.getElementById('lib').addEventListener('click', e => {
+  const sheet = $('sheet');
+  $('lib').addEventListener('click', e => {
     const b = e.target.closest('[data-connect]'); if (!b) return;
-    pending = app(b.dataset.connect);
-    document.getElementById('sheet-title').textContent = 'Connect ' + pending.n;
-    // Dana is the Owner, so every choice is open. For staff the choices follow the app's rule.
-    document.getElementById('team-sel').innerHTML = TEAMS.map(t => `<option>${t.n}</option>`).join('');
-    document.getElementById('acct').value = ''; sheet.hidden = false; cmsg.hidden = true;
-    sheet.scrollIntoView({ behavior: 'smooth', block: 'center' }); document.getElementById('acct').focus();
+    pending = V.apps.find(a => a.app === b.dataset.connect);
+    $('sheet-title').textContent = 'Connect ' + pending.name;
+    const opts = { me: pending.can_connect_me, team: pending.can_connect_team, all: pending.can_connect_everyone };
+    [['ch-me', 'me'], ['ch-team', 'team'], ['ch-all', 'all']].forEach(([id, k]) => {
+      const el = $(id); el.setAttribute('aria-disabled', String(!opts[k])); el.querySelector('input').disabled = !opts[k];
+    });
+    const first = Object.keys(opts).find(k => opts[k]);
+    sheet.querySelector(`input[value="${first}"]`).checked = true;
+    const myTeams = V.can.manage_connections ? V.teams : V.teams.filter(t => t.is_member);
+    $('team-sel').innerHTML = myTeams.map(t => `<option>${esc(t.name)}</option>`).join('');
+    $('team-pick').hidden = first !== 'team';
+    $('acct').value = ''; sheet.hidden = false; $('c-msg').hidden = true;
+    sheet.scrollIntoView({ behavior: 'smooth', block: 'center' }); $('acct').focus();
   });
-  sheet.addEventListener('change', () => { document.getElementById('team-pick').hidden = sheet.for.value !== 'team'; });
-  document.getElementById('sheet-cancel').addEventListener('click', () => { sheet.hidden = true; });
-  sheet.addEventListener('submit', e => {
+  sheet.addEventListener('change', () => { $('team-pick').hidden = sheet.for.value !== 'team'; });
+  $('sheet-cancel').addEventListener('click', () => { sheet.hidden = true; });
+  sheet.addEventListener('submit', async e => {
     e.preventDefault();
-    const acct = document.getElementById('acct').value.trim();
-    if (!acct) return csay('Enter the account to connect, like an email address or company name.', false);
     const f = sheet.for.value;
-    if (conns.some(c => c.app === pending.n && c.acct.toLowerCase() === acct.toLowerCase())) return csay('That account is already connected.', false);
-    conns.push(f === 'me' ? { app: pending.n, acct, kind: 'mine', st: 'ok' }
-      : { app: pending.n, acct, kind: 'company', who: f === 'all' ? 'Everyone' : document.getElementById('team-sel').value, by: 'Dana Ruiz', st: 'ok' });
-    sheet.hidden = true; renderConns(); renderLib();
-    csay(`${pending.n} is connected. Arkhon will start reading it in the background.`, true);
+    const target = f === 'me' ? { type: 'me' } : f === 'all' ? { type: 'everyone' } : { type: 'team', team: $('team-sel').value };
+    if (await run({ command: 'connect', app: pending.app, account: $('acct').value, for: target }, $('c-msg'))) sheet.hidden = true;
   });
-  renderConns(); renderLib();
 
-  renderPeople();
+  /* Activity */
+  async function loadActivity() {
+    if (!live) { $('activity').innerHTML = '<li class="conn" style="grid-template-columns:1fr;color:var(--fg-2)">Activity appears here when Arkhon is running on your computer.</li>'; return; }
+    const r = await fetch('/api/activity', { headers: headers() });
+    if (!r.ok) { $('activity').innerHTML = ''; return; }
+    const log = await r.json();
+    $('activity').innerHTML = log.slice(0, 50).map(a => `<li class="conn" style="grid-template-columns:minmax(0,1fr) auto">
+      <div style="min-width:0"><div class="n">${esc(a.action)}</div><div class="d">${esc(a.actor)}${a.refused ? ' · <span style="color:var(--bad)">Not allowed: ' + esc(a.refused) + '</span>' : ''}</div></div>
+      <span class="soon">${new Date(a.at * 1000).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}</span></li>`).join('')
+      || '<li class="conn" style="grid-template-columns:1fr;color:var(--fg-2)">Nothing yet. Changes to people, roles and connections show up here.</li>';
+  }
+  addEventListener('hashchange', () => { if (location.hash === '#activity') loadActivity(); });
+
+  load();
   route();
 })();
 </script>

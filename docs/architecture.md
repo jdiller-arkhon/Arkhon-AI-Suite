@@ -17,6 +17,11 @@
  Arkhon License Manager (axum + Postgres) ── Admin/Customer portals ── Stripe (test mode first)
 ```
 
+Organization model: `crates/arkhon-org` holds the rules for people, roles, teams and connections
+(ADR-0005/0006). `suite/engine` is the only command surface over it, and it writes the activity
+log and saves state. The Tauri app calls the engine directly. `suite/devserver` exposes the same
+engine on 127.0.0.1 for development.
+
 Key hierarchy: offline **root** Ed25519 → online, rotatable **issuing** key → licenses and release
 manifests. The runtime embeds the root public key and an issuing-key revocation list. Model releases
 use chunked AES-256-GCM under per-release CEKs, which are wrapped to the activating machine's TPM key.

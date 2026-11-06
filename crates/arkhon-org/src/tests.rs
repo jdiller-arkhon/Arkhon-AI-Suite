@@ -355,3 +355,32 @@ fn errors_read_as_plain_language() {
         assert!(!p.label().is_empty());
     }
 }
+
+#[cfg(feature = "serde")]
+#[test]
+fn organization_round_trips_through_json() {
+    let (mut o, owner) = org(Plan::Business, 10);
+    let r = o
+        .create_role(
+            owner,
+            "Dispatcher",
+            [Permission::ApproveForTeam].into(),
+            BTreeSet::new(),
+        )
+        .unwrap();
+    let d = active(&mut o, owner, "Dee", r.clone());
+    o.upsert_team(owner, "Front office", [Workspace::Desk].into())
+        .unwrap();
+    o.add_to_team(owner, "Front office", d).unwrap();
+    let json = serde_json::to_string(&o).unwrap();
+    let back: Organization = serde_json::from_str(&json).unwrap();
+    assert_eq!(back.member(d).unwrap().role, r);
+    assert_eq!(back.workspaces_for(d), o.workspaces_for(d));
+    assert!(back.can(d, Permission::ApproveForTeam));
+    // Ids keep counting after reload.
+    let mut back = back;
+    let n = back
+        .invite(owner, "New", "new@coastline.com", RoleId::Member)
+        .unwrap();
+    assert!(n > d);
+}

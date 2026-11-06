@@ -26,6 +26,11 @@ use crate::{MemberId, MemberStatus, Organization, Permission, RoleId};
 
 /// What kind of tool an app is. Used to group the app library.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[cfg_attr(
+    feature = "serde",
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "kebab-case")
+)]
 pub enum Category {
     /// Mail and calendars.
     EmailCalendar,
@@ -64,6 +69,11 @@ impl Category {
 
 /// An app Arkhon can connect to.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[cfg_attr(
+    feature = "serde",
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "kebab-case")
+)]
 pub enum App {
     /// Outlook mail and calendar (Microsoft 365).
     Outlook,
@@ -109,6 +119,11 @@ pub enum App {
 
 /// Delivery status of an integration in the product roadmap.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(
+    feature = "serde",
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "kebab-case")
+)]
 pub enum Availability {
     /// Built in Phase 5 (suite foundation).
     Phase5,
@@ -234,6 +249,11 @@ impl App {
 
 /// Who may connect an app.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(
+    feature = "serde",
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "kebab-case")
+)]
 pub enum AppPolicy {
     /// Nobody may connect it. Existing connections are paused.
     Off,
@@ -261,6 +281,11 @@ impl AppPolicy {
 
 /// What Arkhon may do through a connection.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(
+    feature = "serde",
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "kebab-case")
+)]
 pub enum Access {
     /// Read only (search, answer questions, learn the company voice).
     Read,
@@ -273,6 +298,11 @@ pub enum Access {
 
 /// Who can use a company connection.
 #[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(
+    feature = "serde",
+    derive(serde::Serialize, serde::Deserialize),
+    serde(tag = "type", content = "value", rename_all = "kebab-case")
+)]
 pub enum Audience {
     /// Everyone in the organization.
     Everyone,
@@ -284,6 +314,11 @@ pub enum Audience {
 
 /// Owner of a connection.
 #[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(
+    feature = "serde",
+    derive(serde::Serialize, serde::Deserialize),
+    serde(tag = "type", rename_all = "kebab-case")
+)]
 pub enum Kind {
     /// Shared company account.
     Company {
@@ -299,6 +334,11 @@ pub enum Kind {
 
 /// Health of a connection.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[cfg_attr(
+    feature = "serde",
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "kebab-case")
+)]
 pub enum ConnStatus {
     /// Working.
     Active,
@@ -313,6 +353,7 @@ pub type ConnectionId = u64;
 
 /// A connected account.
 #[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Connection {
     /// Identifier.
     pub id: ConnectionId,
@@ -404,6 +445,7 @@ pub type ConnResult<T> = Result<T, ConnError>;
 
 /// All connections and app rules for one organization.
 #[derive(Debug, Clone, Default)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Connections {
     policies: BTreeMap<App, AppPolicy>,
     items: BTreeMap<ConnectionId, Connection>,
@@ -629,6 +671,22 @@ impl Connections {
             .get_mut(&id)
             .ok_or(ConnError::UnknownConnection)?
             .status = ConnStatus::NeedsSignIn;
+        Ok(())
+    }
+
+    /// Mark a connection signed in again after [`ConnStatus::NeedsSignIn`]. Paused connections
+    /// stay paused (their app or owner is off).
+    ///
+    /// # Errors
+    /// [`ConnError::UnknownConnection`].
+    pub fn mark_signed_in(&mut self, id: ConnectionId) -> ConnResult<()> {
+        let c = self
+            .items
+            .get_mut(&id)
+            .ok_or(ConnError::UnknownConnection)?;
+        if c.status == ConnStatus::NeedsSignIn {
+            c.status = ConnStatus::Active;
+        }
         Ok(())
     }
 

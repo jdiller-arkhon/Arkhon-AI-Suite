@@ -24,6 +24,11 @@ pub mod connections;
 
 /// A single capability. Kept deliberately coarse so owners can reason about it in plain words.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[cfg_attr(
+    feature = "serde",
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "kebab-case")
+)]
 pub enum Permission {
     /// See and change the plan, seats and invoices.
     ManageBilling,
@@ -100,6 +105,11 @@ pub type Permissions = BTreeSet<Permission>;
 
 /// A product workspace a person can be given access to.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[cfg_attr(
+    feature = "serde",
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "kebab-case")
+)]
 pub enum Workspace {
     /// Email triage and drafting.
     Inbox,
@@ -139,6 +149,11 @@ impl Workspace {
 
 /// Commercial plan (brief section 7).
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[cfg_attr(
+    feature = "serde",
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "kebab-case")
+)]
 pub enum Plan {
     /// Inbox + Knowledge + Docs.
     Starter,
@@ -174,6 +189,11 @@ impl Plan {
 
 /// Identifier of a role.
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[cfg_attr(
+    feature = "serde",
+    derive(serde::Serialize, serde::Deserialize),
+    serde(into = "String", from = "String")
+)]
 pub enum RoleId {
     /// Full control, including billing and ownership. At least one is always required.
     Owner,
@@ -185,6 +205,24 @@ pub enum RoleId {
     Member,
     /// An organization-defined role.
     Custom(String),
+}
+
+impl From<RoleId> for String {
+    fn from(r: RoleId) -> String {
+        r.to_string()
+    }
+}
+
+impl From<String> for RoleId {
+    fn from(s: String) -> RoleId {
+        match s.as_str() {
+            "Owner" => RoleId::Owner,
+            "Admin" => RoleId::Admin,
+            "Manager" => RoleId::Manager,
+            "Member" => RoleId::Member,
+            _ => RoleId::Custom(s),
+        }
+    }
 }
 
 impl fmt::Display for RoleId {
@@ -201,6 +239,7 @@ impl fmt::Display for RoleId {
 
 /// A role: a name, a permission set and default workspace access.
 #[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Role {
     /// Identifier.
     pub id: RoleId,
@@ -256,6 +295,11 @@ pub type MemberId = u64;
 
 /// Whether a person currently uses a seat.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[cfg_attr(
+    feature = "serde",
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "kebab-case")
+)]
 pub enum MemberStatus {
     /// Invitation sent, not yet accepted. Holds a seat so invites can't oversell.
     Invited,
@@ -267,6 +311,7 @@ pub enum MemberStatus {
 
 /// A person in the organization.
 #[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Member {
     /// Identifier.
     pub id: MemberId,
@@ -288,6 +333,7 @@ impl Member {
 
 /// A group of people sharing extra workspace access and an approver (e.g. "Field techs").
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Team {
     /// Display name.
     pub name: String,
@@ -393,6 +439,7 @@ pub type OrgResult<T> = Result<T, OrgError>;
 
 /// An organization and everything needed to make permission decisions.
 #[derive(Debug, Clone)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Organization {
     /// Display name.
     pub name: String,
@@ -463,6 +510,11 @@ impl Organization {
     /// All members.
     pub fn members(&self) -> impl Iterator<Item = &Member> {
         self.members.values()
+    }
+
+    /// Custom roles.
+    pub fn custom_roles(&self) -> impl Iterator<Item = Role> + '_ {
+        self.custom_roles.values().cloned()
     }
 
     /// All teams.
