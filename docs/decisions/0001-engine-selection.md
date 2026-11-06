@@ -1,6 +1,6 @@
 # ADR-0001: Engine base selection and license verification
 
-- Status: **Proposed** — needs owner approval at the Phase 0 gate
+- Status: **Accepted**. The owner approved the engine section on 2026-11-06, including Decision 2 (Vision = Core weights + Vision LoRA). The Phase 7 ship gate can still move Vision to its own weights if the LoRA doesn't beat the base model on document extraction.
 - Date: 2026-11-06
 - Needs served: N1 (local-only), N2 (automatic selection), N10 (no per-token cost)
 

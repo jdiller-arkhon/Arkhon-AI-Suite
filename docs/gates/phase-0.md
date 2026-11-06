@@ -29,6 +29,6 @@ Date: 2026-11-06 · Branch: `claude/kind-mendel-jsavoh` · Needs: N1, N2, N10, N
 
 ## Decisions needed
 1. ~~Launch Industry Pack~~ → **Trades & field services** (ADR-0003, decided 2026-11-06).
-2. Approve ADR-0001, including the proposal that **Vision = Core weights + LoRA** (saves about 5–6 GB on tier M).
+2. ~~Approve ADR-0001~~ → **Approved 2026-11-06**, including Vision = Core + LoRA.
 3. Approve the reference hardware matrix sourcing plan (`docs/hardware-matrix.md`, ADR-0004). This means per-backend self-hosted runners, not one dev machine.
 4. Branch naming: the session can only push `claude/kind-mendel-jsavoh`. Rename to `phase-0-bootstrap` when opening the PR, or accept the name as-is.
