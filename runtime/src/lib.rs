@@ -3,7 +3,7 @@
 //! Phase 1 scope: load decrypted model weights **into memory only** and hand them to the
 //! inference engine without plaintext ever touching disk, swap or core dumps.
 //!
-//! Linux strategy (see `docs/decisions/0008-in-memory-model-loading.md`):
+//! Linux strategy (see `docs/decisions/0009-in-memory-model-loading.md`):
 //! 1. [`harden_process`]: mark the process non-dumpable (blocks same-user `ptrace` and
 //!    `/proc/<pid>/mem` reads) and set the core-dump limit to zero.
 //! 2. [`SealedModel::create`]: decrypt straight into an anonymous `memfd` (RAM-backed, no

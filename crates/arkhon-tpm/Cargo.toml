@@ -1,6 +1,6 @@
 [package]
 name = "arkhon-tpm"
-description = "TPM 2.0 abstraction (Windows TBS / Linux tpm2-tss) with software keystore fallback."
+description = "Device binding (TPM 2.0 / Secure Enclave / software), sealed clock and hardware fingerprint."
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
@@ -9,3 +9,26 @@ publish.workspace = true
 
 [lints]
 workspace = true
+
+[features]
+default = []
+# Real TPM 2.0 binding through tss-esapi. Needs libtss2 (e.g. `apt-get install libtss2-dev`).
+tpm = ["dep:tss-esapi"]
+
+[dependencies]
+aes-gcm = { version = "=0.10.3", default-features = false, features = ["aes", "alloc", "zeroize"] }
+hkdf = "=0.12.4"
+hmac = "=0.12.1"
+p256 = { version = "=0.13.2", default-features = false, features = ["std", "arithmetic", "ecdh"] }
+rand_core = { version = "=0.6.4", features = ["getrandom"] }
+sha2 = "=0.10.9"
+subtle = "=2.6.1"
+zeroize = { version = "=1.9.1", features = ["derive"] }
+tss-esapi = { version = "=7.7.0", optional = true }
+
+# Held at 0.14.7: 0.14.8+ deprecates `from_slice`, used throughout RustCrypto 0.10-era APIs,
+# which would fail `clippy -D warnings`. Lift when moving to the RustCrypto 0.11 releases.
+generic-array = "=0.14.7"
+
+[dev-dependencies]
+proptest = "=1.12.0"
