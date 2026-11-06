@@ -258,10 +258,31 @@ async fn rate_limit(State(s): State<AppState>, req: Request, next: Next) -> Resp
     res
 }
 
+/// The operator console: one static page that talks only to this server's `/admin` API.
+#[allow(clippy::unused_async)] // axum handler signature
+async fn console() -> Response {
+    (
+        [
+            ("content-type", "text/html; charset=utf-8"),
+            (
+                "content-security-policy",
+                "default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; \
+                 connect-src 'self'; img-src 'self' data:; form-action 'none'; base-uri 'none'; \
+                 frame-ancestors 'none'",
+            ),
+            ("x-frame-options", "DENY"),
+            ("referrer-policy", "no-referrer"),
+        ],
+        include_str!("../console/index.html"),
+    )
+        .into_response()
+}
+
 /// Build the router.
 pub fn router(state: AppState) -> Router {
     Router::new()
         .route("/healthz", get(|| async { "ok" }))
+        .route("/console", get(console))
         .route(
             "/openapi.yaml",
             get(|| async { include_str!("../openapi.yaml") }),

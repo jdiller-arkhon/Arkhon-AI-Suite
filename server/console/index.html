@@ -1,0 +1,341 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Arkhon Operator Console</title>
+<style>
+/* Operator console: same calm language as the suite. One column, one task per view.
+   Talks only to this server's /admin API (CSP: connect-src 'self'). */
+:root {
+  --bg: #f5f5f7; --card: #fff; --soft: #f0f0f2; --line: #e6e6e9;
+  --fg: #1d1d1f; --fg-2: #6e6e73; --fg-3: #a1a1a6;
+  --ink: #2b2b2e; --ink-fg: #fff; --focus: #0071e3;
+  --ok: #2f7a55; --ok-bg: #e8f3ed; --warn: #b45309; --warn-bg: #fdf1e3; --bad: #d92d20; --bad-bg: #fdecea;
+  --shadow: 0 1px 2px rgba(0,0,0,.04), 0 12px 32px -16px rgba(0,0,0,.12);
+  --font: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Geist", "Helvetica Neue", Arial, sans-serif;
+  --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root {
+  --bg: #000; --card: #141416; --soft: #1c1c1f; --line: #2a2a2e;
+  --fg: #f5f5f7; --fg-2: #a1a1a6; --fg-3: #6e6e73; --ink: #f5f5f7; --ink-fg: #111113; --focus: #2997ff;
+  --ok: #4fbf86; --ok-bg: rgba(79,191,134,.14); --warn: #f0a33a; --warn-bg: rgba(240,163,58,.14); --bad: #ff6b61; --bad-bg: rgba(255,107,97,.14);
+  --shadow: 0 0 0 1px var(--line); color-scheme: dark;
+} }
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body { margin: 0; background: var(--bg); color: var(--fg); font: 16px/1.5 var(--font); -webkit-font-smoothing: antialiased; }
+button, input, select { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; border-radius: 10px; }
+.wrap { max-width: 980px; margin: 0 auto; padding-left: max(24px, env(safe-area-inset-left)); padding-right: max(24px, env(safe-area-inset-right)); }
+header { position: sticky; top: 0; z-index: 5; background: color-mix(in srgb, var(--bg) 85%, transparent); backdrop-filter: blur(20px); }
+.hdr { display: flex; align-items: center; gap: 24px; height: 60px; }
+.brand { font-weight: 700; letter-spacing: .14em; font-size: 14px; }
+.brand small { font-weight: 500; letter-spacing: 0; color: var(--fg-3); margin-left: 8px; }
+nav { display: flex; gap: 20px; overflow-x: auto; }
+nav a { color: var(--fg-2); text-decoration: none; font-size: 15px; white-space: nowrap; }
+nav a[aria-current="page"], nav a:hover { color: var(--fg); }
+.grow { flex: 1; }
+main { padding-block: 40px 96px; display: grid; gap: 20px; }
+h1 { margin: 0; font-size: clamp(30px, 5vw, 42px); letter-spacing: -.03em; line-height: 1.1; }
+h2 { margin: 0; font-size: 21px; letter-spacing: -.02em; }
+.lede { margin: 6px 0 0; color: var(--fg-2); font-size: 18px; }
+.card { background: var(--card); border-radius: 20px; box-shadow: var(--shadow); padding: 24px 28px; }
+.kpis { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 14px; }
+.kpi b { display: block; font-size: 34px; letter-spacing: -.03em; font-variant-numeric: tabular-nums; }
+.kpi span { color: var(--fg-2); font-size: 15px; }
+.kpi.warn b { color: var(--warn); }
+.btn { height: 42px; padding: 0 20px; border-radius: 999px; border: 0; background: var(--soft); font-weight: 500; font-size: 15px; white-space: nowrap; }
+.btn.primary { background: var(--ink); color: var(--ink-fg); }
+.btn.danger { color: var(--bad); }
+.btn:disabled { opacity: .4; cursor: default; }
+.row { display: flex; gap: 12px; align-items: end; flex-wrap: wrap; }
+label { display: grid; gap: 6px; font-size: 14px; color: var(--fg-2); flex: 1 1 200px; min-width: 0; }
+input, select { height: 44px; border-radius: 12px; border: 1px solid var(--line); background: var(--card); padding: 0 14px; font-size: 16px; color: var(--fg); width: 100%; }
+.msg { margin: 0; padding: 12px 16px; border-radius: 12px; font-size: 15px; }
+.msg.ok { color: var(--ok); background: var(--ok-bg); }
+.msg.err { color: var(--bad); background: var(--bad-bg); }
+.key { font: 600 20px var(--mono); letter-spacing: .04em; padding: 16px 18px; border-radius: 14px; background: var(--soft); user-select: all; overflow-wrap: anywhere; }
+table { width: 100%; border-collapse: collapse; font-size: 15px; }
+th { text-align: left; font-weight: 500; color: var(--fg-3); font-size: 13px; padding: 0 12px 10px 0; }
+td { padding: 12px 12px 12px 0; border-top: 1px solid var(--line); vertical-align: top; }
+td.mono, .mono { font-family: var(--mono); font-size: 13px; }
+.tbl { overflow-x: auto; }
+.pill { display: inline-block; font-size: 13px; font-weight: 500; border-radius: 999px; padding: 2px 10px; }
+.pill.active { color: var(--ok); background: var(--ok-bg); }
+.pill.suspended { color: var(--warn); background: var(--warn-bg); }
+.pill.revoked, .pill.deactivated { color: var(--fg-3); background: var(--soft); }
+.link { border: 0; background: none; color: var(--focus); padding: 0; font-size: 15px; }
+.signin { max-width: 420px; margin: 10vh auto 0; display: grid; gap: 16px; }
+.muted { color: var(--fg-2); font-size: 14px; }
+@media (max-width: 720px) {
+  .kpis { grid-template-columns: minmax(0,1fr); }
+  .wrap { padding-left: max(16px, env(safe-area-inset-left)); padding-right: max(16px, env(safe-area-inset-right)); }
+  .card { padding: 20px; }
+}
+</style>
+</head>
+<body>
+<header hidden id="top">
+  <div class="wrap hdr">
+    <span class="brand">ARKHON<small>Operator Console</small></span>
+    <nav id="nav">
+      <a href="#overview">Overview</a><a href="#customers">Customers</a><a href="#licenses">Licenses</a><a href="#releases">Releases</a><a href="#audit">Audit log</a>
+    </nav>
+    <span class="grow"></span>
+    <button class="link" id="signout" type="button">Sign out</button>
+  </div>
+</header>
+
+<main class="wrap">
+  <!-- Sign in -->
+  <form class="card signin" id="v-signin">
+    <h1 style="font-size:30px">Sign in</h1>
+    <p class="muted" style="margin:0">Arkhon staff only. You need your password and the 6-digit code from your authenticator app.</p>
+    <label>Email<input id="si-email" type="email" autocomplete="username" required></label>
+    <label>Password<input id="si-pass" type="password" autocomplete="current-password" required></label>
+    <label>Authenticator code<input id="si-code" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" maxlength="6" required></label>
+    <button class="btn primary" type="submit">Sign in</button>
+    <p class="msg err" id="si-msg" hidden></p>
+  </form>
+
+  <!-- Overview -->
+  <section id="v-overview" hidden>
+    <h1>Overview</h1>
+    <p class="lede">How Arkhon's customers are doing today.</p>
+    <div class="kpis" style="margin-top:24px">
+      <div class="card kpi"><b id="k-customers">–</b><span>customers</span></div>
+      <div class="card kpi"><b id="k-licenses">–</b><span>active licenses</span></div>
+      <div class="card kpi"><b id="k-seats">–</b><span>seats sold</span></div>
+      <div class="card kpi"><b id="k-devices">–</b><span>computers running Arkhon</span></div>
+      <div class="card kpi" id="k-exp-card"><b id="k-expiring">–</b><span>licenses ending within 30 days</span></div>
+      <div class="card kpi" id="k-stale-card"><b id="k-stale">–</b><span>computers not seen in 30 days</span></div>
+    </div>
+  </section>
+
+  <!-- Customers -->
+  <section id="v-customers" hidden>
+    <h1>Customers</h1>
+    <p class="lede">Add a company, then give it a license.</p>
+    <form class="card" id="new-customer" style="margin-top:24px;display:grid;gap:16px">
+      <h2>Add a customer</h2>
+      <div class="row">
+        <label>Company name<input id="c-name" required></label>
+        <label>Contact email<input id="c-email" type="email" required></label>
+        <button class="btn primary" type="submit">Add customer</button>
+      </div>
+      <p class="msg" id="c-msg" hidden></p>
+    </form>
+    <div class="card tbl" style="margin-top:20px"><table><thead><tr><th>Company</th><th>Contact</th><th>Licenses</th><th></th></tr></thead><tbody id="c-rows"></tbody></table></div>
+  </section>
+
+  <!-- Licenses -->
+  <section id="v-licenses" hidden>
+    <h1>Licenses</h1>
+    <p class="lede">Pick a plan. Workspaces, engines and terms fill in for you.</p>
+    <form class="card" id="new-license" style="margin-top:24px;display:grid;gap:16px">
+      <h2>Issue a license</h2>
+      <div class="row">
+        <label>Customer<select id="l-customer" required></select></label>
+        <label>Plan<select id="l-plan"></select></label>
+        <label style="flex:0 1 120px">Seats<input id="l-seats" type="number" min="1"></label>
+        <label style="flex:0 1 140px">Computers<input id="l-devices" type="number" min="1" value="1"></label>
+      </div>
+      <div class="row">
+        <label>Industry pack<select id="l-pack"><option value="">None</option><option value="trades">Trades &amp; field services</option></select></label>
+        <label>Offline grace<select id="l-grace"><option value="30">30 days (normal)</option><option value="90">90 days (offline / air-gapped site)</option></select></label>
+        <label style="flex:0 1 auto;flex-direction:row;display:flex;align-items:center;gap:8px;height:44px"><input id="l-soft" type="checkbox" style="width:auto;height:auto"> Allow computers without a TPM</label>
+      </div>
+      <p class="muted" id="l-summary" style="margin:0"></p>
+      <div class="row"><button class="btn primary" type="submit">Issue license</button></div>
+      <p class="msg" id="l-msg" hidden></p>
+      <div id="l-key" hidden><p class="muted" style="margin:0 0 8px">Activation key. Give it to the customer now: Arkhon keeps only a hash, so it can't be shown again.</p><div class="key" id="l-keytext"></div></div>
+    </form>
+    <div class="card tbl" style="margin-top:20px"><table><thead><tr><th>License</th><th>Customer</th><th>Plan</th><th>Seats</th><th>Ends</th><th>Status</th></tr></thead><tbody id="l-rows"></tbody></table></div>
+    <div class="card" id="l-detail" hidden style="margin-top:20px;display:grid;gap:16px"></div>
+  </section>
+
+  <!-- Releases -->
+  <section id="v-releases" hidden>
+    <h1>Releases</h1>
+    <p class="lede">Publish an encrypted engine release. Customers get it only inside their update window.</p>
+    <form class="card" id="new-release" style="margin-top:24px;display:grid;gap:16px">
+      <div class="row">
+        <label>Engine<input id="r-engine" placeholder="core" required></label>
+        <label>Version<input id="r-version" placeholder="1.0.0" required></label>
+      </div>
+      <div class="row">
+        <label>Encrypted file name<input id="r-file" placeholder="core-q4_k_m.arkm" required></label>
+        <label style="flex:0 1 160px">Size (bytes)<input id="r-size" type="number" min="1" required></label>
+      </div>
+      <label>SHA-256 of the encrypted file<input id="r-sha" pattern="[0-9a-fA-F]{64}" required class="mono"></label>
+      <label>Release key (base64, from the packaging tool)<input id="r-cek" type="password" required class="mono"></label>
+      <div class="row"><button class="btn primary" type="submit">Publish release</button></div>
+      <p class="msg" id="r-msg" hidden></p>
+    </form>
+  </section>
+
+  <!-- Audit -->
+  <section id="v-audit" hidden>
+    <h1>Audit log</h1>
+    <p class="lede">Every change, who made it, and when.</p>
+    <div class="row" style="margin-top:20px"><label>Filter by license or customer id<input id="a-filter" placeholder="lic-… or cust-…"></label><button class="btn" id="a-go" type="button">Show</button></div>
+    <div class="card tbl" style="margin-top:16px"><table><thead><tr><th>When</th><th>Who</th><th>What</th><th>About</th></tr></thead><tbody id="a-rows"></tbody></table></div>
+  </section>
+</main>
+
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const day = t => new Date(t * 1000).toLocaleDateString([], { year: 'numeric', month: 'short', day: 'numeric' });
+  const when = t => new Date(t * 1000).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+  let token = null, customers = [], plans = [];
+  try { token = sessionStorage.getItem('arkhon-op'); } catch (_) {}
+
+  function show(el, text, ok) { el.hidden = false; el.className = 'msg ' + (ok ? 'ok' : 'err'); el.textContent = text; }
+  async function api(method, path, body) {
+    const r = await fetch(path, { method, headers: Object.assign({ 'content-type': 'application/json' }, token ? { authorization: 'Bearer ' + token } : {}), body: body ? JSON.stringify(body) : undefined });
+    const data = await r.json().catch(() => ({}));
+    if (r.status === 401) { signOut(); throw new Error(data.error || 'Sign in again.'); }
+    if (!r.ok) throw new Error(data.error || 'That didn’t work.');
+    return data;
+  }
+  function signOut() { token = null; try { sessionStorage.removeItem('arkhon-op'); } catch (_) {} route(); }
+  $('signout').addEventListener('click', signOut);
+
+  $('v-signin').addEventListener('submit', async e => {
+    e.preventDefault();
+    try {
+      const d = await api('POST', '/admin/login', { email: $('si-email').value, password: $('si-pass').value, code: $('si-code').value });
+      token = d.token; try { sessionStorage.setItem('arkhon-op', token); } catch (_) {}
+      $('si-pass').value = ''; $('si-code').value = ''; $('si-msg').hidden = true;
+      if (!location.hash || location.hash === '#signin') location.hash = '#overview'; else route();
+    } catch (err) { show($('si-msg'), err.message, false); }
+  });
+
+  const views = ['overview', 'customers', 'licenses', 'releases', 'audit'];
+  async function route() {
+    const signedIn = !!token;
+    $('top').hidden = !signedIn; $('v-signin').hidden = signedIn;
+    const v = views.includes(location.hash.slice(1)) ? location.hash.slice(1) : 'overview';
+    views.forEach(n => { $('v-' + n).hidden = !signedIn || n !== v; });
+    document.querySelectorAll('#nav a').forEach(a => a.toggleAttribute('aria-current', a.getAttribute('href') === '#' + v));
+    document.querySelectorAll('#nav a[aria-current]').forEach(a => a.setAttribute('aria-current', 'page'));
+    if (!signedIn) return;
+    try { await ({ overview: loadOverview, customers: loadCustomers, licenses: loadLicenses, releases: async () => {}, audit: loadAudit })[v](); } catch (_) {}
+  }
+  addEventListener('hashchange', route);
+
+  async function loadOverview() {
+    const o = await api('GET', '/admin/overview');
+    $('k-customers').textContent = o.customers; $('k-licenses').textContent = o.active_licenses;
+    $('k-seats').textContent = o.seats; $('k-devices').textContent = o.active_devices;
+    $('k-expiring').textContent = o.expiring_within_30_days; $('k-stale').textContent = o.devices_not_seen_30_days;
+    $('k-exp-card').classList.toggle('warn', o.expiring_within_30_days > 0);
+    $('k-stale-card').classList.toggle('warn', o.devices_not_seen_30_days > 0);
+  }
+
+  async function loadCustomers() {
+    customers = await api('GET', '/admin/customers');
+    $('c-rows').innerHTML = customers.map(c => `<tr><td><b>${esc(c.name)}</b><div class="mono" style="color:var(--fg-3)">${esc(c.id)}</div></td><td>${esc(c.email)}</td><td>${c.licenses}</td>
+      <td><button class="link" data-issue="${esc(c.id)}" type="button">Issue license</button></td></tr>`).join('') || '<tr><td colspan="4" class="muted">No customers yet. Add the first one above.</td></tr>';
+  }
+  $('c-rows').addEventListener('click', e => { const b = e.target.closest('[data-issue]'); if (b) { location.hash = '#licenses'; setTimeout(() => { $('l-customer').value = b.dataset.issue; }, 300); } });
+  $('new-customer').addEventListener('submit', async e => {
+    e.preventDefault();
+    try { await api('POST', '/admin/customers', { name: $('c-name').value, email: $('c-email').value });
+      show($('c-msg'), `Added ${$('c-name').value}.`, true); $('c-name').value = ''; $('c-email').value = ''; loadCustomers();
+    } catch (err) { show($('c-msg'), err.message, false); }
+  });
+
+  function planSummary() {
+    const p = plans.find(x => x.plan === $('l-plan').value); if (!p) return;
+    if (!$('l-seats').dataset.touched) $('l-seats').value = p.seats;
+    if (!$('l-soft').dataset.touched) $('l-soft').checked = p.allow_software_binding;
+    $('l-summary').textContent = `${p.label}: ${p.days} days, updates for ${p.update_window_days} days. Workspaces: ${p.workspaces.join(', ')}. Engines: ${p.engines.join(', ')}.`;
+  }
+  ['l-seats', 'l-soft'].forEach(id => $(id).addEventListener('input', () => { $(id).dataset.touched = '1'; }));
+  $('l-plan').addEventListener('change', planSummary);
+
+  async function loadLicenses() {
+    if (!plans.length) { plans = await api('GET', '/admin/plans'); $('l-plan').innerHTML = plans.map(p => `<option value="${p.plan}"${p.plan === 'business' ? ' selected' : ''}>${esc(p.label)}</option>`).join(''); }
+    customers = await api('GET', '/admin/customers');
+    const keep = $('l-customer').value;
+    $('l-customer').innerHTML = customers.map(c => `<option value="${esc(c.id)}">${esc(c.name)}</option>`).join('') || '<option value="">Add a customer first</option>';
+    if (keep) $('l-customer').value = keep;
+    planSummary();
+    const names = Object.fromEntries(customers.map(c => [c.id, c.name]));
+    const list = await api('GET', '/admin/licenses');
+    $('l-rows').innerHTML = list.map(l => `<tr><td><button class="link mono" data-lic="${esc(l.id)}" type="button">${esc(l.id)}</button></td><td>${esc(names[l.customer_id] || l.customer_id)}</td>
+      <td>${esc(l.plan)}</td><td>${l.seats}</td><td>${day(l.expires_at)}</td><td><span class="pill ${esc(l.status)}">${esc(l.status)}</span></td></tr>`).join('') || '<tr><td colspan="6" class="muted">No licenses yet.</td></tr>';
+  }
+  $('new-license').addEventListener('submit', async e => {
+    e.preventDefault(); $('l-key').hidden = true;
+    try {
+      const d = await api('POST', '/admin/licenses', {
+        customer_id: $('l-customer').value, plan: $('l-plan').value, seats: +$('l-seats').value, max_devices: +$('l-devices').value,
+        packs: $('l-pack').value ? [$('l-pack').value] : [], offline_grace_days: +$('l-grace').value, allow_software_binding: $('l-soft').checked,
+      });
+      show($('l-msg'), `License ${d.license_id} issued.`, true);
+      $('l-keytext').textContent = d.activation_key; $('l-key').hidden = false; loadLicenses();
+    } catch (err) { show($('l-msg'), err.message, false); }
+  });
+  $('l-rows').addEventListener('click', e => { const b = e.target.closest('[data-lic]'); if (b) openLicense(b.dataset.lic); });
+  async function openLicense(id) {
+    const l = await api('GET', '/admin/licenses/' + encodeURIComponent(id));
+    const d = $('l-detail'); d.hidden = false;
+    d.innerHTML = `<div class="row" style="align-items:center"><h2 class="mono" style="flex:1">${esc(l.id)}</h2><span class="pill ${esc(l.status)}">${esc(l.status)}</span></div>
+      <p class="muted" style="margin:0">${esc(l.plan)} · ${l.seats} seats · ${l.max_devices} computer(s) · ends ${day(l.expires_at)} · updates until ${day(l.update_window_end)}</p>
+      <div class="row">
+        ${l.status === 'active' ? '<button class="btn" data-act="suspended" type="button">Pause (e.g. unpaid)</button>' : ''}
+        ${l.status === 'suspended' ? '<button class="btn" data-act="active" type="button">Resume</button>' : ''}
+        ${l.status !== 'revoked' ? '<button class="btn" data-renew type="button">Renew 1 year</button><button class="btn danger" data-act="revoked" type="button">Revoke…</button>' : ''}
+      </div>
+      <p class="msg" id="d-msg" hidden></p>
+      <h2 style="font-size:17px">Computers</h2>
+      <div class="tbl"><table><thead><tr><th>Activated</th><th>Last seen</th><th>Security</th><th>Status</th><th></th></tr></thead><tbody>
+      ${l.activations.map(a => `<tr><td>${day(a.activated_at)}</td><td>${when(a.last_checkin_at)}</td><td>${esc(a.binding)}</td><td><span class="pill ${esc(a.status)}">${esc(a.status)}</span></td>
+        <td>${a.status === 'active' ? `<button class="link" data-free="${a.id}" type="button">Free this slot</button>` : ''}</td></tr>`).join('') || '<tr><td colspan="5" class="muted">Not activated on any computer yet.</td></tr>'}
+      </tbody></table></div>`;
+    d.dataset.id = id; d.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+  $('l-detail').addEventListener('click', async e => {
+    const id = $('l-detail').dataset.id, msg = () => $('d-msg');
+    const act = e.target.closest('[data-act]'), ren = e.target.closest('[data-renew]'), free = e.target.closest('[data-free]');
+    try {
+      if (act) {
+        const status = act.dataset.act;
+        if (status === 'revoked' && act.dataset.confirm !== '1') { act.dataset.confirm = '1'; act.textContent = 'Click again to revoke permanently'; return; }
+        await api('POST', `/admin/licenses/${encodeURIComponent(id)}/status`, { status, reason: 'operator console' });
+      } else if (ren) {
+        await api('POST', `/admin/licenses/${encodeURIComponent(id)}/renew`, { days: 365, update_window_days: 365 });
+      } else if (free) {
+        await api('POST', `/admin/activations/${free.dataset.free}/deactivate`);
+      } else return;
+      await loadLicenses(); await openLicense(id); show($('d-msg'), 'Saved. It’s in the audit log.', true);
+    } catch (err) { show(msg(), err.message, false); }
+  });
+
+  $('new-release').addEventListener('submit', async e => {
+    e.preventDefault();
+    try {
+      const d = await api('POST', '/admin/releases', { engine: $('r-engine').value.trim(), version: $('r-version').value.trim(), cek: $('r-cek').value.trim(),
+        files: { [$('r-file').value.trim()]: { size: +$('r-size').value, sha256: $('r-sha').value.trim().toLowerCase() } } });
+      $('r-cek').value = ''; show($('r-msg'), `Published ${$('r-engine').value} ${$('r-version').value} (release ${d.release_id}).`, true);
+    } catch (err) { show($('r-msg'), err.message, false); }
+  });
+
+  async function loadAudit() {
+    const f = $('a-filter').value.trim();
+    const rows = await api('GET', '/admin/audit' + (f ? '?target=' + encodeURIComponent(f) : ''));
+    $('a-rows').innerHTML = rows.map(r => `<tr><td>${when(r.at)}</td><td>${esc(r.actor)}</td><td>${esc(r.action)}</td><td class="mono">${esc(r.target)}</td></tr>`).join('') || '<tr><td colspan="4" class="muted">Nothing yet.</td></tr>';
+  }
+  $('a-go').addEventListener('click', loadAudit);
+
+  route();
+})();
+</script>
+</body>
+</html>

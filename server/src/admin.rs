@@ -24,7 +24,6 @@ use crate::public::{key_hash, LicenseRow, LICENSE_COLS};
 use crate::{audit, b64, to_i64, unb64, ApiError, ApiResult, AppState};
 
 const SESSION_SECS: u64 = 8 * 3600;
-const PLANS: [&str; 4] = ["starter", "business", "pro", "trial"];
 
 fn totp(secret: &[u8], email: &str) -> ApiResult<TOTP> {
     TOTP::new(
@@ -249,33 +248,162 @@ async fn list_customers(State(s): State<AppState>, _a: Admin) -> ApiResult<Json<
 pub struct NewLicense {
     /// Customer id.
     pub customer_id: String,
-    /// starter | business | pro | trial.
+    /// starter | business | pro | trial. Everything else defaults from [`plan_preset`].
     pub plan: String,
-    /// Seats.
-    pub seats: i32,
+    /// Seats (default: the plan's).
+    #[serde(default)]
+    pub seats: Option<i32>,
     /// Computers that may be active at once.
     #[serde(default = "one")]
     pub max_devices: i32,
-    /// Workspaces.
-    pub workspaces: Vec<String>,
-    /// Engines.
-    pub engines: Vec<String>,
-    /// Packs.
+    /// Workspaces (default: the plan's).
+    #[serde(default)]
+    pub workspaces: Option<Vec<String>>,
+    /// Engines (default: the plan's).
+    #[serde(default)]
+    pub engines: Option<Vec<String>>,
+    /// Industry packs (e.g. `trades`).
     #[serde(default)]
     pub packs: Vec<String>,
-    /// Allow software binding (computers without a TPM).
+    /// Allow software binding (computers without a TPM). Default: only for trials.
     #[serde(default)]
-    pub allow_software_binding: bool,
-    /// License length in days (trial: 14).
-    pub days: u64,
-    /// Updates included for this many days.
-    pub update_window_days: u64,
+    pub allow_software_binding: Option<bool>,
+    /// License length in days (default: the plan's).
+    #[serde(default)]
+    pub days: Option<u64>,
+    /// Updates included for this many days (default: the plan's).
+    #[serde(default)]
+    pub update_window_days: Option<u64>,
     /// Offline grace days (90 for air-gapped sites).
     #[serde(default = "thirty")]
     pub offline_grace_days: i32,
     /// Each device license lasts this many days before renewal.
     #[serde(default = "thirty")]
     pub license_term_days: i32,
+}
+
+/// What a plan includes by default. The one place plan contents are defined.
+#[derive(Debug, Clone, serde::Serialize)]
+pub struct Preset {
+    /// Plan key.
+    pub plan: &'static str,
+    /// Display name.
+    pub label: &'static str,
+    /// Default seats.
+    pub seats: i32,
+    /// License length.
+    pub days: u64,
+    /// Update window.
+    pub update_window_days: u64,
+    /// Workspaces.
+    pub workspaces: &'static [&'static str],
+    /// Engines.
+    pub engines: &'static [&'static str],
+    /// Software binding allowed by default.
+    pub allow_software_binding: bool,
+}
+
+const STARTER_WS: &[&str] = &["inbox", "knowledge", "docs"];
+const BUSINESS_WS: &[&str] = &[
+    "inbox",
+    "knowledge",
+    "docs",
+    "desk",
+    "meetings",
+    "growth",
+    "insights",
+];
+const PRO_WS: &[&str] = &[
+    "inbox",
+    "knowledge",
+    "docs",
+    "desk",
+    "meetings",
+    "growth",
+    "insights",
+    "tune",
+];
+
+/// Plan presets (brief section 7).
+pub const PRESETS: [Preset; 4] = [
+    Preset {
+        plan: "trial",
+        label: "14-day trial",
+        seats: 10,
+        days: 14,
+        update_window_days: 14,
+        workspaces: BUSINESS_WS,
+        engines: &[
+            "lite",
+            "core",
+            "vision",
+            "embed",
+            "rerank",
+            "scribe",
+            "scribe-small",
+        ],
+        allow_software_binding: true,
+    },
+    Preset {
+        plan: "starter",
+        label: "Starter",
+        seats: 5,
+        days: 365,
+        update_window_days: 365,
+        workspaces: STARTER_WS,
+        engines: &["lite", "core", "vision", "embed", "rerank"],
+        allow_software_binding: false,
+    },
+    Preset {
+        plan: "business",
+        label: "Business",
+        seats: 10,
+        days: 365,
+        update_window_days: 365,
+        workspaces: BUSINESS_WS,
+        engines: &[
+            "lite",
+            "core",
+            "vision",
+            "reason",
+            "embed",
+            "rerank",
+            "scribe",
+            "scribe-small",
+        ],
+        allow_software_binding: false,
+    },
+    Preset {
+        plan: "pro",
+        label: "Pro",
+        seats: 25,
+        days: 365,
+        update_window_days: 365,
+        workspaces: PRO_WS,
+        engines: &[
+            "lite",
+            "core",
+            "vision",
+            "reason",
+            "pro",
+            "code",
+            "embed",
+            "rerank",
+            "scribe",
+            "scribe-small",
+        ],
+        allow_software_binding: false,
+    },
+];
+
+/// The preset for a plan key.
+#[must_use]
+pub fn plan_preset(plan: &str) -> Option<&'static Preset> {
+    PRESETS.iter().find(|p| p.plan == plan)
+}
+
+async fn list_plans(_a: Admin) -> Json<Value> {
+    Json(json!(PRESETS))
 }
 
 fn one() -> i32 {
@@ -290,17 +418,21 @@ async fn create_license(
     Admin(by): Admin,
     Json(n): Json<NewLicense>,
 ) -> ApiResult<Json<Value>> {
-    if !PLANS.contains(&n.plan.as_str()) {
-        return Err(ApiError::bad(
-            "plan must be starter, business, pro or trial.",
-        ));
-    }
-    if n.seats < 1
-        || n.max_devices < 1
-        || n.days == 0
-        || n.engines.is_empty()
-        || n.workspaces.is_empty()
-    {
+    let preset = plan_preset(&n.plan)
+        .ok_or_else(|| ApiError::bad("plan must be starter, business, pro or trial."))?;
+    let own = |v: &[&str]| v.iter().map(|x| (*x).to_owned()).collect::<Vec<_>>();
+    let seats = n.seats.unwrap_or(preset.seats);
+    let workspaces = n
+        .workspaces
+        .clone()
+        .unwrap_or_else(|| own(preset.workspaces));
+    let engines = n.engines.clone().unwrap_or_else(|| own(preset.engines));
+    let days = n.days.unwrap_or(preset.days);
+    let update_window_days = n.update_window_days.unwrap_or(preset.update_window_days);
+    let allow_software = n
+        .allow_software_binding
+        .unwrap_or(preset.allow_software_binding);
+    if seats < 1 || n.max_devices < 1 || days == 0 || engines.is_empty() || workspaces.is_empty() {
         return Err(ApiError::bad(
             "A license needs seats, devices, days, at least one workspace and one engine.",
         ));
@@ -324,15 +456,15 @@ async fn create_license(
     .bind(&n.customer_id)
     .bind(key_hash(&key))
     .bind(&n.plan)
-    .bind(n.seats)
+    .bind(seats)
     .bind(n.max_devices)
-    .bind(&n.workspaces)
-    .bind(&n.engines)
+    .bind(&workspaces)
+    .bind(&engines)
     .bind(&n.packs)
-    .bind(n.allow_software_binding)
+    .bind(allow_software)
     .bind(to_i64(now))
-    .bind(to_i64(now + n.days * 86_400))
-    .bind(to_i64(now + n.update_window_days * 86_400))
+    .bind(to_i64(now + days * 86_400))
+    .bind(to_i64(now + update_window_days * 86_400))
     .bind(n.offline_grace_days)
     .bind(n.license_term_days)
     .execute(&s.pool)
@@ -343,7 +475,7 @@ async fn create_license(
         &by,
         "create-license",
         &id,
-        json!({ "customer": n.customer_id, "plan": n.plan, "seats": n.seats }),
+        json!({ "customer": n.customer_id, "plan": n.plan, "seats": seats }),
     )
     .await?;
     Ok(Json(
@@ -734,6 +866,7 @@ pub fn routes() -> Router<AppState> {
     Router::new()
         .route("/admin/login", post(login))
         .route("/admin/overview", get(overview))
+        .route("/admin/plans", get(list_plans))
         .route(
             "/admin/customers",
             post(create_customer).get(list_customers),

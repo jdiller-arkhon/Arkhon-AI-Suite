@@ -50,6 +50,8 @@ paths:
       responses: { "200": { description: "{token, expires_at}" }, "403": { description: Wrong credentials } }
   /admin/overview:
     get: { summary: Counts for the operator dashboard, security: [ { bearer: [] } ], responses: { "200": { description: Overview } } }
+  /admin/plans:
+    get: { summary: Plan presets (what each plan includes by default), security: [ { bearer: [] } ], responses: { "200": { description: Presets } } }
   /admin/customers:
     get: { summary: List customers, security: [ { bearer: [] } ], responses: { "200": { description: Customers } } }
     post:
@@ -124,7 +126,8 @@ components:
       properties: { license_id: { type: string }, license: { type: string, format: byte }, revocation_list: { type: string, format: byte } }
     NewLicense:
       type: object
-      required: [customer_id, plan, seats, workspaces, engines, days, update_window_days]
+      required: [customer_id, plan]
+      description: Only customer_id and plan are required; everything else defaults from the plan preset (GET /admin/plans).
       properties:
         customer_id: { type: string }
         plan: { enum: [starter, business, pro, trial] }

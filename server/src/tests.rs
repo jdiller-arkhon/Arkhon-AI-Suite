@@ -648,7 +648,7 @@ fn openapi_documents_every_route_and_nothing_else() {
             let rest = &squashed[i + m.len()..];
             rest[..rest.find('"').unwrap()].to_owned()
         })
-        .filter(|p| p != "/openapi.yaml")
+        .filter(|p| p != "/openapi.yaml" && p != "/console")
         .collect();
     let documented: std::collections::BTreeSet<String> =
         documented.into_iter().map(str::to_owned).collect();
