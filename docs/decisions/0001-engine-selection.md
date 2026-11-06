@@ -44,7 +44,7 @@ confirmed it.
 5. **Pin a llama.cpp build in Phase 1.** We couldn't find the minimum release tag that supports `qwen35` / `qwen35moe` (UNVERIFIED). Phase 1 pins an exact commit and records it here.
 
 ## Open items for later phases
-- Measure VRAM, RAM, tok/s and quality deltas per quant on the RTX 5070. `models/registry.yaml` `quants` stay empty until then, because the schema requires a saved run log.
+- Measure VRAM, RAM, tok/s and quality deltas per quant on each backend in the reference hardware matrix (ADR-0004). `models/registry.yaml` `quants` stay empty until then, because the schema requires a saved run log.
 - Check whether a Qwen3.5-generation embedding or reranker exists. Also check for 2026 Apache/MIT competitors (Gemma, Mistral, Granite). Not checked this session: UNVERIFIED.
 - Third-party GGUFs (unsloth) are a convenience only. Release builds will **convert and quantize from the official safetensors ourselves**, so the supply chain is ours and checksums are reproducible.
 

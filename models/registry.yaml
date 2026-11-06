@@ -1,6 +1,7 @@
 # Arkhon engine registry — single source of truth for engines, bases, licenses, tiers, quants.
 # Phase 0: bases verified 2026-11-06 (see docs/decisions/0001-engine-selection.md).
-# `quants` are filled ONLY with measured values from runs on the reference RTX 5070 (Phase 1/7).
+# `quants` are filled ONLY with measured values; `measured_on` must be a machine ID from
+# docs/hardware-matrix.md (hardware-neutral, ADR-0004). Tiers are memory-based, not GPU-model-based.
 schema_version: 1
 allowed_licenses: [Apache-2.0, MIT]
 

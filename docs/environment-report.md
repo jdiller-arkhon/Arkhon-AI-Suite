@@ -1,11 +1,14 @@
 # Environment report — Phase 0
 
-## Owner dev machine (RTX 5070): **PENDING — must run locally**
+## Reference machines: **PENDING — see `docs/hardware-matrix.md`**
+The product targets any customer hardware (ADR-0004). The owner's RTX 5070 is one reference machine (`ref-nv-12`).
+
+### ref-nv-12 (owner dev box)
 This build ran in a sandboxed cloud container. It cannot see the owner's machine, so no hardware
 values are asserted here. Run this and attach the output to the gate PR:
 
 ```bash
-cd tools/env-check && python -m arkhon_envcheck.check --json reports/dev-rtx5070.json
+cd tools/env-check && python -m arkhon_envcheck.check --json reports/ref-nv-12.json
 ```
 On Windows, also run these in an elevated PowerShell: `nvidia-smi`, `Get-Tpm`, and `tpm.msc`
 (confirm "Specification Version: 2.0").
@@ -23,6 +26,6 @@ TPM       : present=False (no /sys/class/tpm/tpm0)
 Tier      : S
 ```
 Toolchain: rustc 1.97.0, cargo 1.97.0, Python 3.13.18, Node 22.23.4, pnpm available.
-Consequence: GPU and TPM work (Phase 1 onward) has to run on the owner's machine or a self-hosted
-runner. **Recommendation:** register the RTX 5070 machine as a self-hosted GitHub Actions runner
-labelled `gpu,tpm` for Phase 1 and Phase 4 tests.
+Consequence: GPU and TPM work (Phase 1 onward) needs real hardware across backends. **Recommendation:**
+self-hosted runners labelled by backend (`cuda`, `vulkan`, `rocm`, `tpm`), with Metal covered by GitHub's
+hosted Apple Silicon runners. See `docs/hardware-matrix.md`.
