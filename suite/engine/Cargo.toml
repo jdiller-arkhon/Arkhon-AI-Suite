@@ -1,0 +1,11 @@
+[package]
+name = "arkhon-engine"
+description = "Suite engine: workflows, review queue, retrieval index, value metrics, audit log."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[lints]
+workspace = true

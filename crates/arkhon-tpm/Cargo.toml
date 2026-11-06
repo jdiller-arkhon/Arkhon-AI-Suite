@@ -1,0 +1,11 @@
+[package]
+name = "arkhon-tpm"
+description = "TPM 2.0 abstraction (Windows TBS / Linux tpm2-tss) with software keystore fallback."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[lints]
+workspace = true
