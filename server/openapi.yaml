@@ -1,0 +1,140 @@
+openapi: 3.1.0
+info:
+  title: Arkhon License Manager
+  version: 0.1.0
+  description: |
+    License and activation METADATA only. No customer content is ever sent here (N1).
+    Binary fields are base64 in JSON. Errors are `{"error": "<plain sentence>"}`.
+    Rate limit: 60 requests/minute per client IP (429 when exceeded).
+paths:
+  /healthz:
+    get: { summary: Liveness, responses: { "200": { description: ok } } }
+  /v1/activate:
+    post:
+      summary: Activate a computer with an activation key
+      requestBody: { required: true, content: { application/json: { schema: { $ref: "#/components/schemas/ActivateRequest" } } } }
+      responses:
+        "200": { description: Signed license, content: { application/json: { schema: { $ref: "#/components/schemas/LicenseResponse" } } } }
+        "403": { description: License paused/expired/revoked, or software binding not allowed }
+        "404": { description: Unknown activation key }
+        "409": { description: All device slots in use }
+  /v1/checkin:
+    post:
+      summary: Renew this computer's license and fetch the revocation list
+      requestBody: { required: true, content: { application/json: { schema: { $ref: "#/components/schemas/CheckinRequest" } } } }
+      responses:
+        "200": { description: Renewed license, content: { application/json: { schema: { $ref: "#/components/schemas/LicenseResponse" } } } }
+        "403": { description: Not activated, hardware changed too much, or license not usable }
+  /v1/deactivate:
+    post:
+      summary: Free this computer's slot (transfer = deactivate + activate elsewhere)
+      requestBody: { required: true, content: { application/json: { schema: { type: object, required: [license_id, device_public_key], properties: { license_id: { type: string }, device_public_key: { type: string, format: byte } } } } } }
+      responses: { "200": { description: Deactivated }, "404": { description: Not activated } }
+  /v1/offline/renew:
+    post:
+      summary: Offline renewal by file exchange (air-gapped sites)
+      requestBody: { required: true, content: { application/octet-stream: { schema: { type: string, format: binary, description: RenewalRequest bytes } } } }
+      responses:
+        "200": { description: RenewalResponse bytes, content: { application/octet-stream: { schema: { type: string, format: binary } } } }
+        "400": { description: Not a renewal request }
+        "409": { description: Request already used }
+  /v1/releases:
+    get:
+      summary: Signed release manifests the license may install (within its update window)
+      parameters: [ { name: license_id, in: query, required: true, schema: { type: string } } ]
+      responses: { "200": { description: Releases }, "404": { description: Unknown license } }
+  /admin/login:
+    post:
+      summary: Sign in with password + authenticator code; returns an 8-hour bearer token
+      requestBody: { required: true, content: { application/json: { schema: { type: object, required: [email, password, code], properties: { email: { type: string }, password: { type: string }, code: { type: string } } } } } }
+      responses: { "200": { description: "{token, expires_at}" }, "403": { description: Wrong credentials } }
+  /admin/overview:
+    get: { summary: Counts for the operator dashboard, security: [ { bearer: [] } ], responses: { "200": { description: Overview } } }
+  /admin/customers:
+    get: { summary: List customers, security: [ { bearer: [] } ], responses: { "200": { description: Customers } } }
+    post:
+      summary: Create a customer
+      security: [ { bearer: [] } ]
+      requestBody: { required: true, content: { application/json: { schema: { type: object, required: [name, email], properties: { name: { type: string }, email: { type: string } } } } } }
+      responses: { "200": { description: "{id}" } }
+  /admin/licenses:
+    get:
+      summary: List licenses
+      security: [ { bearer: [] } ]
+      parameters: [ { name: customer_id, in: query, schema: { type: string } } ]
+      responses: { "200": { description: Licenses } }
+    post:
+      summary: Create a license; the activation key is returned once and only its hash is stored
+      security: [ { bearer: [] } ]
+      requestBody: { required: true, content: { application/json: { schema: { $ref: "#/components/schemas/NewLicense" } } } }
+      responses: { "200": { description: "{license_id, activation_key}" } }
+  /admin/licenses/{id}:
+    get: { summary: License with its devices, security: [ { bearer: [] } ], parameters: [ { name: id, in: path, required: true, schema: { type: string } } ], responses: { "200": { description: License } } }
+  /admin/licenses/{id}/status:
+    post:
+      summary: Set active / suspended / revoked (revoked is final)
+      security: [ { bearer: [] } ]
+      parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+      requestBody: { required: true, content: { application/json: { schema: { type: object, required: [status], properties: { status: { enum: [active, suspended, revoked] }, reason: { type: string } } } } } }
+      responses: { "200": { description: Updated }, "409": { description: Revoked licenses can't be reactivated } }
+  /admin/licenses/{id}/renew:
+    post:
+      summary: Extend expiry and update window
+      security: [ { bearer: [] } ]
+      parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+      requestBody: { required: true, content: { application/json: { schema: { type: object, required: [days, update_window_days], properties: { days: { type: integer }, update_window_days: { type: integer } } } } } }
+      responses: { "200": { description: Renewed } }
+  /admin/activations/{id}/deactivate:
+    post: { summary: Free a device slot for a customer, security: [ { bearer: [] } ], parameters: [ { name: id, in: path, required: true, schema: { type: integer } } ], responses: { "200": { description: Deactivated } } }
+  /admin/releases:
+    post:
+      summary: Publish a release (manifest signed by the issuing key; CEK sealed at rest)
+      security: [ { bearer: [] } ]
+      requestBody: { required: true, content: { application/json: { schema: { type: object, required: [engine, version, files, cek], properties: { engine: { type: string }, version: { type: string }, cek: { type: string, format: byte }, files: { type: object, additionalProperties: { type: object, properties: { size: { type: integer }, sha256: { type: string } } } } } } } } }
+      responses: { "200": { description: "{release_id, manifest}" }, "409": { description: Version exists } }
+  /admin/revocations:
+    post:
+      summary: Upload a newer root-signed issuing-key revocation list
+      security: [ { bearer: [] } ]
+      requestBody: { required: true, content: { application/json: { schema: { type: object, required: [list], properties: { list: { type: string, format: byte } } } } } }
+      responses: { "200": { description: Stored }, "403": { description: Not root-signed }, "409": { description: Not newer } }
+  /admin/audit:
+    get:
+      summary: Audit log, newest first
+      security: [ { bearer: [] } ]
+      parameters: [ { name: target, in: query, schema: { type: string } }, { name: limit, in: query, schema: { type: integer } } ]
+      responses: { "200": { description: Entries } }
+components:
+  securitySchemes:
+    bearer: { type: http, scheme: bearer }
+  schemas:
+    Device:
+      type: object
+      required: [device_public_key, fingerprint, binding]
+      properties:
+        device_public_key: { type: string, format: byte, description: 65-byte uncompressed P-256 key }
+        fingerprint: { type: string, format: byte, description: 160 bytes of salted component hashes (no raw serials) }
+        binding: { enum: [tpm, secure-enclave, software] }
+    ActivateRequest:
+      allOf: [ { $ref: "#/components/schemas/Device" }, { type: object, required: [activation_key], properties: { activation_key: { type: string } } } ]
+    CheckinRequest:
+      allOf: [ { $ref: "#/components/schemas/Device" }, { type: object, required: [license_id], properties: { license_id: { type: string } } } ]
+    LicenseResponse:
+      type: object
+      properties: { license_id: { type: string }, license: { type: string, format: byte }, revocation_list: { type: string, format: byte } }
+    NewLicense:
+      type: object
+      required: [customer_id, plan, seats, workspaces, engines, days, update_window_days]
+      properties:
+        customer_id: { type: string }
+        plan: { enum: [starter, business, pro, trial] }
+        seats: { type: integer }
+        max_devices: { type: integer, default: 1 }
+        workspaces: { type: array, items: { type: string } }
+        engines: { type: array, items: { type: string } }
+        packs: { type: array, items: { type: string } }
+        allow_software_binding: { type: boolean, default: false }
+        days: { type: integer }
+        update_window_days: { type: integer }
+        offline_grace_days: { type: integer, default: 30 }
+        license_term_days: { type: integer, default: 30 }

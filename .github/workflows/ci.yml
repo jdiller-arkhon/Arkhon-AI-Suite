@@ -11,6 +11,15 @@ concurrency:
 jobs:
   rust:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env: { POSTGRES_USER: arkhon, POSTGRES_HOST_AUTH_METHOD: trust }
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U arkhon" --health-interval 5s --health-retries 10
+    env:
+      ARKHON_TEST_DATABASE_URL: postgresql://arkhon@127.0.0.1:5432/postgres
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@1.99.1
@@ -18,7 +27,13 @@ jobs:
       - uses: Swatinem/rust-cache@v2
       - run: cargo fmt --all --check
       - run: cargo clippy --workspace --all-targets -- -D warnings
+      - run: sudo apt-get update && sudo apt-get install -y libtss2-dev swtpm
       - run: cargo test --workspace
+      - name: TPM tests against swtpm
+        run: |
+          mkdir -p /tmp/swtpm
+          swtpm socket --tpmstate dir=/tmp/swtpm --tpm2 --server type=tcp,port=2321 --ctrl type=tcp,port=2322 --flags not-need-init,startup-clear --daemon
+          ARKHON_TEST_TCTI="swtpm:host=127.0.0.1,port=2321" cargo test -p arkhon-tpm --features tpm -- --nocapture
   python:
     runs-on: ubuntu-latest
     steps:

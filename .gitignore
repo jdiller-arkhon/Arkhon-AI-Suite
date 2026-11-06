@@ -65,3 +65,8 @@ fuzz/target/
 fuzz/corpus/
 fuzz/artifacts/
 fuzz/coverage/
+
+# Deployment secrets
+deploy/secrets/
+*.hex.key
+cek-kek.hex
