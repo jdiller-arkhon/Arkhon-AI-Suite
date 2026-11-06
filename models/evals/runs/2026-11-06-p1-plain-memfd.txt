@@ -1,0 +1,9 @@
+# Phase 1 baseline run (plaintext source → sealed memfd → llama-server), 2026-11-06T18:16:56Z
+# host: build container, 4 vCPU Xeon @2.1GHz, 15.7 GiB RAM, no swap, no GPU
+# llama.cpp commit: 6c01da6278ab6c69ed67d9124806b50d2b299ba7
+# model: Qwen/Qwen3-0.6B-GGUF Qwen3-0.6B-Q8_0.gguf sha256 9465e63a22add5354d9bb4b99e90117043c7124007664907259bd16d043bb031 (Apache-2.0)
+# cmd: target/release/p1-spike --server llama-server --model Qwen3-0.6B-Q8_0.gguf
+{"step":"memfd_loaded","bytes":639446688,"ms":4835}
+{"step":"server_ready","ok":true,"ms":3248}
+{"step":"completion","ms":679,"http_ok":true}
+{"choices":[{"finish_reason":"stop","index":0,"message":{"role":"assistant","content":"An HVAC system is a system that regulates temperature and humidity in a building to maintain a comfortable environment."}}],"created":1793988730,"model":"/proc/self/fd/3","system_fingerprint":"b1-6c01da6","object":"chat.completion","usage":{"completion_tokens":25,"prompt_tokens":24,"total_tokens":49,"prompt_tokens_details":{"cached_tokens":0}},"id":"chatcmpl-fWYUu1XzQA0hCIlsTz4C400RBdAvpxJ5","timings":{"cache_n":0,"prompt_n":24,"prompt_ms":108.93,"prompt_per_token_ms":4.53875,"prompt_per_second":220.32497934453318,"predicted_n":25,"predicted_ms":566.098,"predicted_per_token_ms":23.587416666666666,"predicted_per_second":42.39548629389258}}
