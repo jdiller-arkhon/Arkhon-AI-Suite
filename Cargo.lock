@@ -137,7 +137,11 @@ dependencies = [
 name = "arkhon-runtime"
 version = "0.0.1"
 dependencies = [
+ "arkhon-crypto",
+ "arkhon-license",
+ "arkhon-tpm",
  "nix",
+ "rand_core 0.6.4",
 ]
 
 [[package]]

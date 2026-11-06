@@ -12,3 +12,13 @@ workspace = true
 
 [target.'cfg(target_os = "linux")'.dependencies]
 nix = { version = "0.31.3", features = ["fs", "mman", "process", "resource"] }
+
+[dependencies]
+arkhon-crypto = { path = "../crates/arkhon-crypto" }
+arkhon-license = { path = "../crates/arkhon-license" }
+arkhon-tpm = { path = "../crates/arkhon-tpm" }
+rand_core = { version = "=0.6.4", features = ["getrandom"] }
+
+[features]
+default = []
+tpm = ["arkhon-tpm/tpm"]
