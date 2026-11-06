@@ -28,7 +28,7 @@ Date: 2026-11-06 · Branch: `claude/kind-mendel-jsavoh` · Needs: N1, N2, N10, N
 4. Blackwell (sm_120) needs a recent CUDA toolchain. The Windows in-memory load path is the biggest Phase 1 unknown.
 
 ## Decisions needed
-1. **Launch Industry Pack** (professional services / healthcare admin / trades / gov-defense subcontractors).
+1. ~~Launch Industry Pack~~ → **Trades & field services** (ADR-0003, decided 2026-11-06).
 2. Approve ADR-0001, including the proposal that **Vision = Core weights + LoRA** (saves about 5–6 GB on tier M).
 3. Approve registering the RTX 5070 machine as a self-hosted CI runner (`gpu,tpm`).
 4. Branch naming: the session can only push `claude/kind-mendel-jsavoh`. Rename to `phase-0-bootstrap` when opening the PR, or accept the name as-is.
