@@ -28,7 +28,7 @@ Customer data never leaves the customer's machine (**N1**).
 ```bash
 pipx install pre-commit && pre-commit install   # gitleaks + fmt hooks
 cargo test --workspace
-pip install -e ".[dev]" && pytest -q
+pip install pyyaml jsonschema pytest ruff && pytest -q
 python tools/env-check/arkhon_envcheck/check.py   # hardware/TPM report
 ```
 
