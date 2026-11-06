@@ -2,198 +2,178 @@
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap">
 <style>
-/* Layout: "Command" console. Left rail of workspaces; a horizon band (the mark's arc) carries
-   the value + privacy readouts; below it the review queue (the work) beside the skyline
-   (hours saved, drawn as the mark's antenna bars). Dark-first, graphite/mist from arkhonindustries.com. */
+/* Layout: developer-console chrome (top bar + underline tabs, hairline grids, dense rows)
+   wrapped around an assistant composer as the page's center of gravity. Monochrome;
+   color is reserved for state. The Arkhon chrome mark + skyline are the only flourish. */
 :root {
-  --bg: #0c0e12;          /* site night */
-  --surface: #13161c;
-  --surface-2: #181c24;
-  --line: #232833;        /* site steel */
-  --fg: #f2f3f6;          /* site mist */
-  --fg-2: #a7adba;        /* site muted */
-  --fg-3: #6b7180;
-  --accent: #e9ebef;      /* graphite inverts to mist on dark: pill primary */
-  --accent-fg: #111113;
-  --sage: #4fa97a;        /* --sage lifted for dark contrast */
-  --sage-bg: rgba(79,169,122,.12);
-  --amber: #e2a03f;       /* --chart-3 */
-  --amber-bg: rgba(226,160,63,.12);
-  --red: #f0645f;
-  --sky: #2b9fd0;         /* --chart-2 */
-  --chrome-a: #f4f5f7; --chrome-b: #8d939e; --chrome-c: #3a3d44;
-  --shadow: 0 1px 2px rgba(0,0,0,.3), 0 24px 48px -24px rgba(0,0,0,.6);
+  --bg: #ffffff; --bg-2: #fafafa; --bg-3: #f2f2f2;
+  --line: #eaeaea; --line-2: #d4d4d4;
+  --fg: #171717; --fg-2: #666666; --fg-3: #8f8f8f;
+  --inv: #171717; --inv-fg: #ffffff;
+  --ok: #1f8a4c; --warn: #b25d00; --bad: #d1242f; --info: #0068d6;
+  --chrome-a: #d6d8dd; --chrome-b: #5f636c; --chrome-c: #1d1f24;
+  --ring: 0 0 0 1px var(--line), 0 1px 2px rgba(0,0,0,.04), 0 8px 24px -12px rgba(0,0,0,.12);
   --font: "Geist", -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
   --mono: "Geist Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
-  --radius: .875rem;
   --ease: cubic-bezier(.22,1,.36,1);
-  color-scheme: dark;
 }
-@media (prefers-color-scheme: light) { :root:not([data-theme="dark"]) {
-  --bg: #fbfbfb; --surface: #ffffff; --surface-2: #f7f7f8; --line: #e6e6e9;
-  --fg: #1d1d1f; --fg-2: #5f6168; --fg-3: #8a8c94;
-  --accent: #2b2b2e; --accent-fg: #ffffff;
-  --sage: #2f7a55; --sage-bg: rgba(47,122,85,.1);
-  --amber: #b45309; --amber-bg: rgba(180,83,9,.09);
-  --red: #d92d20; --sky: #0369a1;
-  --chrome-a: #d6d8dd; --chrome-b: #5f636c; --chrome-c: #1d1f24;
-  --shadow: 0 1px 2px #3738440a, 0 8px 24px -12px #282c5a24;
-  color-scheme: light;
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #000000; --bg-2: #0a0a0a; --bg-3: #1a1a1a;
+  --line: #1f1f1f; --line-2: #2e2e2e;
+  --fg: #ededed; --fg-2: #a1a1a1; --fg-3: #707070;
+  --inv: #ededed; --inv-fg: #0a0a0a;
+  --ok: #3fb950; --warn: #f0a33a; --bad: #ff6166; --info: #52a8ff;
+  --chrome-a: #f4f5f7; --chrome-b: #8d939e; --chrome-c: #3a3d44;
+  --ring: 0 0 0 1px var(--line-2), 0 16px 40px -16px rgba(0,0,0,.8);
+  color-scheme: dark;
 } }
-:root[data-theme="light"] {
-  --bg: #fbfbfb; --surface: #ffffff; --surface-2: #f7f7f8; --line: #e6e6e9;
-  --fg: #1d1d1f; --fg-2: #5f6168; --fg-3: #8a8c94;
-  --accent: #2b2b2e; --accent-fg: #ffffff;
-  --sage: #2f7a55; --sage-bg: rgba(47,122,85,.1);
-  --amber: #b45309; --amber-bg: rgba(180,83,9,.09);
-  --red: #d92d20; --sky: #0369a1;
-  --chrome-a: #d6d8dd; --chrome-b: #5f636c; --chrome-c: #1d1f24;
-  --shadow: 0 1px 2px #3738440a, 0 8px 24px -12px #282c5a24;
-  color-scheme: light;
+:root[data-theme="dark"] {
+  --bg: #000000; --bg-2: #0a0a0a; --bg-3: #1a1a1a;
+  --line: #1f1f1f; --line-2: #2e2e2e;
+  --fg: #ededed; --fg-2: #a1a1a1; --fg-3: #707070;
+  --inv: #ededed; --inv-fg: #0a0a0a;
+  --ok: #3fb950; --warn: #f0a33a; --bad: #ff6166; --info: #52a8ff;
+  --chrome-a: #f4f5f7; --chrome-b: #8d939e; --chrome-c: #3a3d44;
+  --ring: 0 0 0 1px var(--line-2), 0 16px 40px -16px rgba(0,0,0,.8);
+  color-scheme: dark;
 }
 
 * { box-sizing: border-box; }
-html, body { height: 100%; }
-body { margin: 0; background: var(--bg); color: var(--fg); font: 400 14px/1.5 var(--font);
-  -webkit-font-smoothing: antialiased; }
-button { font: inherit; color: inherit; cursor: pointer; }
-:focus-visible { outline: 2px solid var(--sky); outline-offset: 2px; border-radius: 6px; }
-.num { font-family: var(--mono); font-variant-numeric: tabular-nums; }
-.eyebrow { font-size: 11px; font-weight: 600; letter-spacing: .16em; text-transform: uppercase; color: var(--fg-2); }
+[hidden] { display: none !important; }
+body { margin: 0; background: var(--bg); color: var(--fg); font: 400 14px/1.5 var(--font); -webkit-font-smoothing: antialiased; }
+button, input, textarea { font: inherit; color: inherit; }
+button { cursor: pointer; }
+a { color: inherit; }
+:focus-visible { outline: 2px solid var(--info); outline-offset: 2px; border-radius: 6px; }
+.mono { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+.wrap { max-width: 1200px; margin: 0 auto; padding-left: max(24px, env(safe-area-inset-left, 0px)); padding-right: max(24px, env(safe-area-inset-right, 0px)); }
+.grow { flex: 1; }
 
-.app { display: grid; grid-template-columns: 232px minmax(0,1fr); min-height: 100%; }
+/* ---------- Top bar ---------- */
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--bg); }
+header.bar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--bg); border-bottom: 1px solid var(--line); }
+.bar-row { display: flex; align-items: center; gap: 10px; height: 56px; }
+.mark { width: 26px; height: 22px; flex: none; }
+.slash { color: var(--line-2); font-size: 20px; font-weight: 300; }
+.crumb { display: inline-flex; align-items: center; gap: 8px; padding: 4px 8px; border-radius: 8px; border: 0; background: none; font-weight: 500; }
+.crumb:hover { background: var(--bg-3); }
+.avatar { width: 20px; height: 20px; border-radius: 50%; background: linear-gradient(135deg, var(--chrome-a), var(--chrome-c)); flex: none; }
+.badge { font: 500 11px var(--mono); border: 1px solid var(--line-2); color: var(--fg-2); border-radius: 999px; padding: 1px 8px; }
+.status { display: inline-flex; align-items: center; gap: 7px; font-size: 13px; color: var(--fg-2); }
+.dot { width: 8px; height: 8px; border-radius: 50%; background: var(--ok); flex: none; display: inline-block; }
+.dot.warn { background: var(--warn); } .dot.bad { background: var(--bad); } .dot.idle { background: var(--fg-3); }
+.btn { height: 32px; padding: 0 12px; border-radius: 6px; border: 1px solid var(--line-2); background: var(--bg); font-weight: 500; font-size: 13px;
+  display: inline-flex; align-items: center; gap: 6px; transition: background .15s; white-space: nowrap; }
+.btn:hover { background: var(--bg-3); }
+.btn.primary { background: var(--inv); color: var(--inv-fg); border-color: var(--inv); }
+.btn.primary:hover { opacity: .88; }
+.btn.sm { height: 28px; font-size: 12.5px; padding: 0 10px; }
+.tabs { display: flex; gap: 2px; overflow-x: auto; scrollbar-width: none; margin-bottom: -1px; }
+.tabs a { position: relative; padding: 8px 12px 12px; color: var(--fg-2); text-decoration: none; font-size: 14px; white-space: nowrap; border-radius: 6px; }
+.tabs a:hover { color: var(--fg); }
+.tabs a[aria-current="page"] { color: var(--fg); }
+.tabs a[aria-current="page"]::after { content: ""; position: absolute; left: 12px; right: 12px; bottom: 0; height: 2px; background: var(--fg); }
+.tabs .n { font: 500 11px var(--mono); color: var(--fg-3); margin-left: 4px; }
 
-/* ---------- Rail ---------- */
-.rail { border-right: 1px solid var(--line); padding: 20px 14px; display: flex; flex-direction: column; gap: 22px;
-  position: sticky; top: 0; height: 100vh; }
-.brand { display: flex; align-items: center; gap: 10px; padding: 0 8px; }
-.brand svg { width: 30px; height: 26px; flex: none; }
-.brand b { font-weight: 600; letter-spacing: .22em; font-size: 12px; }
-.brand span { display: block; font-size: 11px; color: var(--fg-3); letter-spacing: .04em; }
-.nav { display: flex; flex-direction: column; gap: 2px; }
-.nav a { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 10px; color: var(--fg-2);
-  text-decoration: none; font-weight: 500; }
-.nav a:hover { background: var(--surface-2); color: var(--fg); }
-.nav a[aria-current="page"] { background: var(--surface-2); color: var(--fg); box-shadow: inset 0 0 0 1px var(--line); }
-.nav svg { width: 16px; height: 16px; flex: none; stroke: currentColor; fill: none; stroke-width: 1.6; }
-.nav .count { margin-left: auto; font: 500 11px var(--mono); color: var(--fg-3); }
-.nav .count.hot { color: var(--accent-fg); background: var(--accent); padding: 1px 7px; border-radius: 999px; }
-.rail-foot { margin-top: auto; padding: 12px; border: 1px solid var(--line); border-radius: var(--radius); display: grid; gap: 6px; }
-.lock { display: flex; align-items: center; gap: 8px; font-weight: 500; font-size: 12.5px; }
-.dot { width: 7px; height: 7px; border-radius: 50%; background: var(--sage); box-shadow: 0 0 0 3px var(--sage-bg); flex: none; }
-.rail-foot small { color: var(--fg-3); font-size: 11.5px; }
+/* ---------- Composer (assistant-first) ---------- */
+.hero { padding-block: 56px 36px; display: grid; justify-items: center; gap: 22px; text-align: center; }
+.hero h1 { margin: 0; font-size: clamp(26px, 4vw, 34px); font-weight: 600; letter-spacing: -.035em; text-wrap: balance; display: flex; align-items: center; gap: 12px; }
+.hero h1 svg { width: 34px; height: 30px; }
+.composer { width: 100%; max-width: 720px; border-radius: 18px; background: var(--bg); box-shadow: var(--ring); text-align: left; transition: box-shadow .2s; }
+.composer:focus-within { box-shadow: 0 0 0 1px var(--fg-3), 0 16px 40px -16px rgba(0,0,0,.25); }
+.composer textarea { width: 100%; min-height: 64px; border: 0; background: transparent; resize: none; padding: 18px 20px 6px; font-size: 16px; outline: none; }
+.composer textarea::placeholder { color: var(--fg-3); }
+.composer-row { display: flex; align-items: center; gap: 8px; padding: 8px 10px 10px 12px; flex-wrap: wrap; }
+.ghost { height: 30px; border-radius: 8px; border: 1px solid var(--line); background: none; padding: 0 10px; font-size: 12.5px; color: var(--fg-2); display: inline-flex; align-items: center; gap: 6px; }
+.ghost:hover { color: var(--fg); background: var(--bg-3); }
+.ghost svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 1.6; }
+.send { width: 32px; height: 32px; border-radius: 9px; border: 0; background: var(--inv); color: var(--inv-fg); display: grid; place-items: center; }
+.send:disabled { opacity: .3; cursor: default; }
+.send svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 2; }
+.local { font: 500 11.5px var(--mono); color: var(--fg-3); display: inline-flex; align-items: center; gap: 6px; }
+.suggest { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; max-width: 760px; }
+.suggest button { border: 1px solid var(--line); background: var(--bg); border-radius: 999px; padding: 6px 14px; font-size: 13px; color: var(--fg-2); }
+.suggest button:hover { color: var(--fg); border-color: var(--line-2); }
+.answer { width: 100%; max-width: 720px; text-align: left; border: 1px solid var(--line); border-radius: 14px; padding: 16px 18px; display: grid; gap: 10px; background: var(--bg-2); }
+.answer p { margin: 0; max-width: 66ch; }
+.answer .who { font: 500 11.5px var(--mono); color: var(--fg-3); display: flex; gap: 8px; align-items: center; }
 
-/* ---------- Main ---------- */
-main { padding-block: 22px 48px; padding-left: max(28px, env(safe-area-inset-left, 0px));
-  padding-right: max(28px, env(safe-area-inset-right, 0px)); display: grid; gap: 22px; min-width: 0; }
-.top { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
-.top h1 { margin: 0; font-size: 26px; font-weight: 600; letter-spacing: -.02em; text-wrap: balance; }
-.top p { margin: 2px 0 0; color: var(--fg-2); }
-.top .spacer { flex: 1; }
-.pill { border: 1px solid var(--line); background: transparent; border-radius: 999px; padding: 8px 16px; font-weight: 500;
-  transition: background .2s var(--ease); }
-.pill:hover { background: var(--surface-2); }
-.pill.primary { background: var(--accent); color: var(--accent-fg); border-color: transparent; }
-.pill.primary:hover { filter: brightness(.94); }
-.example { font: 500 10.5px var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--amber);
-  border: 1px dashed var(--amber); border-radius: 999px; padding: 3px 9px; }
+/* ---------- Sections ---------- */
+.section { padding-block: 0 40px; display: grid; gap: 14px; }
+.sec-head { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+.sec-head h2 { margin: 0; font-size: 20px; font-weight: 600; letter-spacing: -.02em; }
+.sec-head p { margin: 0; color: var(--fg-2); font-size: 13.5px; }
+.example { font: 500 11px var(--mono); color: var(--warn); border: 1px dashed currentColor; border-radius: 999px; padding: 1px 8px; }
 
-/* ---------- Horizon band (signature) ---------- */
-.horizon { position: relative; border: 1px solid var(--line); border-radius: 20px; overflow: hidden;
-  background: radial-gradient(120% 140% at 50% 120%, var(--surface-2) 0%, var(--surface) 55%, var(--bg) 100%);
-  display: grid; grid-template-columns: 1.1fr 1.4fr 1.1fr; align-items: end; gap: 12px; padding: 22px 26px 0; }
-.horizon .readout { padding-bottom: 26px; display: grid; gap: 4px; align-content: end; min-width: 0; }
-.horizon .readout.right { text-align: right; justify-items: end; }
-.big { font: 600 40px/1 var(--font); letter-spacing: -.03em; }
-.big small { font-size: 16px; color: var(--fg-2); font-weight: 500; letter-spacing: 0; }
-.sub { color: var(--fg-2); font-size: 13px; }
-.delta { font: 500 12px var(--mono); color: var(--sage); }
-.arc-wrap { position: relative; display: grid; justify-items: center; }
-.arc-wrap svg { width: 100%; max-width: 420px; height: auto; display: block; }
-.arc-center { position: absolute; bottom: 18px; text-align: center; display: grid; gap: 2px; }
-.arc-center .big { font-size: 46px; }
+.metrics { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+.metric { padding: 18px 20px; display: grid; gap: 6px; align-content: start; min-width: 0; }
+.metric + .metric { border-left: 1px solid var(--line); }
+.metric .k { font-size: 13px; color: var(--fg-2); display: flex; align-items: center; gap: 6px; }
+.metric .v { font: 600 30px/1.1 var(--font); letter-spacing: -.035em; font-variant-numeric: tabular-nums; }
+.metric .v small { font-size: 14px; font-weight: 500; color: var(--fg-2); letter-spacing: 0; }
+.metric .d { font: 500 12px var(--mono); color: var(--ok); }
+.metric .d.flat { color: var(--fg-3); }
 
-/* ---------- Grid below ---------- */
-.grid { display: grid; grid-template-columns: minmax(0,1.55fr) minmax(0,1fr); gap: 22px; align-items: start; }
-.panel { border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); }
-.panel-head { display: flex; align-items: baseline; gap: 10px; padding: 16px 18px 12px; border-bottom: 1px solid var(--line); flex-wrap: wrap; }
-.panel-head h2 { margin: 0; font-size: 15px; font-weight: 600; }
-.panel-head .meta { color: var(--fg-3); font-size: 12px; }
-.panel-head .spacer { flex: 1; }
+.cols { display: grid; grid-template-columns: minmax(0,1.6fr) minmax(0,1fr); gap: 24px; align-items: start; }
+.box { border: 1px solid var(--line); border-radius: 12px; overflow: hidden; background: var(--bg); }
+.box-head { display: flex; align-items: center; gap: 10px; padding: 12px 16px; border-bottom: 1px solid var(--line); background: var(--bg-2); font-size: 13px; color: var(--fg-2); flex-wrap: wrap; }
+.box-head b { color: var(--fg); font-weight: 500; }
+.filter { display: inline-flex; border: 1px solid var(--line); border-radius: 7px; overflow: hidden; }
+.filter button { border: 0; background: none; padding: 3px 10px; font-size: 12px; color: var(--fg-2); }
+.filter button[aria-pressed="true"] { background: var(--bg-3); color: var(--fg); }
 
-/* Review queue */
-.queue { list-style: none; margin: 0; padding: 0; }
-.item { display: grid; grid-template-columns: 4px minmax(0,1fr) auto; gap: 14px; padding: 14px 18px 14px 0;
-  border-bottom: 1px solid var(--line); transition: opacity .32s var(--ease), transform .32s var(--ease); }
-.item:last-child { border-bottom: 0; }
-.item .stripe { border-radius: 0 3px 3px 0; background: var(--line); }
-.item[data-sev="urgent"] .stripe { background: var(--amber); }
-.item[data-sev="low"] .stripe { background: var(--red); }
-.item .body { min-width: 0; display: grid; gap: 6px; }
-.row1 { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
-.ws { font: 500 10.5px var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--fg-2); }
-.chip { font-size: 11.5px; font-weight: 500; border-radius: 999px; padding: 2px 9px; border: 1px solid var(--line); color: var(--fg-2); }
-.chip.ok { color: var(--sage); background: var(--sage-bg); border-color: transparent; }
-.chip.warn { color: var(--amber); background: var(--amber-bg); border-color: transparent; }
-.chip.bad { color: var(--red); border-color: var(--red); }
-.item h3 { margin: 0; font-size: 14.5px; font-weight: 600; }
-.item p { margin: 0; color: var(--fg-2); font-size: 13px; max-width: 64ch; }
-.cites { display: flex; gap: 6px; flex-wrap: wrap; }
-.cite { font: 400 11.5px var(--mono); color: var(--fg-2); background: var(--surface-2); border: 1px solid var(--line);
-  border-radius: 6px; padding: 2px 7px; text-decoration: none; }
-.cite::before { content: "↳ "; color: var(--fg-3); }
-.actions { display: flex; flex-direction: column; gap: 6px; align-items: stretch; }
-.actions .pill { padding: 6px 14px; font-size: 13px; white-space: nowrap; }
-.item.done { opacity: .45; }
-.item.done .actions { visibility: hidden; }
-.done-note { font: 500 11.5px var(--mono); color: var(--sage); }
+.rows { list-style: none; margin: 0; padding: 0; }
+.r { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 16px; padding: 14px 16px; border-bottom: 1px solid var(--line); transition: background .15s, opacity .3s var(--ease); }
+.r:last-child { border-bottom: 0; }
+.r:hover { background: var(--bg-2); }
+.r-main { display: grid; gap: 4px; min-width: 0; }
+.r-top { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.r-title { font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.r-sub { color: var(--fg-2); font-size: 13px; }
+.r-meta { display: flex; gap: 6px 14px; flex-wrap: wrap; font: 400 12px var(--mono); color: var(--fg-3); align-items: center; }
+.r-meta a { text-decoration: none; border-bottom: 1px dotted var(--fg-3); }
+.r-meta a:hover { color: var(--fg); }
+.tag { font: 500 11px var(--mono); padding: 1px 7px; border-radius: 5px; background: var(--bg-3); color: var(--fg-2); flex: none; }
+.state { font: 500 12px var(--font); display: inline-flex; align-items: center; gap: 6px; color: var(--fg-2); }
+.r-act { display: flex; align-items: center; gap: 6px; }
+.r.done { opacity: .5; } .r.done .r-act { display: none; }
+.done-note { font: 500 12px var(--mono); color: var(--ok); }
 
-/* Skyline */
-.skyline { padding: 16px 18px 18px; display: grid; gap: 14px; }
-.skyline svg { width: 100%; height: auto; display: block; }
-.legend { display: flex; justify-content: space-between; color: var(--fg-3); font-size: 12px; gap: 8px; flex-wrap: wrap; }
-.tally { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); border-top: 1px solid var(--line); }
-.tally div { padding: 14px 18px; display: grid; gap: 2px; }
-.tally div + div { border-left: 1px solid var(--line); }
-.tally b { font: 600 20px var(--font); letter-spacing: -.02em; }
-.tally span { color: var(--fg-3); font-size: 12px; }
+.sky { padding: 16px; display: grid; gap: 10px; }
+.sky svg { width: 100%; height: auto; display: block; }
+.sky-legend { display: flex; justify-content: space-between; gap: 8px; font: 400 11.5px var(--mono); color: var(--fg-3); flex-wrap: wrap; }
 
-/* Network log */
-.netlog { list-style: none; margin: 0; padding: 6px 0; font: 400 12px/1.4 var(--mono); }
-.netlog li { display: grid; grid-template-columns: 52px minmax(0,1fr) auto; gap: 10px; padding: 7px 18px; color: var(--fg-2); }
-.netlog li b { color: var(--fg); font-weight: 500; overflow-wrap: anywhere; }
-.netlog .tag { color: var(--sage); }
-.netlog .tag.meta { color: var(--fg-3); }
-.side { display: grid; gap: 22px; min-width: 0; }
+.logs { list-style: none; margin: 0; padding: 4px 0; font: 400 12px/1.5 var(--mono); }
+.logs li { display: grid; grid-template-columns: 44px 8px minmax(0,1fr) auto; gap: 10px; align-items: center; padding: 6px 16px; color: var(--fg-2); }
+.logs li:hover { background: var(--bg-2); }
+.logs b { color: var(--fg); font-weight: 400; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.logs .dot { width: 6px; height: 6px; }
+.side { display: grid; gap: 24px; min-width: 0; }
+
+footer { border-top: 1px solid var(--line); }
+footer .wrap { padding-block: 18px; display: flex; gap: 16px; flex-wrap: wrap; align-items: center; font: 400 12px var(--mono); color: var(--fg-3); }
 
 @media (prefers-reduced-motion: no-preference) {
-  .rise { animation: rise .56s var(--ease) both; }
-  .rise:nth-child(2) { animation-delay: 70ms; } .rise:nth-child(3) { animation-delay: 140ms; }
-  @keyframes rise { from { transform: translateY(6px); opacity: .001; } to { transform: none; opacity: 1; } }
-  .bar { transform-box: fill-box; transform-origin: bottom; animation: grow .9s var(--ease) both; }
+  .bar-in { animation: in .5s var(--ease) both; }
+  @keyframes in { from { transform: translateY(4px); opacity: .001; } }
+  .barr { transform-box: fill-box; transform-origin: bottom; animation: grow .8s var(--ease) both; }
   @keyframes grow { from { transform: scaleY(.04); } }
 }
-
-@media (max-width: 1100px) {
-  .grid { grid-template-columns: minmax(0,1fr); }
-  .horizon { grid-template-columns: 1fr 1fr; }
-  .horizon .arc-wrap { grid-column: 1 / -1; order: -1; }
+@media (max-width: 960px) {
+  .cols { grid-template-columns: minmax(0,1fr); }
+  .metrics { grid-template-columns: repeat(2, minmax(0,1fr)); }
+  .metric:nth-child(3) { border-left: 0; }
+  .metric:nth-child(n+3) { border-top: 1px solid var(--line); }
 }
-@media (max-width: 760px) {
-  .app { grid-template-columns: minmax(0,1fr); }
-  .rail { position: static; height: auto; flex-direction: row; flex-wrap: wrap; align-items: center; gap: 12px;
-    border-right: 0; border-bottom: 1px solid var(--line); padding: 12px max(16px, env(safe-area-inset-right, 0px)) 12px max(16px, env(safe-area-inset-left, 0px)); }
-  .nav { flex-direction: row; overflow-x: auto; width: 100%; }
-  .nav a { white-space: nowrap; }
-  .rail-foot { display: none; }
-  main { padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
-  .horizon { grid-template-columns: minmax(0,1fr); padding: 18px 18px 0; }
-  .horizon .readout, .horizon .readout.right { text-align: left; justify-items: start; padding-bottom: 8px; }
-  .item { grid-template-columns: 4px minmax(0,1fr); }
-  .actions { grid-column: 2; flex-direction: row; flex-wrap: wrap; }
-  .big { font-size: 32px; }
+@media (max-width: 560px) {
+  .wrap { padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+  .hide-sm { display: none; }
+  .hero { padding-block: 32px 28px; }
+  .r { grid-template-columns: minmax(0,1fr); }
+  .r-title { white-space: normal; }
+  .metric .v { font-size: 24px; }
 }
 </style>
 
@@ -205,7 +185,6 @@ main { padding-block: 22px 48px; padding-left: max(28px, env(safe-area-inset-lef
       <stop offset=".7" style="stop-color:var(--chrome-c)"/>
       <stop offset="1" style="stop-color:var(--chrome-a)"/>
     </linearGradient>
-    <!-- The Arkhon mark: split "A" peak, skyline of antenna bars, horizon arc -->
     <symbol id="mark" viewBox="0 0 120 104">
       <path d="M60 2 L4 98 L22 98 L58 34 Z" fill="url(#chrome)"/>
       <path d="M68 20 L116 98 L98 98 L66 44 L66 24 Z" fill="url(#chrome)"/>
@@ -219,196 +198,192 @@ main { padding-block: 22px 48px; padding-left: max(28px, env(safe-area-inset-lef
   </defs>
 </svg>
 
-<div class="app">
-  <aside class="rail" aria-label="Workspaces">
-    <div class="brand">
-      <svg aria-hidden="true"><use href="#mark"/></svg>
-      <div><b>ARKHON</b><span>Suite · Command</span></div>
+<header class="bar">
+  <div class="wrap">
+    <div class="bar-row">
+      <svg class="mark" role="img" aria-label="Arkhon"><use href="#mark"/></svg>
+      <span class="slash" aria-hidden="true">/</span>
+      <button class="crumb" type="button" id="org"><span class="avatar"></span>Coastline Mechanical<span class="badge hide-sm">Business</span></button>
+      <span class="grow"></span>
+      <span class="status hide-sm"><span class="dot"></span>Running locally · Core</span>
+      <button class="btn hide-sm" type="button" id="btn-privacy">Privacy</button>
+      <span class="avatar" title="Dana Ruiz" style="width:28px;height:28px"></span>
     </div>
-    <nav class="nav">
-      <a href="#command" aria-current="page"><svg viewBox="0 0 16 16"><path d="M2 13 L8 3 L14 13 M5 13V9 M8 13V7 M11 13V10"/></svg>Command</a>
-      <a href="#inbox"><svg viewBox="0 0 16 16"><path d="M2 4h12v8H2z M2 4l6 5 6-5"/></svg>Inbox<span class="count hot num">6</span></a>
-      <a href="#docs"><svg viewBox="0 0 16 16"><path d="M4 2h6l3 3v9H4z M10 2v3h3"/></svg>Docs<span class="count num">3</span></a>
-      <a href="#desk"><svg viewBox="0 0 16 16"><path d="M3 10a5 5 0 0 1 10 0 M3 10v2h2v-3 M13 10v2h-2v-3"/></svg>Desk<span class="count num">2</span></a>
-      <a href="#knowledge"><svg viewBox="0 0 16 16"><path d="M3 3h4a1 1 0 0 1 1 1v9a1 1 0 0 0-1-1H3z M13 3H9a1 1 0 0 0-1 1v9a1 1 0 0 1 1-1h4z"/></svg>Knowledge</a>
-      <a href="#meetings"><svg viewBox="0 0 16 16"><path d="M6 3h4v6H6z M4 8a4 4 0 0 0 8 0 M8 12v2"/></svg>Meetings</a>
-      <a href="#growth"><svg viewBox="0 0 16 16"><path d="M2 12l4-4 3 3 5-6 M10 5h4v4"/></svg>Growth</a>
-      <a href="#insights"><svg viewBox="0 0 16 16"><path d="M3 13V8 M7 13V4 M11 13V9 M2 13h12"/></svg>Insights</a>
+    <nav class="tabs" aria-label="Workspaces">
+      <a href="#overview" aria-current="page">Overview</a>
+      <a href="#inbox">Inbox<span class="n">6</span></a>
+      <a href="#docs">Docs<span class="n">3</span></a>
+      <a href="#desk">Desk<span class="n">2</span></a>
+      <a href="#knowledge">Knowledge</a>
+      <a href="#meetings">Meetings</a>
+      <a href="#growth">Growth</a>
+      <a href="#insights">Insights</a>
+      <a href="#value">Value</a>
     </nav>
-    <div class="rail-foot">
-      <div class="lock"><span class="dot"></span>Running on this machine</div>
-      <small>Core engine · TPM-bound license<br>Updates through Aug 2027</small>
+  </div>
+</header>
+
+<main id="overview">
+  <section class="wrap hero bar-in">
+    <h1><svg aria-hidden="true"><use href="#mark"/></svg>Good morning, Dana</h1>
+    <form class="composer" id="ask">
+      <textarea id="q" rows="2" aria-label="Ask Arkhon" placeholder="Ask about your jobs, customers, bills or files…"></textarea>
+      <div class="composer-row">
+        <button class="ghost" type="button" aria-label="Attach a file"><svg viewBox="0 0 16 16"><path d="M10.5 4.5 5.8 9.2a1.5 1.5 0 0 0 2.1 2.1l5-5a3 3 0 0 0-4.2-4.2l-5 5a4.5 4.5 0 0 0 6.4 6.4L13 10.5"/></svg></button>
+        <button class="ghost" type="button" id="scope"><svg viewBox="0 0 16 16"><path d="M2 4h12M4 8h8M6 12h4"/></svg>All workspaces</button>
+        <span class="grow"></span>
+        <span class="local"><span class="dot"></span>On this PC</span>
+        <button class="send" type="submit" id="send" aria-label="Ask" disabled><svg viewBox="0 0 16 16"><path d="M8 13V3M3.5 7.5 8 3l4.5 4.5"/></svg></button>
+      </div>
+    </form>
+    <div class="suggest" id="suggest">
+      <button type="button">Which invoices are past 30 days?</button>
+      <button type="button">Summarize yesterday's emergency calls</button>
+      <button type="button">Draft a follow-up for the Ortiz quote</button>
+      <button type="button">What's our warranty on compressors?</button>
     </div>
-  </aside>
+    <div class="answer" id="answer" hidden>
+      <div class="who"><svg width="16" height="14" aria-hidden="true"><use href="#mark"/></svg>Arkhon · Core · local</div>
+      <p id="answer-text"></p>
+      <div class="r-meta" id="answer-cites"></div>
+    </div>
+  </section>
 
-  <main id="command">
-    <header class="top">
-      <div>
-        <div class="eyebrow">Thursday, Nov 6 · Coastline Mechanical</div>
-        <h1>Good morning, Dana. 11 items are cleared for your review.</h1>
-      </div>
-      <div class="spacer"></div>
-      <span class="example">Example data</span>
-      <button class="pill" type="button" id="btn-report">Monthly ROI report</button>
-      <button class="pill primary" type="button" id="btn-approve-all">Review queue</button>
-    </header>
+  <section class="wrap section" aria-labelledby="wk">
+    <div class="sec-head"><h2 id="wk">This week</h2><p>Measured on this PC from what your team approved.</p><span class="example">Example data</span></div>
+    <div class="metrics">
+      <div class="metric"><span class="k">Hours returned</span><span class="v">14.6<small> h</small></span><span class="d">+3.1 h vs last week</span></div>
+      <div class="metric"><span class="k">Estimated value</span><span class="v">$847</span><span class="d flat">at $58/h · adjustable</span></div>
+      <div class="metric"><span class="k">Drafts sent as written</span><span class="v">86<small>%</small></span><span class="d">+4 pts</span></div>
+      <div class="metric"><span class="k"><span class="dot"></span>Data sent to cloud AI</span><span class="v">0<small> bytes</small></span><span class="d flat">2 license check-ins · metadata</span></div>
+    </div>
+  </section>
 
-    <!-- Horizon band: the mark's arc as the trust/value gauge -->
-    <section class="horizon rise" aria-label="This week at a glance">
-      <div class="readout">
-        <div class="eyebrow">Hours returned · this week</div>
-        <div class="big num">14.6<small> h</small></div>
-        <div class="delta">▲ 3.1 h vs last week</div>
-        <div class="sub">≈ $847 at your $58/h rate</div>
-      </div>
-      <div class="arc-wrap">
-        <svg viewBox="0 0 420 200" role="img" aria-label="Draft acceptance 86 percent">
-          <path d="M30 190 A180 180 0 0 1 390 190" fill="none" style="stroke:var(--line)" stroke-width="10" stroke-linecap="round"/>
-          <path d="M30 190 A180 180 0 0 1 390 190" fill="none" stroke="url(#chrome)" stroke-width="10" stroke-linecap="round"
-                pathLength="100" stroke-dasharray="86 100"/>
-          <g style="fill:var(--fg-3)" font-family="var(--mono)" font-size="10">
-            <text x="22" y="186" text-anchor="end">0</text>
-            <text x="398" y="186">100</text>
-          </g>
-          <g style="stroke:var(--fg-3)" stroke-width="1">
-            <line x1="210" y1="4" x2="210" y2="14"/>
-          </g>
-        </svg>
-        <div class="arc-center">
-          <div class="big num">86<small>%</small></div>
-          <div class="sub">drafts sent with light or no edits</div>
+  <section class="wrap section">
+    <div class="cols">
+      <div class="box">
+        <div class="box-head">
+          <b>Review queue</b><span id="q-left" class="mono">4 waiting</span>
+          <span class="grow"></span>
+          <div class="filter" role="group" aria-label="Filter">
+            <button type="button" aria-pressed="true">All</button><button type="button" aria-pressed="false">Urgent</button>
+          </div>
         </div>
-      </div>
-      <div class="readout right">
-        <div class="eyebrow">Sent to the cloud</div>
-        <div class="big num">0<small> bytes</small></div>
-        <div class="delta" style="color:var(--sage)">● All AI ran on this PC</div>
-        <div class="sub">2 license check-ins · metadata only</div>
-      </div>
-    </section>
-
-    <div class="grid">
-      <section class="panel rise" aria-labelledby="q-title">
-        <div class="panel-head">
-          <h2 id="q-title">Review queue</h2>
-          <span class="meta">Nothing is sent, filed or posted until you approve it.</span>
-          <div class="spacer"></div>
-          <span class="meta num" id="q-left">4 waiting</span>
-        </div>
-        <ul class="queue" id="queue">
-          <li class="item" data-sev="urgent">
-            <span class="stripe"></span>
-            <div class="body">
-              <div class="row1"><span class="ws">Inbox</span><span class="chip warn">No-cool call · today</span><span class="chip ok">High confidence</span></div>
-              <h3>Reply to Marisol Vega — "AC blowing warm, 2 kids at home"</h3>
-              <p>Offers the 1–3 pm emergency slot, quotes the $129 diagnostic waived with repair, and confirms her 2019 Carrier unit is still under parts warranty.</p>
-              <div class="cites"><a class="cite" href="#">Service-Pricing-2026.pdf · p.2</a><a class="cite" href="#">Job #4471 · Mar 2024</a><a class="cite" href="#">Warranty-Policy.docx</a></div>
+        <ul class="rows" id="queue">
+          <li class="r" data-urgent="1">
+            <div class="r-main">
+              <div class="r-top"><span class="tag">inbox</span><span class="r-title">Reply to Marisol Vega: “AC blowing warm, 2 kids at home”</span></div>
+              <div class="r-sub">Offers today's 1–3 pm slot, waives the $129 diagnostic with repair, confirms parts warranty on her 2019 Carrier.</div>
+              <div class="r-meta"><span class="state"><span class="dot warn"></span>Urgent</span><span>high confidence</span><a href="#">Service-Pricing-2026.pdf p.2</a><a href="#">Job #4471</a><a href="#">Warranty-Policy.docx</a></div>
             </div>
-            <div class="actions"><button class="pill primary" type="button" data-act="Sent">Approve &amp; send</button><button class="pill" type="button">Edit draft</button></div>
+            <div class="r-act"><button class="btn sm" type="button">Edit</button><button class="btn sm primary" type="button" data-act="Sent">Approve &amp; send</button></div>
           </li>
-          <li class="item">
-            <span class="stripe"></span>
-            <div class="body">
-              <div class="row1"><span class="ws">Docs</span><span class="chip">Supplier bill</span><span class="chip ok">PO matched</span></div>
-              <h3>Ferguson bill INV-88213 · $2,418.36 → QuickBooks</h3>
-              <p>14 lines extracted. Matches PO-1187 within $0.00. Coded to Job 4502 (Harbor Dental retrofit), Materials – HVAC.</p>
-              <div class="cites"><a class="cite" href="#">scan_2026-11-05_0912.pdf</a><a class="cite" href="#">PO-1187</a></div>
+          <li class="r">
+            <div class="r-main">
+              <div class="r-top"><span class="tag">docs</span><span class="r-title">Ferguson INV-88213 · $2,418.36 → QuickBooks</span></div>
+              <div class="r-sub">14 lines extracted, matches PO-1187 exactly. Coded to Job 4502, Materials – HVAC.</div>
+              <div class="r-meta"><span class="state"><span class="dot"></span>Ready</span><span>fields 14/14 valid</span><a href="#">scan_2026-11-05_0912.pdf</a><a href="#">PO-1187</a></div>
             </div>
-            <div class="actions"><button class="pill primary" type="button" data-act="Posted as draft bill">Approve &amp; post</button><button class="pill" type="button">Open</button></div>
+            <div class="r-act"><button class="btn sm" type="button">Open</button><button class="btn sm primary" type="button" data-act="Posted as draft bill">Approve &amp; post</button></div>
           </li>
-          <li class="item">
-            <span class="stripe"></span>
-            <div class="body">
-              <div class="row1"><span class="ws">Growth</span><span class="chip">Quote</span><span class="chip ok">High confidence</span></div>
-              <h3>Quote Q-2291 for 16 SEER2 heat pump · Ortiz residence</h3>
-              <p>$11,840 installed, with line items from your 2026 price book and the SCE rebate noted as estimated, not guaranteed.</p>
-              <div class="cites"><a class="cite" href="#">Price-Book-2026.xlsx</a><a class="cite" href="#">Site visit notes · Nov 3</a></div>
+          <li class="r">
+            <div class="r-main">
+              <div class="r-top"><span class="tag">growth</span><span class="r-title">Quote Q-2291 · 16 SEER2 heat pump · Ortiz residence</span></div>
+              <div class="r-sub">$11,840 installed from your 2026 price book. Rebate marked as estimated, not guaranteed.</div>
+              <div class="r-meta"><span class="state"><span class="dot"></span>Ready</span><span>high confidence</span><a href="#">Price-Book-2026.xlsx</a><a href="#">Site notes Nov 3</a></div>
             </div>
-            <div class="actions"><button class="pill primary" type="button" data-act="Sent">Approve &amp; send</button><button class="pill" type="button">Edit</button></div>
+            <div class="r-act"><button class="btn sm" type="button">Edit</button><button class="btn sm primary" type="button" data-act="Sent">Approve &amp; send</button></div>
           </li>
-          <li class="item" data-sev="low">
-            <span class="stripe"></span>
-            <div class="body">
-              <div class="row1"><span class="ws">Desk</span><span class="chip bad">Not found in your data</span></div>
-              <h3>"Do you service Mitsubishi ductless in Irvine?"</h3>
-              <p>Your files don't say whether you carry Mitsubishi parts. Arkhon drafted a holding reply instead of guessing. Add the answer once and it will be reused.</p>
-              <div class="cites"><a class="cite" href="#">Searched 1,284 documents</a></div>
+          <li class="r">
+            <div class="r-main">
+              <div class="r-top"><span class="tag">desk</span><span class="r-title">“Do you service Mitsubishi ductless in Irvine?”</span></div>
+              <div class="r-sub">Not found in your data. Arkhon drafted a holding reply instead of guessing. Answer once and it's reused.</div>
+              <div class="r-meta"><span class="state"><span class="dot bad"></span>Needs you</span><span>searched 1,284 docs</span></div>
             </div>
-            <div class="actions"><button class="pill" type="button">Answer once</button><button class="pill" type="button" data-act="Holding reply sent">Send holding reply</button></div>
+            <div class="r-act"><button class="btn sm" type="button">Answer once</button><button class="btn sm" type="button" data-act="Holding reply sent">Send holding reply</button></div>
           </li>
         </ul>
-      </section>
+      </div>
 
       <div class="side">
-        <section class="panel rise" aria-labelledby="s-title">
-          <div class="panel-head"><h2 id="s-title">Skyline</h2><span class="meta">Hours returned per day · last 14 days</span></div>
-          <div class="skyline">
-            <svg viewBox="0 0 320 150" role="img" aria-label="Hours returned per day, last 14 days, peaking at 3.4 hours on Wednesday" id="sky"></svg>
-            <div class="legend"><span>Oct 24</span><span>Each antenna marks a day with zero send-errors</span><span>Nov 6</span></div>
+        <div class="box">
+          <div class="box-head"><b>Hours returned</b><span>last 14 days</span></div>
+          <div class="sky">
+            <svg viewBox="0 0 320 140" role="img" aria-label="Hours returned per day over 14 days, peaking at 3.4 hours" id="sky"></svg>
+            <div class="sky-legend"><span>Oct 24</span><span>antenna = zero send-errors</span><span>Nov 6</span></div>
           </div>
-          <div class="tally">
-            <div><b class="num">212</b><span>drafts accepted</span></div>
-            <div><b class="num">96</b><span>docs filed</span></div>
-            <div><b class="num">7</b><span>meetings summarized</span></div>
-          </div>
-        </section>
-
-        <section class="panel rise" aria-labelledby="n-title">
-          <div class="panel-head"><h2 id="n-title">Network activity</h2><span class="meta">Every connection Arkhon made today</span></div>
-          <ul class="netlog">
-            <li><span>09:14</span><b>outlook.office365.com</b><span class="tag">your mail</span></li>
-            <li><span>09:02</span><b>quickbooks.api.intuit.com</b><span class="tag">your books</span></li>
-            <li><span>08:30</span><b>license.arkhon.ai</b><span class="tag meta">license only</span></li>
-            <li><span>07:55</span><b>graph.microsoft.com</b><span class="tag">your files</span></li>
+        </div>
+        <div class="box">
+          <div class="box-head"><b>Network</b><span>every connection today</span><span class="grow"></span><a href="#" class="mono" style="font-size:12px">View all</a></div>
+          <ul class="logs">
+            <li><span>09:14</span><span class="dot"></span><b>outlook.office365.com</b><span>your mail</span></li>
+            <li><span>09:02</span><span class="dot"></span><b>quickbooks.api.intuit.com</b><span>your books</span></li>
+            <li><span>08:30</span><span class="dot idle"></span><b>license.arkhon.ai</b><span>license only</span></li>
+            <li><span>07:55</span><span class="dot"></span><b>graph.microsoft.com</b><span>your files</span></li>
           </ul>
-        </section>
+        </div>
       </div>
     </div>
-  </main>
-</div>
+  </section>
+</main>
+
+<footer><div class="wrap"><span>Arkhon Suite 0.1</span><span>Core engine · TPM-bound</span><span>Updates through Aug 2027</span><span class="grow"></span><span><span class="dot" style="margin-right:6px"></span>All systems local</span></div></footer>
 
 <script>
 (() => {
-  // Skyline: bars echo the mark's antenna towers; scale 0–4 h.
   const data = [0.6,1.1,0.9,1.8,2.2,0.4,0.2,1.4,2.0,1.7,3.4,2.6,1.9,1.2];
   const clean = [1,1,1,0,1,1,1,1,1,1,1,1,0,1];
-  const W = 320, H = 150, top = 12, base = 128, max = 4, n = data.length;
-  const gx = 24, step = (W - gx) / n, bw = step * 0.42, y = v => base - (v / max) * (base - top);
-  const ns = 'http://www.w3.org/2000/svg';
-  const svg = document.getElementById('sky');
-  const add = (tag, attrs) => { const el = document.createElementNS(ns, tag);
-    for (const k in attrs) { const v = attrs[k];
-      if ((k === 'fill' || k === 'stroke') && String(v).startsWith('var(')) el.style[k] = v; else el.setAttribute(k, v); } svg.appendChild(el); return el; };
-  [1,2,3,4].forEach(v => {
-    add('line', { x1: gx, x2: W, y1: y(v), y2: y(v), stroke: 'var(--line)', 'stroke-dasharray': '2 4' });
-    add('text', { x: 0, y: y(v) + 3, 'text-anchor': 'start', fill: 'var(--fg-3)', 'font-size': 9, 'font-family': 'var(--mono)' }).textContent = v + 'h';
+  const W = 320, top = 14, base = 120, max = 4, n = data.length, gx = 22;
+  const step = (W - gx) / n, bw = step * 0.4, y = v => base - (v / max) * (base - top);
+  const svg = document.getElementById('sky'), ns = 'http://www.w3.org/2000/svg';
+  const add = (tag, a) => { const el = document.createElementNS(ns, tag);
+    for (const k in a) { const v = a[k]; if ((k === 'fill' || k === 'stroke') && String(v).startsWith('var(')) el.style[k] = v; else el.setAttribute(k, v); }
+    svg.appendChild(el); return el; };
+  [0,1,2,3,4].forEach(v => {
+    add('line', { x1: gx, x2: W, y1: y(v), y2: y(v), stroke: 'var(--line)' });
+    add('text', { x: 0, y: y(v) + 3, fill: 'var(--fg-3)', 'font-size': 9, 'font-family': 'Geist Mono, monospace' }).textContent = v + 'h';
   });
   const peak = data.indexOf(Math.max(...data));
   data.forEach((v, i) => {
-    const x = gx + i * step + (step - bw) / 2, last = i === n - 1;
-    const r = add('rect', { x, y: y(v), width: bw, height: base - y(v), rx: 1.5, class: 'bar',
-      fill: last || i === peak ? 'url(#chrome)' : 'var(--fg-3)', opacity: last || i === peak ? 1 : .55 });
-    r.style.animationDelay = (i * 35) + 'ms';
+    const x = gx + i * step + (step - bw) / 2, hi = i === peak || i === n - 1;
+    const r = add('rect', { x, y: y(v), width: bw, height: base - y(v), rx: 1, class: 'barr', fill: hi ? 'url(#chrome)' : 'var(--line-2)' });
+    r.style.animationDelay = i * 30 + 'ms';
     if (clean[i]) {
-      add('line', { x1: x + bw / 2, x2: x + bw / 2, y1: y(v) - 9, y2: y(v) - 2, stroke: 'var(--fg-3)', 'stroke-width': 1 });
-      add('circle', { cx: x + bw / 2, cy: y(v) - 10, r: 1.6, fill: i === peak ? 'var(--fg)' : 'var(--fg-3)' });
+      add('line', { x1: x + bw / 2, x2: x + bw / 2, y1: y(v) - 8, y2: y(v) - 1, stroke: 'var(--fg-3)' });
+      add('circle', { cx: x + bw / 2, cy: y(v) - 9, r: 1.5, fill: hi ? 'var(--fg)' : 'var(--fg-3)' });
     }
   });
-  add('path', { d: `M${gx} ${base + 6} Q${(W + gx) / 2} ${base - 2} ${W - 4} ${base + 6}`, stroke: 'url(#chrome)', 'stroke-width': 2, fill: 'none', 'stroke-linecap': 'round' });
-  add('text', { x: gx + peak * step + step / 2, y: y(data[peak]) - 16, 'text-anchor': 'middle', fill: 'var(--fg)', 'font-size': 10, 'font-family': 'var(--mono)' }).textContent = '3.4h';
+  add('text', { x: gx + peak * step + step / 2, y: y(data[peak]) - 15, 'text-anchor': 'middle', fill: 'var(--fg)', 'font-size': 10, 'font-family': 'Geist Mono, monospace' }).textContent = '3.4h';
 
-  // Review queue: approval is local and explicit; each action is acknowledged in place.
   const left = document.getElementById('q-left');
-  const refresh = () => { const k = document.querySelectorAll('.item:not(.done)').length;
-    left.textContent = k ? k + ' waiting' : 'All clear'; };
+  const refresh = () => { const k = document.querySelectorAll('.r:not(.done)').length; left.textContent = k ? k + ' waiting' : 'All clear'; };
   document.getElementById('queue').addEventListener('click', e => {
     const b = e.target.closest('button[data-act]'); if (!b) return;
-    const item = b.closest('.item'); item.classList.add('done');
-    const note = document.createElement('span'); note.className = 'done-note';
-    note.textContent = '✓ ' + b.dataset.act + ' · logged ' + new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    item.querySelector('.row1').appendChild(note); refresh();
+    const r = b.closest('.r'); r.classList.add('done');
+    const s = document.createElement('span'); s.className = 'done-note';
+    s.textContent = '✓ ' + b.dataset.act + ' · logged ' + new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    r.querySelector('.r-meta').prepend(s); refresh();
   });
-  document.getElementById('btn-approve-all').addEventListener('click', () =>
-    document.getElementById('queue').querySelector('.item:not(.done) button')?.focus());
+  document.querySelector('.filter').addEventListener('click', e => {
+    const b = e.target.closest('button'); if (!b) return;
+    document.querySelectorAll('.filter button').forEach(x => x.setAttribute('aria-pressed', x === b));
+    const urgent = b.textContent === 'Urgent';
+    document.querySelectorAll('.r').forEach(r => { r.hidden = urgent && !r.dataset.urgent; });
+  });
+
+  const q = document.getElementById('q'), send = document.getElementById('send'), form = document.getElementById('ask');
+  q.addEventListener('input', () => { send.disabled = !q.value.trim(); });
+  q.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); form.requestSubmit(); } });
+  document.getElementById('suggest').addEventListener('click', e => {
+    const b = e.target.closest('button'); if (!b) return; q.value = b.textContent; send.disabled = false; form.requestSubmit();
+  });
+  form.addEventListener('submit', e => {
+    e.preventDefault(); if (!q.value.trim()) return;
+    document.getElementById('answer').hidden = false;
+    document.getElementById('answer-text').textContent =
+      'Example answer: 3 invoices are past 30 days, totaling $6,912.40. Harbor Dental ($4,180.00, 41 days) is the largest. I drafted reminders for all three; they are waiting in your review queue.';
+    document.getElementById('answer-cites').innerHTML =
+      '<a href="#">QuickBooks · A/R aging · Nov 6</a><a href="#">INV-3310</a><a href="#">INV-3324</a><a href="#">INV-3341</a>';
+  });
 })();
 </script>

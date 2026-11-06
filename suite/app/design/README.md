@@ -1,6 +1,6 @@
 # Arkhon Suite design language
 
-`dashboard.html` is the reference prototype for the Command (home) screen, and `tokens.css` is
+`dashboard.html` is the reference prototype (v2) for the Command (home) screen, and `tokens.css` is
 what the Tauri app imports in Phase 5.
 
 ## Source
@@ -9,23 +9,28 @@ The tokens come from arkhonindustries.com. Its live `:root` CSS variables were c
 five-color chart palette, a 0.875rem radius, the brand easing curve and timings, and the
 SF Pro/Geist type stack. Nothing here is invented beyond the dark-console extension described below.
 
-## Signature elements (what makes it Arkhon, not a generic dashboard)
-| Element | Derived from | Meaning in the product |
-|---|---|---|
-| **Horizon gauge** | The arc under the logo mark | Draft acceptance rate (N4/N7), flanked by hours returned (N5) and bytes sent to the cloud (N1) |
-| **Skyline chart** | The mark's antenna towers | Hours returned per day. An antenna marks a day with zero send-errors |
-| **Chrome gradient** | The mark's brushed-metal finish | Used only for brand marks, the gauge, and the current or peak data point |
-| **Pill buttons, letter-spaced eyebrows** | Site controls and labels | Primary actions and section labels |
-| **"Approve & send" on every item** | Site promise "approve before pay" | Review queue (N9). Nothing leaves without approval |
-| **Severity stripe + "Not found in your data" chip** | Site status chips | Honest uncertainty (N4) |
-| **Network activity log** | — | Privacy proof shown on the home screen (N1) |
+## Direction (v2, 2026-11-06)
+The owner asked for a look much closer to modern developer and AI products: monochrome,
+hairline-bordered, dense, with a conversational composer as the centerpiece. We borrow that
+*design language* only, with no third-party logos, names or assets. Arkhon's own identity comes
+through the brand tokens, Geist type, and the chrome mark.
+
+| Element | Role |
+|---|---|
+| Top bar: mark / company switcher, underline workspace tabs | Navigation (N3: one suite) |
+| **Composer** ("Ask about your jobs, customers, bills or files…") with a scope chip and an "On this PC" indicator | Ask the company (N2: no blank-chat expertise, thanks to suggestions; N1) |
+| Grounded answer card with citations | N4 |
+| One-box metric strip with hairline dividers | Value Dashboard (N5) and cloud bytes = 0 (N1) |
+| Dense review-queue rows: tag, title, state dot, mono citations, Approve | N9, N4 |
+| **Skyline** chart (the mark's antenna bars, chrome on peak and today) | Hours returned (N5) |
+| Network log | Privacy Center preview (N1) |
 
 ## Rules
-- Dark-first console, with a full light theme that matches the site's light tokens one-to-one.
-- Semantic colors (sage/amber/red) are for state only and never decorative.
-- Numbers use Geist Mono tabular figures.
-- Every citation links to its source document. Example data is always labelled.
-- Motion: one entrance stagger (70 ms, brand ease). It is fully disabled under `prefers-reduced-motion`.
+- Pure black/white surfaces, neutral greys, 1px hairlines. Color is used only for state (ok/warn/bad/info).
+- The chrome gradient appears only on the mark, avatars, and the highlighted data points.
+- Numbers, citations and logs use Geist Mono with tabular figures.
+- Example data is always labelled. The composer answer in the prototype is a canned example.
+- Motion: a 4px rise on load and bar growth. Both are disabled under `prefers-reduced-motion`.
 
 ## Open questions
 - An official vector logo. The prototype redraws the mark as SVG from `brand/arkhon-mark-mist.png`. Replace it with the master SVG when one is available.
