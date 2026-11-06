@@ -125,7 +125,8 @@ h2 { margin: 0; font-size: clamp(26px, 3.6vw, 32px); line-height: 1.15; font-wei
 .private b { color: var(--fg); font-weight: 600; }
 
 /* ---------- Settings ---------- */
-.seg { display: inline-flex; padding: 4px; border-radius: 999px; background: var(--soft); gap: 2px; }
+.seg { display: inline-flex; padding: 4px; border-radius: 999px; background: var(--soft); gap: 2px; max-width: 100%; overflow-x: auto; scrollbar-width: none; }
+.seg a { flex: none; }
 .seg a { padding: 8px 20px; border-radius: 999px; color: var(--fg-2); text-decoration: none; font-size: 15px; font-weight: 500; }
 .seg a[aria-current="page"] { background: var(--card); color: var(--fg); box-shadow: 0 1px 3px rgba(0,0,0,.12); }
 .seats { padding: 28px 32px; display: grid; gap: 14px; }
@@ -174,6 +175,55 @@ label.f { display: grid; gap: 6px; font-size: 14px; color: var(--fg-2); }
 .faces .av { width: 36px; height: 36px; font-size: 13px; border: 2px solid var(--card); margin-left: -8px; }
 .chips { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
 .chip { font-size: 14px; padding: 4px 12px; border-radius: 999px; background: var(--soft); color: var(--fg-2); }
+
+
+/* ---------- Connections ---------- */
+.conn-list { list-style: none; margin: 0; padding: 8px 0; }
+.conn { display: grid; grid-template-columns: auto minmax(0,1fr) auto; gap: 16px; align-items: center; padding: 16px 28px; }
+.conn + .conn { border-top: 1px solid var(--line); }
+.tile { width: 44px; height: 44px; border-radius: 12px; display: grid; place-items: center; font-weight: 700; font-size: 17px; color: #fff; flex: none; letter-spacing: 0; }
+.conn .n { font-weight: 600; }
+.conn .d { color: var(--fg-2); font-size: 15px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.conn .side-s { display: flex; align-items: center; gap: 14px; }
+.status-s { font-size: 14px; color: var(--ok); display: inline-flex; align-items: center; gap: 6px; }
+.status-s::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+.status-s.warn { color: var(--warn); }
+.sub-h { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; margin: 44px 0 16px; }
+.sub-h h2 { font-size: 24px; }
+.sub-h p { margin: 0; color: var(--fg-2); font-size: 15px; }
+.lib-tools { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; margin-bottom: 18px; }
+.search { flex: 1 1 260px; height: 46px; border-radius: 999px; border: 0; background: var(--card); box-shadow: var(--shadow); padding: 0 20px; font-size: 16px; min-width: 0; }
+.search:focus { outline: 3px solid color-mix(in srgb, var(--focus) 35%, transparent); }
+.cats { display: flex; gap: 8px; flex-wrap: wrap; }
+.cats button { border: 0; background: var(--soft); color: var(--fg-2); border-radius: 999px; padding: 7px 14px; font-size: 14px; }
+.cats button[aria-pressed="true"] { background: var(--ink); color: var(--ink-fg); }
+.lib { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 14px; }
+.app { padding: 22px; display: grid; gap: 14px; align-content: start; }
+.app .top { display: flex; gap: 14px; align-items: center; }
+.app .n { font-weight: 600; font-size: 16px; }
+.app .c { color: var(--fg-3); font-size: 14px; }
+.app .bottom { display: flex; gap: 10px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+.app select { height: 34px; border-radius: 10px; border: 1px solid var(--line); background: var(--card); color: var(--fg-2); font-size: 13px; padding: 0 8px; max-width: 100%; }
+.app .btn { height: 36px; padding: 0 16px; font-size: 14px; }
+.soon { font-size: 13px; color: var(--fg-3); }
+.sheet { padding: 28px 32px; display: grid; gap: 18px; margin-bottom: 14px; }
+.sheet h2 { font-size: 22px; }
+.choices { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 10px; }
+.choice { display: grid; gap: 4px; padding: 16px 18px; border-radius: 14px; border: 1.5px solid var(--line); cursor: pointer; }
+.choice:has(input:checked) { border-color: var(--ink); }
+.choice input { position: absolute; opacity: 0; pointer-events: none; }
+.choice b { font-weight: 600; font-size: 16px; }
+.choice span { color: var(--fg-2); font-size: 14px; }
+.choice[aria-disabled="true"] { opacity: .45; cursor: not-allowed; }
+.sheet .row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+@media (max-width: 720px) {
+  .lib { grid-template-columns: minmax(0,1fr); }
+  .choices { grid-template-columns: minmax(0,1fr); }
+  .conn { padding: 16px 20px; grid-template-columns: auto minmax(0,1fr); }
+  .conn .side-s { grid-column: 2; }
+  .sheet { padding: 24px; }
+}
+@media (min-width: 721px) and (max-width: 960px) { .lib { grid-template-columns: repeat(2, minmax(0,1fr)); } }
 
 @media (prefers-reduced-motion: no-preference) {
   .view:not([hidden]) { animation: fade .5s var(--ease) both; }
@@ -316,6 +366,7 @@ label.f { display: grid; gap: 6px; font-size: 14px; color: var(--fg-2); }
       <a href="#people" data-tab="people">People</a>
       <a href="#roles" data-tab="roles">Roles</a>
       <a href="#teams" data-tab="teams">Teams</a>
+      <a href="#connections" data-tab="connections">Connections</a>
     </nav>
   </section>
 
@@ -350,12 +401,46 @@ label.f { display: grid; gap: 6px; font-size: 14px; color: var(--fg-2); }
     <div class="head"><p style="margin:0;max-width:52ch">Teams give a group extra tools without a new role. Everyone on a team can use what the team can use.</p></div>
     <div class="teams" id="teams"></div>
   </section>
+
+  <!-- Connections -->
+  <section class="wrap band tab" id="t-connections" style="padding-block-start:32px" hidden>
+    <p style="margin:0 0 28px;color:var(--fg-2);max-width:56ch">Connect the apps your company already uses. Arkhon reads them right here on this computer and always asks before sending or changing anything.</p>
+    <p class="msg" id="c-msg" hidden></p>
+
+    <form class="card sheet" id="sheet" hidden>
+      <h2 id="sheet-title">Connect</h2>
+      <div class="choices" role="radiogroup" aria-label="Who will use this account">
+        <label class="choice" id="ch-me"><input type="radio" name="for" value="me" checked><b>Just me</b><span>My own work account</span></label>
+        <label class="choice" id="ch-team"><input type="radio" name="for" value="team"><b>A team</b><span id="team-hint">Shared with a team</span></label>
+        <label class="choice" id="ch-all"><input type="radio" name="for" value="all"><b>Everyone</b><span>A company account for all</span></label>
+      </div>
+      <div class="row">
+        <label class="f" style="flex:1 1 240px">Account<input id="acct" type="text" placeholder="e.g. service@coastline.com"></label>
+        <label class="f" id="team-pick" style="flex:1 1 200px" hidden>Team<select id="team-sel"></select></label>
+      </div>
+      <div class="row"><button class="btn primary" type="submit">Sign in and connect</button><button class="btn" type="button" id="sheet-cancel">Cancel</button>
+        <span style="color:var(--fg-3);font-size:14px">Arkhon will ask before sending or changing anything.</span></div>
+    </form>
+
+    <div class="sub-h" style="margin-top:0"><h2>Company accounts</h2><p>Shared accounts and who can use them.</p></div>
+    <div class="card"><ul class="conn-list" id="company-list"></ul></div>
+
+    <div class="sub-h"><h2>Your accounts</h2><p>Only you can use these.</p></div>
+    <div class="card"><ul class="conn-list" id="mine-list"></ul></div>
+
+    <div class="sub-h"><h2>App library</h2><p>Choose what people can connect. Staff can connect their own email and calendar by default.</p></div>
+    <div class="lib-tools">
+      <input class="search" id="lib-q" type="search" placeholder="Search apps" aria-label="Search apps">
+      <div class="cats" id="cats" role="group" aria-label="Filter by type"></div>
+    </div>
+    <div class="lib" id="lib"></div>
+  </section>
 </main>
 
 <script>
 (() => {
   /* ---------- Routing (#home, #people, #roles, #teams) ---------- */
-  const tabs = ['people', 'roles', 'teams'];
+  const tabs = ['people', 'roles', 'teams', 'connections'];
   function route() {
     const h = (location.hash || '#home').slice(1);
     const settings = tabs.includes(h);
@@ -502,6 +587,105 @@ label.f { display: grid; gap: 6px; font-size: 14px; color: var(--fg-2); }
       <div><h3>${t.n}</h3><p>${t.d}</p><div class="chips">${t.ws.map(w => `<span class="chip">${w}</span>`).join('')}</div></div>
       <div class="faces" aria-label="${t.who.length} people">${t.who.map(w => `<span class="av" title="${w}">${initials(w)}</span>`).join('')}</div>
     </article>`).join('') + `<button class="btn" type="button" style="justify-self:start;margin-top:6px">New team</button>`;
+
+
+  /* ---------- Connections (mirrors crates/arkhon-org/src/connections.rs) ---------- */
+  const POL = { off: 'Off', admins: 'Admins only', own: 'Everyone: own accounts', team: 'Everyone: own + team accounts' };
+  const APPS = [
+    ['Outlook','Email & calendar','own','now','#0f6cbd'], ['Gmail','Email & calendar','own','now','#c5221f'],
+    ['Google Calendar','Email & calendar','own','now','#1a73e8'], ['Other email','Email & calendar','own','now','#5f6368'],
+    ['OneDrive & SharePoint','Files','own','now','#0364b8'], ['Google Drive','Files','own','now','#188038'],
+    ['Folder or network drive','Files','admins','now','#3a3d44'], ['Dropbox','Files','admins','soon','#0061fe'],
+    ['QuickBooks Online','Accounting','admins','now','#2ca01c'], ['Xero','Accounting','admins','now','#13b5ea'],
+    ['HubSpot','Customers & sales','admins','now','#ff5c35'],
+    ['ServiceTitan','Jobs & scheduling','admins','soon','#1f3a60'], ['Jobber','Jobs & scheduling','team','soon','#2f7a55'],
+    ['Housecall Pro','Jobs & scheduling','admins','soon','#0b5cff'],
+    ['Stripe','Payments','admins','soon','#635bff'], ['Square','Payments','admins','soon','#1d1d1f'],
+    ['Microsoft Teams','Chat & meetings','own','soon','#5b5fc7'], ['Slack','Chat & meetings','admins','soon','#611f69'],
+    ['Zoom','Chat & meetings','own','soon','#0b5cff'], ['DocuSign','Signatures','admins','soon','#d4a000'],
+  ].map(([n, c, p, a, col]) => ({ n, c, p, a, col }));
+  const app = n => APPS.find(a => a.n === n);
+  const conns = [
+    { app: 'Outlook', acct: 'service@coastline.com', kind: 'company', who: 'Front office', by: 'Ari Patel', st: 'ok' },
+    { app: 'QuickBooks Online', acct: 'Coastline Mechanical books', kind: 'company', who: 'Owners and admins', by: 'Dana Ruiz', st: 'ok' },
+    { app: 'Folder or network drive', acct: '\\\\office-nas\\Jobs', kind: 'company', who: 'Everyone', by: 'Ari Patel', st: 'ok' },
+    { app: 'Google Drive', acct: 'Price books & manuals', kind: 'company', who: 'Everyone', by: 'Ari Patel', st: 'warn' },
+    { app: 'Outlook', acct: 'dana@coastline.com', kind: 'mine', st: 'ok' },
+    { app: 'Google Calendar', acct: 'dana@coastline.com', kind: 'mine', st: 'ok' },
+  ];
+  const tile = a => `<span class="tile" style="background:${a.col}" aria-hidden="true">${a.n[0]}</span>`;
+  const cmsg = document.getElementById('c-msg');
+  const csay = (t, ok) => { cmsg.hidden = false; cmsg.className = 'msg ' + (ok ? 'ok' : 'err'); cmsg.textContent = t; };
+  function renderConns() {
+    const row = (c, i) => { const a = app(c.app); return `<li class="conn">${tile(a)}
+      <div style="min-width:0"><div class="n">${a.n}</div><div class="d">${c.acct}${c.kind === 'company' ? ` · Shared with ${c.who}` : ''}</div></div>
+      <div class="side-s">${c.st === 'ok' ? '<span class="status-s">Connected</span>' : '<span class="status-s warn">Sign in again</span>'}
+      <button class="link" type="button" data-rm="${i}" style="font-size:15px">${c.st === 'ok' ? 'Disconnect' : 'Fix'}</button></div></li>`; };
+    document.getElementById('company-list').innerHTML = conns.map((c, i) => c.kind === 'company' ? row(c, i) : '').join('');
+    const mine = conns.map((c, i) => c.kind === 'mine' ? row(c, i) : '').join('');
+    document.getElementById('mine-list').innerHTML = mine || '<li class="conn" style="grid-template-columns:1fr;color:var(--fg-2)">Nothing connected yet. Pick your email below to get started.</li>';
+  }
+  ['company-list', 'mine-list'].forEach(id => document.getElementById(id).addEventListener('click', e => {
+    const b = e.target.closest('[data-rm]'); if (!b) return;
+    const c = conns[+b.dataset.rm];
+    if (c.st !== 'ok') { c.st = 'ok'; csay(`${c.app} is connected again.`, true); }
+    else { conns.splice(+b.dataset.rm, 1); csay(`Disconnected ${c.app} (${c.acct}).`, true); }
+    renderConns(); renderLib();
+  }));
+
+  let cat = 'All';
+  const cats = ['All', ...new Set(APPS.map(a => a.c))];
+  document.getElementById('cats').innerHTML = cats.map(c => `<button type="button" aria-pressed="${c === cat}">${c}</button>`).join('');
+  document.getElementById('cats').addEventListener('click', e => {
+    const b = e.target.closest('button'); if (!b) return; cat = b.textContent;
+    document.querySelectorAll('#cats button').forEach(x => x.setAttribute('aria-pressed', x === b)); renderLib();
+  });
+  document.getElementById('lib-q').addEventListener('input', renderLib);
+  function renderLib() {
+    const q = document.getElementById('lib-q').value.trim().toLowerCase();
+    document.getElementById('lib').innerHTML = APPS.filter(a => (cat === 'All' || a.c === cat) && (!q || a.n.toLowerCase().includes(q))).map(a => {
+      const n = conns.filter(c => c.app === a.n).length;
+      return `<article class="card app">
+        <div class="top">${tile(a)}<div style="min-width:0"><div class="n">${a.n}</div><div class="c">${n ? `${n} connected` : a.c}</div></div></div>
+        <div class="bottom">
+          <select data-pol="${a.n}" aria-label="Who can connect ${a.n}">${Object.entries(POL).map(([k, v]) => `<option value="${k}"${k === a.p ? ' selected' : ''}>${v}</option>`).join('')}</select>
+          ${a.a === 'soon' ? '<span class="soon">Coming soon</span>' : a.p === 'off' ? '<span class="soon">Turned off</span>' : `<button class="btn" type="button" data-connect="${a.n}">Connect</button>`}
+        </div></article>`;
+    }).join('') || '<p style="color:var(--fg-2)">No apps match. Try another word.</p>';
+  }
+  document.getElementById('lib').addEventListener('change', e => {
+    const s = e.target.closest('[data-pol]'); if (!s) return;
+    const a = app(s.dataset.pol); a.p = s.value;
+    const paused = conns.filter(c => c.app === a.n);
+    paused.forEach(c => c.st = a.p === 'off' ? 'warn' : 'ok');
+    csay(a.p === 'off' ? `${a.n} is turned off. ${paused.length ? 'Its connections are paused.' : ''}` : `${a.n}: ${POL[a.p]}.`, true);
+    renderConns(); renderLib();
+  });
+
+  const sheet = document.getElementById('sheet'); let pending = null;
+  document.getElementById('lib').addEventListener('click', e => {
+    const b = e.target.closest('[data-connect]'); if (!b) return;
+    pending = app(b.dataset.connect);
+    document.getElementById('sheet-title').textContent = 'Connect ' + pending.n;
+    // Dana is the Owner, so every choice is open. For staff the choices follow the app's rule.
+    document.getElementById('team-sel').innerHTML = TEAMS.map(t => `<option>${t.n}</option>`).join('');
+    document.getElementById('acct').value = ''; sheet.hidden = false; cmsg.hidden = true;
+    sheet.scrollIntoView({ behavior: 'smooth', block: 'center' }); document.getElementById('acct').focus();
+  });
+  sheet.addEventListener('change', () => { document.getElementById('team-pick').hidden = sheet.for.value !== 'team'; });
+  document.getElementById('sheet-cancel').addEventListener('click', () => { sheet.hidden = true; });
+  sheet.addEventListener('submit', e => {
+    e.preventDefault();
+    const acct = document.getElementById('acct').value.trim();
+    if (!acct) return csay('Enter the account to connect, like an email address or company name.', false);
+    const f = sheet.for.value;
+    if (conns.some(c => c.app === pending.n && c.acct.toLowerCase() === acct.toLowerCase())) return csay('That account is already connected.', false);
+    conns.push(f === 'me' ? { app: pending.n, acct, kind: 'mine', st: 'ok' }
+      : { app: pending.n, acct, kind: 'company', who: f === 'all' ? 'Everyone' : document.getElementById('team-sel').value, by: 'Dana Ruiz', st: 'ok' });
+    sheet.hidden = true; renderConns(); renderLib();
+    csay(`${pending.n} is connected. Arkhon will start reading it in the background.`, true);
+  });
+  renderConns(); renderLib();
 
   renderPeople();
   route();

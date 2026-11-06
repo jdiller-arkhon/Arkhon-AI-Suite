@@ -16,6 +16,8 @@
 use std::collections::{BTreeMap, BTreeSet};
 use std::fmt;
 
+pub mod connections;
+
 // ---------------------------------------------------------------------------------------------
 // Permissions
 // ---------------------------------------------------------------------------------------------
@@ -461,6 +463,11 @@ impl Organization {
     /// All members.
     pub fn members(&self) -> impl Iterator<Item = &Member> {
         self.members.values()
+    }
+
+    /// All teams.
+    pub fn teams(&self) -> impl Iterator<Item = &Team> {
+        self.teams.values()
     }
 
     /// A team by name.
