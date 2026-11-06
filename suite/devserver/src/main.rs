@@ -8,7 +8,8 @@
 use std::net::{Ipv4Addr, SocketAddr};
 use std::path::PathBuf;
 
-use arkhon_engine::{demo_state, Store, Suite, SystemClock};
+use arkhon_engine::vault::DevFileKeyProvider;
+use arkhon_engine::{demo_state, Store, Suite, SystemClock, TokenVault};
 use arkhon_suite_dev::{router, AppState};
 
 #[tokio::main]
@@ -39,6 +40,21 @@ async fn main() -> std::io::Result<()> {
         }
     }
     let store = Store::new(&data);
+    // Sign-ins live in their own encrypted file, never in the organization JSON. The key file
+    // is the development-only provider; the desktop app uses the TPM / OS key store.
+    let vault_path = data.with_file_name("vault.json");
+    if reset {
+        match std::fs::remove_file(&vault_path) {
+            Err(e) if e.kind() != std::io::ErrorKind::NotFound => return Err(e),
+            _ => {}
+        }
+    }
+    let vault = TokenVault::new(
+        vault_path,
+        Box::new(DevFileKeyProvider::new(
+            data.with_file_name("vault.dev-key"),
+        )),
+    );
     let (seed, ids) = demo_state();
     let saved = if reset { None } else { store.load()? };
     let state = if let Some(saved) = saved {
@@ -50,7 +66,7 @@ async fn main() -> std::io::Result<()> {
     let static_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../app/design");
     let app = router(
         AppState::new(
-            Suite::new(state, Box::new(SystemClock)),
+            Suite::new(state, Box::new(SystemClock)).with_vault(vault),
             Some(store),
             ids.owner,
         ),

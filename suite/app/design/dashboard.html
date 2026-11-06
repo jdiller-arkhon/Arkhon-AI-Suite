@@ -105,6 +105,11 @@ h2 { margin: 0; font-size: clamp(26px, 3.6vw, 32px); line-height: 1.15; font-wei
 .task .acts { display: flex; gap: 10px; }
 .task.done { opacity: .5; }
 .task.done .acts { display: none; }
+.task .detail { margin-top: 12px; display: grid; gap: 10px; }
+.task .detail textarea, .task .detail input { width: 100%; border-radius: 12px; border: 1px solid var(--line); background: var(--card); padding: 10px 14px; font-size: 16px; color: var(--fg); }
+.task .detail textarea { min-height: 140px; resize: vertical; }
+.task .detail ul { margin: 0; padding-left: 18px; color: var(--fg-2); font-size: 14px; }
+.task .blocked { margin-top: 8px; font-size: 14px; color: var(--warn); }
 .pill-s { display: inline-block; font-size: 13px; font-weight: 500; border-radius: 999px; padding: 2px 10px; margin-left: 8px; vertical-align: 2px; }
 .pill-s.warn { color: var(--warn); background: var(--warn-bg); }
 .pill-s.ok { color: var(--ok); background: var(--ok-bg); }
@@ -295,8 +300,8 @@ label.f { display: grid; gap: 6px; font-size: 14px; color: var(--fg-2); }
 <main class="view" id="v-home">
   <section class="wrap hello">
     <span class="example">Example company · sample data</span>
-    <h1>Good morning, Dana.</h1>
-    <p class="lede">Three things need you today. Everything else is handled.</p>
+    <h1 id="hello">Good morning, Dana.</h1>
+    <p class="lede" id="lede">Three things need you today. Everything else is handled.</p>
     <form class="ask" id="ask">
       <input id="q" type="text" autocomplete="off" aria-label="Ask Arkhon anything" placeholder="Ask anything about your business">
       <button type="submit" id="send" aria-label="Ask" disabled><svg viewBox="0 0 20 20"><path d="M10 16V4M5 9l5-5 5 5"/></svg></button>
@@ -314,49 +319,23 @@ label.f { display: grid; gap: 6px; font-size: 14px; color: var(--fg-2); }
 
   <section class="wrap band" aria-labelledby="needs-h">
     <div class="head"><div><h2 id="needs-h">Needs you</h2><p>Nothing goes out until you say so.</p></div><span class="grow"></span><span id="left" style="color:var(--fg-2)">3 left</span></div>
-    <div class="needs" id="needs">
-      <article class="card task">
-        <span class="ico"><svg viewBox="0 0 24 24"><path d="M3 6h18v12H3z M3 6l9 7 9-7"/></svg></span>
-        <div>
-          <h3>Reply to Marisol Vega<span class="pill-s warn">Urgent</span></h3>
-          <p>Her AC is blowing warm. Arkhon offered today's 1–3 pm slot and confirmed her unit is under warranty.</p>
-          <div class="why">Based on your price list, her past job and your warranty policy</div>
-        </div>
-        <div class="acts"><button class="btn" type="button">Read</button><button class="btn primary" type="button" data-done="Sent">Send</button></div>
-      </article>
-      <article class="card task">
-        <span class="ico"><svg viewBox="0 0 24 24"><path d="M6 3h9l4 4v14H6z M14 3v5h5 M9 13h7 M9 17h5"/></svg></span>
-        <div>
-          <h3>File a Ferguson bill for $2,418.36<span class="pill-s ok">Matches order</span></h3>
-          <p>It matches purchase order 1187 exactly and belongs to the Harbor Dental job.</p>
-          <div class="why">Ready to add to QuickBooks</div>
-        </div>
-        <div class="acts"><button class="btn" type="button">Look</button><button class="btn primary" type="button" data-done="Filed">File it</button></div>
-      </article>
-      <article class="card task">
-        <span class="ico"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1.6V14 M12 17.5v.01"/></svg></span>
-        <div>
-          <h3>A customer asked about Mitsubishi units<span class="pill-s bad">Not sure</span></h3>
-          <p>Your files don't say whether you service them, so Arkhon didn't guess. Answer once and it will remember.</p>
-        </div>
-        <div class="acts"><button class="btn primary" type="button" data-done="Answered">Answer</button></div>
-      </article>
-    </div>
+    <p class="msg" id="home-msg" hidden style="margin-bottom:14px"></p>
+    <div class="needs" id="needs"></div>
   </section>
 
   <section class="wrap band" aria-labelledby="week-h">
     <div class="head"><div><h2 id="week-h">This week</h2></div></div>
     <div class="card week">
       <div>
-        <div class="big">14.6<small> hours</small></div>
-        <p>given back to your team. That's about <b style="color:var(--fg)">$847</b> of time.</p>
+        <div class="big" id="wk-hours">0<small> hours</small></div>
+        <p id="wk-line">given back to your team.</p>
       </div>
-      <svg id="sky" viewBox="0 0 300 120" role="img" aria-label="Hours saved each day this week and last, highest on Wednesday at 3.4 hours"></svg>
+      <svg id="sky" viewBox="0 0 300 120" role="img" aria-label="Hours saved each day this week and last"></svg>
     </div>
     <div class="facts">
-      <div class="card fact"><b>212</b><span>emails written for you</span></div>
-      <div class="card fact"><b>96</b><span>bills and receipts filed</span></div>
-      <div class="card fact"><b>7</b><span>meetings written up</span></div>
+      <div class="card fact"><b id="wk-drafts">0</b><span>emails written for you</span></div>
+      <div class="card fact"><b id="wk-docs">0</b><span>bills and receipts filed</span></div>
+      <div class="card fact"><b id="wk-meetings">0</b><span>meetings written up</span></div>
     </div>
     <div class="card private">
       <span class="shield"><svg viewBox="0 0 24 24"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z M8.5 12l2.5 2.5 4.5-5"/></svg></span>
@@ -430,6 +409,11 @@ label.f { display: grid; gap: 6px; font-size: 14px; color: var(--fg-2); }
         <label class="f" style="flex:1 1 240px">Account<input id="acct" type="text" placeholder="e.g. service@coastline.com"></label>
         <label class="f" id="team-pick" style="flex:1 1 200px" hidden>Team<select id="team-sel"></select></label>
       </div>
+      <div class="row" id="mail-fields" hidden>
+        <label class="f" style="flex:1 1 200px">Incoming mail server (IMAP)<input id="imap-host" type="text" autocomplete="off" placeholder="imap.example.com"></label>
+        <label class="f" style="flex:1 1 200px">Outgoing mail server (SMTP)<input id="smtp-host" type="text" autocomplete="off" placeholder="smtp.example.com"></label>
+        <label class="f" style="flex:1 1 200px">Password or app password<input id="mail-pw" type="password" autocomplete="off"></label>
+      </div>
       <div class="row"><button class="btn primary" type="submit">Sign in and connect</button><button class="btn" type="button" id="sheet-cancel">Cancel</button>
         <span style="color:var(--fg-3);font-size:14px">Arkhon will ask before sending or changing anything.</span></div>
     </form>
@@ -460,7 +444,7 @@ label.f { display: grid; gap: 6px; font-size: 14px; color: var(--fg-2); }
   </section>
 </main>
 
-<script type="application/json" id="snapshot">{"company":"Coastline Mechanical","plan":"Business","seats":10,"seats_used":8,"viewer":{"id":1,"name":"Dana Ruiz","email":"dana@coastline.com","role":"Owner","status":"active"},"can":{"manage_people":true,"assign_roles":true,"manage_billing":true,"manage_connections":true,"view_activity":true},"people":[{"id":1,"name":"Dana Ruiz","email":"dana@coastline.com","role":"Owner","status":"active"},{"id":2,"name":"Ari Patel","email":"ari@coastline.com","role":"Admin","status":"active"},{"id":3,"name":"Max Okafor","email":"max@coastline.com","role":"Manager","status":"active"},{"id":4,"name":"Lena Cho","email":"lena@coastline.com","role":"Dispatcher","status":"active"},{"id":5,"name":"Tia Alvarez","email":"tia@coastline.com","role":"Member","status":"active"},{"id":6,"name":"Sam Brooks","email":"sam@coastline.com","role":"Member","status":"active"},{"id":7,"name":"Rae Kim","email":"rae@coastline.com","role":"Member","status":"invited"},{"id":8,"name":"Jon Weiss","email":"jon@coastline.com","role":"Member","status":"active"},{"id":9,"name":"Pat Doyle","email":"pat@coastline.com","role":"Member","status":"suspended"}],"roles":[{"name":"Owner","description":"Runs the account, including plan and billing.","can":["Manage plan and billing","Change company settings","Invite and remove people","Change people's roles","Create custom roles","Manage teams","Connect company accounts","Turn on company automations","Approve work for their team","See company time-saved reports","See everyone's activity history","Install updates and industry packs"],"workspaces":["Email","Customer replies","Documents","Company answers","Meeting notes","Quotes & marketing","Reports","Coding & IT"],"people":1,"custom":false},{"name":"Admin","description":"Runs Arkhon day to day for the company.","can":["Change company settings","Invite and remove people","Change people's roles","Create custom roles","Manage teams","Connect company accounts","Turn on company automations","Approve work for their team","See company time-saved reports","See everyone's activity history","Install updates and industry packs"],"workspaces":["Email","Customer replies","Documents","Company answers","Meeting notes","Quotes & marketing","Reports","Coding & IT"],"people":1,"custom":false},{"name":"Manager","description":"Leads a team and signs off on their work.","can":["Manage teams","Approve work for their team","See company time-saved reports"],"workspaces":["Email","Customer replies","Documents","Company answers","Meeting notes","Quotes & marketing","Reports","Coding & IT"],"people":1,"custom":false},{"name":"Member","description":"Uses Arkhon for their own work.","can":[],"workspaces":["Email","Documents","Company answers"],"people":5,"custom":false},{"name":"Dispatcher","description":"A role your company created.","can":["Approve work for their team"],"workspaces":["Email","Customer replies","Company answers","Quotes & marketing"],"people":1,"custom":true}],"teams":[{"name":"Field techs","members":["Max Okafor","Tia Alvarez","Sam Brooks","Jon Weiss"],"workspaces":["Documents","Meeting notes"],"is_member":false},{"name":"Front office","members":["Ari Patel","Lena Cho","Rae Kim"],"workspaces":["Customer replies","Quotes & marketing"],"is_member":false}],"connections":[{"id":1,"app":"outlook","app_name":"Outlook","account":"service@coastline.com","mine":false,"personal":false,"shared_with":"Front office","connected_by":"Ari Patel","status":"active","can_disconnect":true},{"id":2,"app":"quick-books","app_name":"QuickBooks Online","account":"coastline mechanical books","mine":false,"personal":false,"shared_with":"Owners and Admins","connected_by":"Dana Ruiz","status":"active","can_disconnect":true},{"id":3,"app":"local-folder","app_name":"Folder or network drive","account":"\\\\office-nas\\jobs","mine":false,"personal":false,"shared_with":"Everyone","connected_by":"Ari Patel","status":"active","can_disconnect":true},{"id":4,"app":"google-drive","app_name":"Google Drive","account":"price books & manuals","mine":false,"personal":false,"shared_with":"Everyone","connected_by":"Ari Patel","status":"needs-sign-in","can_disconnect":true},{"id":5,"app":"outlook","app_name":"Outlook","account":"dana@coastline.com","mine":true,"personal":true,"shared_with":"Only Dana Ruiz","connected_by":"Dana Ruiz","status":"active","can_disconnect":true},{"id":6,"app":"google-calendar","app_name":"Google Calendar","account":"dana@coastline.com","mine":true,"personal":true,"shared_with":"Only Dana Ruiz","connected_by":"Dana Ruiz","status":"active","can_disconnect":true},{"id":7,"app":"gmail","app_name":"Gmail","account":"tia@coastline.com","mine":false,"personal":true,"shared_with":"Only Tia Alvarez","connected_by":"Tia Alvarez","status":"active","can_disconnect":true}],"apps":[{"app":"outlook","name":"Outlook","category":"Email & calendar","policy":"own-accounts","available":true,"connected":2,"can_connect_me":true,"can_connect_team":true,"can_connect_everyone":true},{"app":"one-drive","name":"OneDrive & SharePoint","category":"Files","policy":"own-accounts","available":true,"connected":0,"can_connect_me":true,"can_connect_team":true,"can_connect_everyone":true},{"app":"microsoft-teams","name":"Microsoft Teams","category":"Chat & meetings","policy":"admins-only","available":false,"connected":0,"can_connect_me":true,"can_connect_team":true,"can_connect_everyone":true},{"app":"gmail","name":"Gmail","category":"Email & calendar","policy":"own-accounts","available":true,"connected":1,"can_connect_me":true,"can_connect_team":true,"can_connect_everyone":true},{"app":"google-calendar","name":"Google Calendar","category":"Email & calendar","policy":"own-accounts","available":true,"connected":1,"can_connect_me":true,"can_connect_team":true,"can_connect_everyone":true},{"app":"google-drive","name":"Google Drive","category":"Files","policy":"own-accounts","available":true,"connected":1,"can_connect_me":true,"can_connect_team":true,"can_connect_everyone":true},{"app":"other-email","name":"Other email (IMAP)","category":"Email & calendar","policy":"own-accounts","available":true,"connected":0,"can_connect_me":true,"can_connect_team":true,"can_connect_everyone":true},{"app":"local-folder","name":"Folder or network drive","category":"Files","policy":"admins-only","available":true,"connected":1,"can_connect_me":true,"can_connect_team":true,"can_connect_everyone":true},{"app":"dropbox","name":"Dropbox","category":"Files","policy":"admins-only","available":false,"connected":0,"can_connect_me":true,"can_connect_team":true,"can_connect_everyone":true},{"app":"quick-books","name":"QuickBooks Online","category":"Accounting","policy":"admins-only","available":true,"connected":1,"can_connect_me":true,"can_connect_team":true,"can_connect_everyone":true},{"app":"xero","name":"Xero","category":"Accounting","policy":"admins-only","available":true,"connected":0,"can_connect_me":true,"can_connect_team":true,"can_connect_everyone":true},{"app":"hub-spot","name":"HubSpot","category":"Customers & sales","policy":"admins-only","available":true,"connected":0,"can_connect_me":true,"can_connect_team":true,"can_connect_everyone":true},{"app":"service-titan","name":"ServiceTitan","category":"Jobs & scheduling","policy":"admins-only","available":false,"connected":0,"can_connect_me":true,"can_connect_team":true,"can_connect_everyone":true},{"app":"jobber","name":"Jobber","category":"Jobs & scheduling","policy":"team-accounts","available":false,"connected":0,"can_connect_me":true,"can_connect_team":true,"can_connect_everyone":true},{"app":"housecall-pro","name":"Housecall Pro","category":"Jobs & scheduling","policy":"admins-only","available":false,"connected":0,"can_connect_me":true,"can_connect_team":true,"can_connect_everyone":true},{"app":"stripe","name":"Stripe","category":"Payments","policy":"admins-only","available":false,"connected":0,"can_connect_me":true,"can_connect_team":true,"can_connect_everyone":true},{"app":"square","name":"Square","category":"Payments","policy":"admins-only","available":false,"connected":0,"can_connect_me":true,"can_connect_team":true,"can_connect_everyone":true},{"app":"slack","name":"Slack","category":"Chat & meetings","policy":"admins-only","available":false,"connected":0,"can_connect_me":true,"can_connect_team":true,"can_connect_everyone":true},{"app":"zoom","name":"Zoom","category":"Chat & meetings","policy":"admins-only","available":false,"connected":0,"can_connect_me":true,"can_connect_team":true,"can_connect_everyone":true},{"app":"docu-sign","name":"DocuSign","category":"Signatures","policy":"admins-only","available":false,"connected":0,"can_connect_me":true,"can_connect_team":true,"can_connect_everyone":true}],"workspaces":["Email","Customer replies","Documents","Company answers","Meeting notes","Quotes & marketing","Reports","Coding & IT"]}</script>
+<script type="application/json" id="snapshot">{"company":"Coastline Mechanical","plan":"Business","seats":10,"seats_used":8,"viewer":{"id":1,"name":"Dana Ruiz","email":"dana@coastline.com","role":"Owner","status":"active"},"can":{"manage_people":true,"assign_roles":true,"manage_billing":true,"manage_connections":true,"view_activity":true},"people":[{"id":1,"name":"Dana Ruiz","email":"dana@coastline.com","role":"Owner","status":"active"},{"id":2,"name":"Ari Patel","email":"ari@coastline.com","role":"Admin","status":"active"},{"id":3,"name":"Max Okafor","email":"max@coastline.com","role":"Manager","status":"active"},{"id":4,"name":"Lena Cho","email":"lena@coastline.com","role":"Dispatcher","status":"active"},{"id":5,"name":"Tia Alvarez","email":"tia@coastline.com","role":"Member","status":"active"},{"id":6,"name":"Sam Brooks","email":"sam@coastline.com","role":"Member","status":"active"},{"id":7,"name":"Rae Kim","email":"rae@coastline.com","role":"Member","status":"invited"},{"id":8,"name":"Jon Weiss","email":"jon@coastline.com","role":"Member","status":"active"},{"id":9,"name":"Pat Doyle","email":"pat@coastline.com","role":"Member","status":"suspended"}],"roles":[{"name":"Owner","description":"Runs the account, including plan and billing.","can":["Manage plan and billing","Change company settings","Invite and remove people","Change people's roles","Create custom roles","Manage teams","Connect company accounts","Turn on company automations","Approve work for their team","See company time-saved reports","See everyone's activity history","Install updates and industry packs"],"workspaces":["Email","Customer replies","Documents","Company answers","Meeting notes","Quotes & marketing","Reports","Coding & IT"],"people":1,"custom":false},{"name":"Admin","description":"Runs Arkhon day to day for the company.","can":["Change company settings","Invite and remove people","Change people's roles","Create custom roles","Manage teams","Connect company accounts","Turn on company automations","Approve work for their team","See company time-saved reports","See everyone's activity history","Install updates and industry packs"],"workspaces":["Email","Customer replies","Documents","Company answers","Meeting notes","Quotes & marketing","Reports","Coding & IT"],"people":1,"custom":false},{"name":"Manager","description":"Leads a team and signs off on their work.","can":["Manage teams","Approve work for their team","See company time-saved reports"],"workspaces":["Email","Customer replies","Documents","Company answers","Meeting notes","Quotes & marketing","Reports","Coding & IT"],"people":1,"custom":false},{"name":"Member","description":"Uses Arkhon for their own work.","can":[],"workspaces":["Email","Documents","Company answers"],"people":5,"custom":false},{"name":"Dispatcher","description":"A role your company created.","can":["Approve work for their team"],"workspaces":["Email","Customer replies","Company answers","Quotes & marketing"],"people":1,"custom":true}],"teams":[{"name":"Field techs","members":["Max Okafor","Tia Alvarez","Sam Brooks","Jon Weiss"],"workspaces":["Documents","Meeting notes"],"is_member":false},{"name":"Front office","members":["Ari Patel","Lena Cho","Rae Kim"],"workspaces":["Customer replies","Quotes & marketing"],"is_member":false}],"connections":[{"id":1,"app":"outlook","app_name":"Outlook","account":"service@coastline.com","mine":false,"personal":false,"shared_with":"Front office","connected_by":"Ari Patel","status":"active","can_disconnect":true},{"id":2,"app":"quick-books","app_name":"QuickBooks Online","account":"coastline mechanical books","mine":false,"personal":false,"shared_with":"Owners and Admins","connected_by":"Dana Ruiz","status":"active","can_disconnect":true},{"id":3,"app":"local-folder","app_name":"Folder or network drive","account":"\\\\office-nas\\jobs","mine":false,"personal":false,"shared_with":"Everyone","connected_by":"Ari Patel","status":"active","can_disconnect":true},{"id":4,"app":"google-drive","app_name":"Google Drive","account":"price books & manuals","mine":false,"personal":false,"shared_with":"Everyone","connected_by":"Ari Patel","status":"needs-sign-in","can_disconnect":true},{"id":5,"app":"outlook","app_name":"Outlook","account":"dana@coastline.com","mine":true,"personal":true,"shared_with":"Only Dana Ruiz","connected_by":"Dana Ruiz","status":"active","can_disconnect":true},{"id":6,"app":"google-calendar","app_name":"Google Calendar","account":"dana@coastline.com","mine":true,"personal":true,"shared_with":"Only Dana Ruiz","connected_by":"Dana Ruiz","status":"active","can_disconnect":true},{"id":7,"app":"gmail","app_name":"Gmail","account":"tia@coastline.com","mine":false,"personal":true,"shared_with":"Only Tia Alvarez","connected_by":"Tia Alvarez","status":"active","can_disconnect":true}],"apps":[{"app":"outlook","name":"Outlook","category":"Email & calendar","policy":"own-accounts","available":true,"connected":2,"can_connect_me":true,"can_connect_team":true,"can_connect_everyone":true},{"app":"one-drive","name":"OneDrive & SharePoint","category":"Files","policy":"own-accounts","available":true,"connected":0,"can_connect_me":true,"can_connect_team":true,"can_connect_everyone":true},{"app":"microsoft-teams","name":"Microsoft Teams","category":"Chat & meetings","policy":"admins-only","available":false,"connected":0,"can_connect_me":true,"can_connect_team":true,"can_connect_everyone":true},{"app":"gmail","name":"Gmail","category":"Email & calendar","policy":"own-accounts","available":true,"connected":1,"can_connect_me":true,"can_connect_team":true,"can_connect_everyone":true},{"app":"google-calendar","name":"Google Calendar","category":"Email & calendar","policy":"own-accounts","available":true,"connected":1,"can_connect_me":true,"can_connect_team":true,"can_connect_everyone":true},{"app":"google-drive","name":"Google Drive","category":"Files","policy":"own-accounts","available":true,"connected":1,"can_connect_me":true,"can_connect_team":true,"can_connect_everyone":true},{"app":"other-email","name":"Other email (IMAP)","category":"Email & calendar","policy":"own-accounts","available":true,"connected":0,"can_connect_me":true,"can_connect_team":true,"can_connect_everyone":true},{"app":"local-folder","name":"Folder or network drive","category":"Files","policy":"admins-only","available":true,"connected":1,"can_connect_me":true,"can_connect_team":true,"can_connect_everyone":true},{"app":"dropbox","name":"Dropbox","category":"Files","policy":"admins-only","available":false,"connected":0,"can_connect_me":true,"can_connect_team":true,"can_connect_everyone":true},{"app":"quick-books","name":"QuickBooks Online","category":"Accounting","policy":"admins-only","available":true,"connected":1,"can_connect_me":true,"can_connect_team":true,"can_connect_everyone":true},{"app":"xero","name":"Xero","category":"Accounting","policy":"admins-only","available":true,"connected":0,"can_connect_me":true,"can_connect_team":true,"can_connect_everyone":true},{"app":"hub-spot","name":"HubSpot","category":"Customers & sales","policy":"admins-only","available":true,"connected":0,"can_connect_me":true,"can_connect_team":true,"can_connect_everyone":true},{"app":"service-titan","name":"ServiceTitan","category":"Jobs & scheduling","policy":"admins-only","available":false,"connected":0,"can_connect_me":true,"can_connect_team":true,"can_connect_everyone":true},{"app":"jobber","name":"Jobber","category":"Jobs & scheduling","policy":"team-accounts","available":false,"connected":0,"can_connect_me":true,"can_connect_team":true,"can_connect_everyone":true},{"app":"housecall-pro","name":"Housecall Pro","category":"Jobs & scheduling","policy":"admins-only","available":false,"connected":0,"can_connect_me":true,"can_connect_team":true,"can_connect_everyone":true},{"app":"stripe","name":"Stripe","category":"Payments","policy":"admins-only","available":false,"connected":0,"can_connect_me":true,"can_connect_team":true,"can_connect_everyone":true},{"app":"square","name":"Square","category":"Payments","policy":"admins-only","available":false,"connected":0,"can_connect_me":true,"can_connect_team":true,"can_connect_everyone":true},{"app":"slack","name":"Slack","category":"Chat & meetings","policy":"admins-only","available":false,"connected":0,"can_connect_me":true,"can_connect_team":true,"can_connect_everyone":true},{"app":"zoom","name":"Zoom","category":"Chat & meetings","policy":"admins-only","available":false,"connected":0,"can_connect_me":true,"can_connect_team":true,"can_connect_everyone":true},{"app":"docu-sign","name":"DocuSign","category":"Signatures","policy":"admins-only","available":false,"connected":0,"can_connect_me":true,"can_connect_team":true,"can_connect_everyone":true}],"workspaces":["Email","Customer replies","Documents","Company answers","Meeting notes","Quotes & marketing","Reports","Coding & IT"],"needs_you":{"total":4,"items":[{"id":1,"kind":"draft-reply","workspace":"Email","title":"Reply to Marisol Vega","summary":"Her AC is blowing warm. Arkhon offered today's 1–3 pm slot and confirmed her unit is under warranty.","draft":"Hi Marisol,\n\nSorry to hear the AC is blowing warm. We can come out today between 1 and 3 pm. Your unit was installed in May 2024, so the visit and any covered parts are under warranty.\n\nDana\nCoastline Mechanical","question":null,"sources":[{"label":"Price list 2026","reference":"file:\\\\office-nas\\jobs\\price-list-2026.pdf#p2"},{"label":"Job #4471, Vega residence","reference":"file:\\\\office-nas\\jobs\\4471\\invoice.pdf"},{"label":"Warranty policy","reference":"file:\\\\office-nas\\jobs\\policies\\warranty.docx"}],"confidence":"high","confidence_label":"Sure","urgency":"urgent","created_at":1793952000,"assignee":"Dana Ruiz","team":null,"connection":"Outlook (dana@coastline.com)","action":"Send","done_word":"Sent","can_approve":true,"blocked":null},{"id":2,"kind":"file-bill","workspace":"Documents","title":"File a Ferguson bill for $2,418.36","summary":"It matches purchase order 1187 exactly and belongs to the Harbor Dental job.","draft":null,"question":null,"sources":[{"label":"Ferguson invoice 88213","reference":"mail:service@coastline.com/88213"},{"label":"Purchase order 1187","reference":"file:\\\\office-nas\\jobs\\po\\1187.pdf"}],"confidence":"high","confidence_label":"Sure","urgency":"normal","created_at":1793944800,"assignee":"Dana Ruiz","team":null,"connection":"QuickBooks Online (coastline mechanical books)","action":"File it","done_word":"Filed","can_approve":true,"blocked":null},{"id":3,"kind":"knowledge-gap","workspace":"Company answers","title":"A customer asked about Mitsubishi units","summary":"Your files don't say whether you service them, so Arkhon didn't guess. Answer once and it will remember.","draft":null,"question":"Do we service Mitsubishi mini-split units?","sources":[],"confidence":"not-found","confidence_label":"Not sure","urgency":"normal","created_at":1793948400,"assignee":"Dana Ruiz","team":null,"connection":null,"action":"Answer","done_word":"Answered","can_approve":true,"blocked":null}]},"this_week":{"scope":"company","hours":16.1,"dollars":935,"hourly_rate":58,"totals":{"drafts":120,"documents":69,"meetings":9,"answers":20,"minutes":967,"hours":16.1,"dollars":935},"previous_hours":12.4,"days":[{"date":"2026-10-24","label":"S","weekday":"Saturday","minutes":36,"hours":0.6},{"date":"2026-10-25","label":"S","weekday":"Sunday","minutes":27,"hours":0.5},{"date":"2026-10-26","label":"M","weekday":"Monday","minutes":113,"hours":1.9},{"date":"2026-10-27","label":"T","weekday":"Tuesday","minutes":143,"hours":2.4},{"date":"2026-10-28","label":"W","weekday":"Wednesday","minutes":172,"hours":2.9},{"date":"2026-10-29","label":"T","weekday":"Thursday","minutes":136,"hours":2.3},{"date":"2026-10-30","label":"F","weekday":"Friday","minutes":114,"hours":1.9},{"date":"2026-10-31","label":"S","weekday":"Saturday","minutes":34,"hours":0.6},{"date":"2026-11-01","label":"S","weekday":"Sunday","minutes":18,"hours":0.3},{"date":"2026-11-02","label":"M","weekday":"Monday","minutes":136,"hours":2.3},{"date":"2026-11-03","label":"T","weekday":"Tuesday","minutes":186,"hours":3.1},{"date":"2026-11-04","label":"W","weekday":"Wednesday","minutes":257,"hours":4.3},{"date":"2026-11-05","label":"T","weekday":"Thursday","minutes":195,"hours":3.3},{"date":"2026-11-06","label":"F","weekday":"Friday","minutes":141,"hours":2.4}],"example":true}}</script>
 <script>
 (() => {
   /* ---------- Routing (#home, #people, #roles, #teams) ---------- */
@@ -482,30 +466,93 @@ label.f { display: grid; gap: 6px; font-size: 14px; color: var(--fg-2); }
   }
   addEventListener('hashchange', route);
 
-  /* ---------- Home ---------- */
-  const W = 300, base = 104, top = 16, max = 4;
-  const days = [1.1,2.0,3.4,2.6,1.9,1.4,2.2], prev = [0.9,1.6,1.8,2.0,1.5,0.6,1.1];
-  const names = ['M','T','W','T','F','S','S'];
+  /* ---------- Home: rendered from the engine view (needs_you, this_week) ---------- */
   const ns = 'http://www.w3.org/2000/svg', sky = document.getElementById('sky');
   const add = (t, a) => { const e = document.createElementNS(ns, t);
     for (const k in a) { const v = a[k]; if ((k === 'fill' || k === 'stroke') && String(v).startsWith('var(')) e.style[k] = v; else e.setAttribute(k, v); }
     sky.appendChild(e); return e; };
-  const step = W / 7, bw = 18, y = v => base - v / max * (base - top);
-  days.forEach((v, i) => {
-    const cx = i * step + step / 2;
-    add('rect', { x: cx - bw / 2 - 3, y: y(prev[i]), width: 6, height: base - y(prev[i]), rx: 3, fill: 'var(--soft)' });
-    add('rect', { x: cx - bw / 2 + 5, y: y(v), width: bw - 4, height: base - y(v), rx: 5, fill: i === 2 ? 'url(#chrome)' : 'var(--fg-3)', opacity: i === 2 ? 1 : .45 });
-    add('text', { x: cx, y: 118, 'text-anchor': 'middle', 'font-size': 11, fill: 'var(--fg-3)', 'font-family': 'Geist, sans-serif' }).textContent = names[i];
+  function drawSky(days) {
+    [...sky.querySelectorAll('rect,text')].forEach(e => e.remove());
+    const W = 300, base = 104, top = 16;
+    const now = days.slice(7), prev = days.slice(0, 7);
+    const max = Math.max(1, Math.ceil(Math.max(...days.map(d => d.hours))));
+    const step = W / 7, bw = 18, y = v => base - v / max * (base - top);
+    const peak = now.reduce((b, d, i) => d.hours > now[b].hours ? i : b, 0);
+    now.forEach((d, i) => {
+      const cx = i * step + step / 2;
+      add('rect', { x: cx - bw / 2 - 3, y: y(prev[i].hours), width: 6, height: base - y(prev[i].hours), rx: 3, fill: 'var(--soft)' });
+      add('rect', { x: cx - bw / 2 + 5, y: y(d.hours), width: bw - 4, height: base - y(d.hours), rx: 5, fill: i === peak ? 'url(#chrome)' : 'var(--fg-3)', opacity: i === peak ? 1 : .45 });
+      add('text', { x: cx, y: 118, 'text-anchor': 'middle', 'font-size': 11, fill: 'var(--fg-3)', 'font-family': 'Geist, sans-serif' }).textContent = d.label;
+    });
+    const p = now[peak];
+    add('text', { x: peak * step + step / 2 + 2, y: y(p.hours) - 6, 'text-anchor': 'middle', 'font-size': 11, 'font-weight': 600, fill: 'var(--fg)', 'font-family': 'Geist, sans-serif' }).textContent = p.hours + ' h';
+    sky.setAttribute('aria-label', `Hours saved each day this week and last, highest on ${p.weekday} at ${p.hours} hours`);
+  }
+  const ICONS = {
+    mail: '<path d="M3 6h18v12H3z M3 6l9 7 9-7"/>',
+    doc: '<path d="M6 3h9l4 4v14H6z M14 3v5h5 M9 13h7 M9 17h5"/>',
+    ask: '<circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1.6V14 M12 17.5v.01"/>',
+  };
+  const kindIcon = k => k === 'knowledge-gap' ? ICONS.ask : (k === 'file-bill' || k === 'meeting-notes') ? ICONS.doc : ICONS.mail;
+  const NUM = ['Nothing', 'One thing', 'Two things', 'Three things', 'Four things', 'Five things'];
+  function pill(it) {
+    if (it.urgency === 'urgent') return '<span class="pill-s warn">Urgent</span>';
+    const cls = { high: 'ok', medium: 'warn', low: 'bad', 'not-found': 'bad' }[it.confidence];
+    return `<span class="pill-s ${cls}">${esc(it.confidence_label)}</span>`;
+  }
+  function renderHome() {
+    const n = V.needs_you, w = V.this_week;
+    if (V.viewer) $('hello').textContent = `Good morning, ${V.viewer.name.split(' ')[0]}.`;
+    $('lede').textContent = n.total
+      ? `${NUM[n.total] || n.total + ' things'} need${n.total === 1 ? 's' : ''} you today. Everything else is handled.`
+      : 'Nothing needs you today. Everything else is handled.';
+    $('left').textContent = n.total ? n.total + ' left' : "You're all caught up";
+    $('needs').innerHTML = n.items.map(it => {
+      const why = it.sources.length ? `<div class="why">Based on ${esc(it.sources.map(x => x.label).join(', '))}</div>` : '';
+      const blocked = it.blocked ? `<div class="blocked">${esc(it.blocked)}</div>` : '';
+      const look = it.draft != null ? `<button class="btn" type="button" data-read="${it.id}">Read</button>` : '';
+      const primary = it.kind === 'knowledge-gap'
+        ? `<button class="btn primary" type="button" data-ask="${it.id}">${esc(it.action)}</button>`
+        : it.can_approve ? `<button class="btn primary" type="button" data-approve="${it.id}">${esc(it.action)}</button>` : '';
+      const detail = it.kind === 'knowledge-gap'
+        ? `<form class="detail" data-answer="${it.id}" hidden><label class="f">${esc(it.question || it.title)}<input type="text" aria-label="Your answer" placeholder="Your answer"></label><div class="acts"><button class="btn primary" type="submit">Save answer</button></div></form>`
+        : it.draft != null
+          ? `<div class="detail" data-detail="${it.id}" hidden><textarea aria-label="Text Arkhon prepared">${esc(it.draft)}</textarea>${it.sources.length ? `<ul>${it.sources.map(x => `<li>${esc(x.label)}</li>`).join('')}</ul>` : ''}${it.connection ? `<span class="why">Goes out from ${esc(it.connection)}</span>` : ''}</div>`
+          : '';
+      return `<article class="card task" data-item="${it.id}">
+        <span class="ico"><svg viewBox="0 0 24 24">${kindIcon(it.kind)}</svg></span>
+        <div><h3>${esc(it.title)}${pill(it)}</h3><p>${esc(it.summary)}</p>${why}${blocked}${detail}</div>
+        <div class="acts">${look}${primary}<button class="link" type="button" data-dismiss="${it.id}" style="font-size:15px">Dismiss</button></div>
+      </article>`;
+    }).join('') || '<article class="card task" style="grid-template-columns:1fr"><p>Nothing is waiting for you. Arkhon will put new work here for you to check.</p></article>';
+    $('wk-hours').innerHTML = `${w.hours}<small> hours</small>`;
+    $('wk-line').innerHTML = `given back to ${w.scope === 'company' ? 'your team' : 'you'}. That's about <b style="color:var(--fg)">$${w.dollars.toLocaleString('en-US')}</b> of time.`;
+    $('wk-drafts').textContent = w.totals.drafts;
+    $('wk-docs').textContent = w.totals.documents;
+    $('wk-meetings').textContent = w.totals.meetings;
+    drawSky(w.days);
+  }
+  document.getElementById('needs').addEventListener('click', async e => {
+    const msg = $('home-msg');
+    const read = e.target.closest('[data-read]');
+    if (read) { const d = document.querySelector(`[data-detail="${read.dataset.read}"]`); if (d) d.hidden = !d.hidden; return; }
+    const ask = e.target.closest('[data-ask]');
+    if (ask) { const f = document.querySelector(`[data-answer="${ask.dataset.ask}"]`); f.hidden = false; f.querySelector('input').focus(); return; }
+    const ap = e.target.closest('[data-approve]');
+    if (ap) {
+      const id = +ap.dataset.approve, d = document.querySelector(`[data-detail="${id}"]`);
+      const it = V.needs_you.items.find(x => x.id === id);
+      const text = d ? d.querySelector('textarea').value : null;
+      const edited = it && it.draft != null && text != null && text.trim() !== it.draft.trim();
+      return run(edited ? { command: 'edit-and-approve', item: id, text } : { command: 'approve', item: id }, msg);
+    }
+    const dis = e.target.closest('[data-dismiss]');
+    if (dis) return run({ command: 'dismiss', item: +dis.dataset.dismiss }, msg);
   });
-  add('text', { x: 2 * step + step / 2 + 2, y: y(3.4) - 6, 'text-anchor': 'middle', 'font-size': 11, 'font-weight': 600, fill: 'var(--fg)', 'font-family': 'Geist, sans-serif' }).textContent = '3.4 h';
-
-  const left = document.getElementById('left');
-  document.getElementById('needs').addEventListener('click', e => {
-    const b = e.target.closest('[data-done]'); if (!b) return;
-    const t = b.closest('.task'); t.classList.add('done');
-    t.querySelector('h3').insertAdjacentHTML('beforeend', `<span class="pill-s ok">${b.dataset.done}</span>`);
-    const n = document.querySelectorAll('.task:not(.done)').length;
-    left.textContent = n ? n + ' left' : "You're all caught up";
+  document.getElementById('needs').addEventListener('submit', e => {
+    const f = e.target.closest('[data-answer]'); if (!f) return;
+    e.preventDefault();
+    run({ command: 'answer-once', item: +f.dataset.answer, answer: f.querySelector('input').value }, $('home-msg'));
   });
 
   const q = document.getElementById('q'), send = document.getElementById('send'), ask = document.getElementById('ask');
@@ -570,13 +617,14 @@ label.f { display: grid; gap: 6px; font-size: 14px; color: var(--fg-2); }
   }
   $('as-sel').addEventListener('change', e => {
     actorId = e.target.value; try { sessionStorage.setItem('arkhon-as', actorId); } catch (_) {}
-    ['inv-msg', 'c-msg'].forEach(id => { $(id).hidden = true; }); $('sheet').hidden = true;
+    ['inv-msg', 'c-msg', 'home-msg'].forEach(id => { $(id).hidden = true; }); $('sheet').hidden = true;
     load();
   });
 
   const initials = n => n.split(' ').map(w => w[0]).join('').slice(0, 2);
   const statusWord = s => ({ invited: 'Invited', suspended: 'Paused', active: '' }[s]);
   function render() {
+    renderHome();
     $('org-name').textContent = V.company;
     if (V.viewer) { const me = document.querySelector('.me'); me.textContent = initials(V.viewer.name); me.setAttribute('aria-label', `${V.viewer.name}, ${V.viewer.role}`); }
     $('org-sub').textContent = `${V.plan} plan · Choose who can use Arkhon and what they can do.`;
@@ -690,6 +738,8 @@ label.f { display: grid; gap: 6px; font-size: 14px; color: var(--fg-2); }
     const myTeams = V.can.manage_connections ? V.teams : V.teams.filter(t => t.is_member);
     $('team-sel').innerHTML = myTeams.map(t => `<option>${esc(t.name)}</option>`).join('');
     $('team-pick').hidden = first !== 'team';
+    const mail = pending.app === 'other-email';
+    $('mail-fields').hidden = !mail; ['imap-host', 'smtp-host', 'mail-pw'].forEach(id => { $(id).value = ''; });
     $('acct').value = ''; sheet.hidden = false; $('c-msg').hidden = true;
     sheet.scrollIntoView({ behavior: 'smooth', block: 'center' }); $('acct').focus();
   });
@@ -699,7 +749,14 @@ label.f { display: grid; gap: 6px; font-size: 14px; color: var(--fg-2); }
     e.preventDefault();
     const f = sheet.for.value;
     const target = f === 'me' ? { type: 'me' } : f === 'all' ? { type: 'everyone' } : { type: 'team', team: $('team-sel').value };
-    if (await run({ command: 'connect', app: pending.app, account: $('acct').value, for: target }, $('c-msg'))) sheet.hidden = true;
+    const cmd = { command: 'connect', app: pending.app, account: $('acct').value, for: target };
+    if (pending.app === 'other-email') {
+      // Sent once to the local engine, which seals it in the encrypted vault. Never kept here.
+      cmd.credentials = { imap_host: $('imap-host').value.trim(), smtp_host: $('smtp-host').value.trim(), username: $('acct').value.trim(), password: $('mail-pw').value };
+    }
+    const ok = await run(cmd, $('c-msg'));
+    $('mail-pw').value = '';
+    if (ok) sheet.hidden = true;
   });
 
   /* Activity */
