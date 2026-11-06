@@ -13,9 +13,13 @@
 //!
 //! Admin API (`/admin/...`, bearer session after password + TOTP sign-in) manages customers,
 //! licenses, activations, releases, revocation lists and the audit log. See `openapi.yaml`.
+//!
+//! Customer portal (`/portal` page, `/portal/...` API): people at a customer company see and
+//! manage only their own company's licenses, computers, downloads and team. See [`portal`].
 
 pub mod admin;
 pub mod keys;
+pub mod portal;
 pub mod public;
 
 use std::collections::HashMap;
@@ -53,6 +57,8 @@ pub struct AppState {
     /// Clock (tests inject a fixed one).
     pub clock: Arc<dyn Fn() -> u64 + Send + Sync>,
     limiter: Arc<RateLimiter>,
+    /// Stricter limit for public trial sign-ups (per client IP).
+    pub(crate) trial_limiter: Arc<RateLimiter>,
 }
 
 impl AppState {
@@ -75,6 +81,7 @@ impl AppState {
                     .map_or(0, |d| d.as_secs())
             }),
             limiter: Arc::new(RateLimiter::new(60, Duration::from_secs(60))),
+            trial_limiter: Arc::new(RateLimiter::new(5, Duration::from_secs(3600))),
         }
     }
 
@@ -89,6 +96,13 @@ impl AppState {
     #[must_use]
     pub fn with_rate_limit(mut self, max: u32, window: Duration) -> Self {
         self.limiter = Arc::new(RateLimiter::new(max, window));
+        self
+    }
+
+    /// Replace the trial sign-up limit (sign-ups per window per client IP).
+    #[must_use]
+    pub fn with_trial_limit(mut self, max: u32, window: Duration) -> Self {
+        self.trial_limiter = Arc::new(RateLimiter::new(max, window));
         self
     }
 
@@ -236,11 +250,14 @@ impl RateLimiter {
     }
 }
 
+/// The client IP (unspecified when the server runs without connect info, as in tests).
+pub(crate) fn client_ip(ext: &axum::http::Extensions) -> IpAddr {
+    ext.get::<ConnectInfo<std::net::SocketAddr>>()
+        .map_or(IpAddr::from([0, 0, 0, 0]), |c| c.0.ip())
+}
+
 async fn rate_limit(State(s): State<AppState>, req: Request, next: Next) -> Response {
-    let ip = req
-        .extensions()
-        .get::<ConnectInfo<std::net::SocketAddr>>()
-        .map_or(IpAddr::from([0, 0, 0, 0]), |c| c.0.ip());
+    let ip = client_ip(req.extensions());
     if !s.limiter.allow(ip) {
         return ApiError(
             StatusCode::TOO_MANY_REQUESTS,
@@ -256,6 +273,30 @@ async fn rate_limit(State(s): State<AppState>, req: Request, next: Next) -> Resp
         "nosniff".parse().expect("static header"),
     );
     res
+}
+
+const PAGE_CSP: &str =
+    "default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; \
+     connect-src 'self'; img-src 'self' data: blob:; form-action 'none'; base-uri 'none'; \
+     frame-ancestors 'none'";
+
+fn page(html: &'static str) -> Response {
+    (
+        [
+            ("content-type", "text/html; charset=utf-8"),
+            ("content-security-policy", PAGE_CSP),
+            ("x-frame-options", "DENY"),
+            ("referrer-policy", "no-referrer"),
+        ],
+        html,
+    )
+        .into_response()
+}
+
+/// The customer portal: one static page that talks only to this server's `/portal` API.
+#[allow(clippy::unused_async)] // axum handler signature
+async fn portal_page() -> Response {
+    page(include_str!("../portal/index.html"))
 }
 
 /// The operator console: one static page that talks only to this server's `/admin` API.
@@ -283,6 +324,7 @@ pub fn router(state: AppState) -> Router {
     Router::new()
         .route("/healthz", get(|| async { "ok" }))
         .route("/console", get(console))
+        .route("/portal", get(portal_page))
         .route(
             "/openapi.yaml",
             get(|| async { include_str!("../openapi.yaml") }),
@@ -293,6 +335,7 @@ pub fn router(state: AppState) -> Router {
         .route("/v1/offline/renew", post(public::offline_renew))
         .route("/v1/releases", get(public::releases))
         .merge(admin::routes())
+        .merge(portal::routes())
         .layer(middleware::from_fn_with_state(state.clone(), rate_limit))
         .with_state(state)
 }

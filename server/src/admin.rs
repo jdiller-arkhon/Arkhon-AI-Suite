@@ -25,7 +25,7 @@ use crate::{audit, b64, to_i64, unb64, ApiError, ApiResult, AppState};
 
 const SESSION_SECS: u64 = 8 * 3600;
 
-fn totp(secret: &[u8], email: &str) -> ApiResult<TOTP> {
+pub(crate) fn totp(secret: &[u8], email: &str) -> ApiResult<TOTP> {
     TOTP::new(
         Algorithm::SHA1,
         6,
@@ -168,14 +168,14 @@ impl FromRequestParts<AppState> for Admin {
     }
 }
 
-fn random_id(prefix: &str) -> String {
+pub(crate) fn random_id(prefix: &str) -> String {
     let mut b = [0u8; 9];
     OsRng.fill_bytes(&mut b);
     format!("{prefix}-{}", crate::hex(&b))
 }
 
 /// A new activation key: `ARKH-XXXXX-XXXXX-XXXXX-XXXXX` (Crockford-style base32, no I/L/O/U).
-fn new_activation_key() -> String {
+pub(crate) fn new_activation_key() -> String {
     const ALPHABET: &[u8; 32] = b"0123456789ABCDEFGHJKMNPQRSTVWXYZ";
     let mut raw = [0u8; 20];
     OsRng.fill_bytes(&mut raw);
@@ -241,6 +241,30 @@ async fn list_customers(State(s): State<AppState>, _a: Admin) -> ApiResult<Json<
         .into_iter()
         .map(|(id, name, email, created_at, licenses)| json!({ "id": id, "name": name, "email": email, "created_at": created_at, "licenses": licenses }))
         .collect::<Vec<_>>())))
+}
+
+/// `POST /admin/customers/{id}/portal-invite` body.
+#[derive(Debug, Deserialize)]
+pub struct PortalInvite {
+    /// The person's email.
+    pub email: String,
+    /// owner (default) | billing | viewer.
+    #[serde(default = "owner")]
+    pub role: String,
+}
+
+fn owner() -> String {
+    "owner".into()
+}
+
+async fn portal_invite(
+    State(s): State<AppState>,
+    Admin(by): Admin,
+    Path(id): Path<String>,
+    Json(p): Json<PortalInvite>,
+) -> ApiResult<Json<Value>> {
+    let inv = crate::portal::invite_user(&s, &id, &p.email, &p.role, &by, true).await?;
+    Ok(Json(crate::portal::invite_json(&inv, &p.email)))
 }
 
 /// `POST /admin/licenses` body.
@@ -871,6 +895,7 @@ pub fn routes() -> Router<AppState> {
             "/admin/customers",
             post(create_customer).get(list_customers),
         )
+        .route("/admin/customers/{id}/portal-invite", post(portal_invite))
         .route("/admin/licenses", post(create_license).get(list_licenses))
         .route("/admin/licenses/{id}", get(get_license))
         .route("/admin/licenses/{id}/status", post(set_status))

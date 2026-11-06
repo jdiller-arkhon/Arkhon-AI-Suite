@@ -27,6 +27,19 @@ licenses before it's fully set up. Production deployment: `deploy/docker-compose
 - **Revocation lists** must be root-signed and strictly newer than the current one.
 - **Admins** sign in with password (argon2id) plus TOTP and get an 8-hour session. Every change is in the audit log.
 - **Hardening:** a per-IP rate limit (60/min); SQL errors never reach clients.
+- **Customer portal** (`/portal` page, `/portal/...` API; see below).
+
+## Customer portal
+A single static page at `/portal` (strict CSP, no external resources) on top of the `/portal/...` API.
+People at a customer company sign in to see **their own company only**.
+
+- **Accounts:** portal users belong to one customer, with a role: `owner` (can change things), `billing` (reads everything plus billing) or `viewer` (reads). Passwords are argon2id (12+ characters). Two-step sign-in (TOTP) is optional per person. Sessions last 2 hours, in `portal_sessions`, separate from admin sessions; an admin token doesn't work on `/portal` and vice versa.
+- **Invites:** Arkhon staff invite a customer's first owner with `POST /admin/customers/{id}/portal-invite`; owners invite the rest from **Team**. Each invite or reset link (`/portal#accept=<token>`) works once, for 7 days, and only its hash is stored. **Email isn't wired yet:** links are returned in the API response and written to the server log (`portal invite link for …`). SMTP comes later.
+- **Scoping:** every portal query filters by the signed-in person's customer. Another company's license, computer, person or renewal file answers **404**, exactly as if it didn't exist.
+- **Owner-only actions (all audited as `portal:<email>`):** request a new activation key (rotates `key_hash`: the old key stops activating new computers, running computers are unaffected, the key is shown once), deactivate a computer (frees its slot), offline activation (upload a `RenewalRequest` file, download the `RenewalResponse`; the same single-use rule as `/v1/offline/renew`), and team invite/remove/reset. You can't remove yourself or the last owner.
+- **Downloads:** releases each license may install (inside its update window), with file sizes and SHA-256.
+- **Billing:** `GET /portal/invoices` returns a "Billing is being set up" placeholder. No payment provider is connected.
+- **Free trial:** `POST /portal/trial` (public) creates the company, a 14-day `trial` license (plan preset, 2 computers, software binding allowed) and an owner invite, and returns the activation key once. Limited to 5 sign-ups per hour per IP, on top of the global limit.
 
 ## Tests
 ```bash
@@ -38,4 +51,6 @@ Each test creates its own database. CI runs them against a Postgres service.
 - Run the issuing key in a KMS/HSM: implement `IssuingSigner` over it.
 - Use a KMS data key for `CekVault`.
 - Use a shared rate limiter at the edge when running several instances.
-- Add passkeys when the admin portal arrives (Phase 9).
+- Add passkeys for admins and portal users.
+- Wire SMTP so invite, reset and trial links are emailed instead of shown and logged.
+- Connect online billing to the `/portal/invoices` placeholder.

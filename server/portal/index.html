@@ -1,0 +1,510 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Arkhon Customer Portal</title>
+<style>
+/* Customer portal: the same calm language as the suite and the Operator Console.
+   One column, one task per view, plain words. Talks only to this server's /portal API
+   (CSP: connect-src 'self'); no external resources. */
+:root {
+  --bg: #f5f5f7; --card: #fff; --soft: #f0f0f2; --line: #e6e6e9;
+  --fg: #1d1d1f; --fg-2: #6e6e73; --fg-3: #a1a1a6;
+  --ink: #2b2b2e; --ink-fg: #fff; --focus: #0071e3;
+  --ok: #2f7a55; --ok-bg: #e8f3ed; --warn: #b45309; --warn-bg: #fdf1e3; --bad: #d92d20; --bad-bg: #fdecea;
+  --shadow: 0 1px 2px rgba(0,0,0,.04), 0 12px 32px -16px rgba(0,0,0,.12);
+  --font: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Geist", "Helvetica Neue", Arial, sans-serif;
+  --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root {
+  --bg: #000; --card: #141416; --soft: #1c1c1f; --line: #2a2a2e;
+  --fg: #f5f5f7; --fg-2: #a1a1a6; --fg-3: #6e6e73; --ink: #f5f5f7; --ink-fg: #111113; --focus: #2997ff;
+  --ok: #4fbf86; --ok-bg: rgba(79,191,134,.14); --warn: #f0a33a; --warn-bg: rgba(240,163,58,.14); --bad: #ff6b61; --bad-bg: rgba(255,107,97,.14);
+  --shadow: 0 0 0 1px var(--line); color-scheme: dark;
+} }
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html, body { overflow-x: hidden; }
+body { margin: 0; background: var(--bg); color: var(--fg); font: 16px/1.5 var(--font); -webkit-font-smoothing: antialiased; }
+button, input, select { font: inherit; color: inherit; }
+button { cursor: pointer; }
+a { color: var(--focus); }
+:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; border-radius: 10px; }
+.wrap { max-width: 980px; margin: 0 auto; padding-left: max(24px, env(safe-area-inset-left)); padding-right: max(24px, env(safe-area-inset-right)); }
+header { position: sticky; top: 0; z-index: 5; background: color-mix(in srgb, var(--bg) 85%, transparent); backdrop-filter: blur(20px); }
+.hdr { display: flex; align-items: center; gap: 24px; min-height: 60px; }
+.brand { font-weight: 700; letter-spacing: .14em; font-size: 14px; white-space: nowrap; }
+.brand small { font-weight: 500; letter-spacing: 0; color: var(--fg-3); margin-left: 8px; }
+nav { display: flex; gap: 20px; overflow-x: auto; scrollbar-width: none; min-width: 0; }
+nav::-webkit-scrollbar { display: none; }
+nav a { color: var(--fg-2); text-decoration: none; font-size: 15px; white-space: nowrap; padding: 6px 0; }
+nav a[aria-current="page"], nav a:hover { color: var(--fg); }
+.grow { flex: 1; }
+.who { color: var(--fg-3); font-size: 14px; white-space: nowrap; }
+main { padding-block: 40px 96px; display: grid; gap: 20px; }
+section { display: grid; gap: 20px; min-width: 0; }
+h1 { margin: 0; font-size: clamp(30px, 5vw, 42px); letter-spacing: -.03em; line-height: 1.1; }
+h2 { margin: 0; font-size: 21px; letter-spacing: -.02em; }
+h3 { margin: 0; font-size: 17px; }
+.lede { margin: 6px 0 0; color: var(--fg-2); font-size: 18px; }
+.card { background: var(--card); border-radius: 20px; box-shadow: var(--shadow); padding: 24px 28px; min-width: 0; }
+.stack { display: grid; gap: 16px; }
+.kpis { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 14px; }
+.kpi b { display: block; font-size: 34px; letter-spacing: -.03em; font-variant-numeric: tabular-nums; }
+.kpi span { color: var(--fg-2); font-size: 15px; }
+.hero { display: flex; gap: 16px; align-items: center; }
+.dot { width: 12px; height: 12px; border-radius: 50%; background: var(--ok); flex: none; }
+.dot.warn { background: var(--warn); } .dot.bad { background: var(--bad); }
+.hero p { margin: 0; font-size: 19px; font-weight: 500; }
+.btn { height: 42px; padding: 0 20px; border-radius: 999px; border: 0; background: var(--soft); font-weight: 500; font-size: 15px; white-space: nowrap; }
+.btn.primary { background: var(--ink); color: var(--ink-fg); }
+.btn.danger { color: var(--bad); }
+.btn:disabled { opacity: .4; cursor: default; }
+.row { display: flex; gap: 12px; align-items: end; flex-wrap: wrap; }
+label { display: grid; gap: 6px; font-size: 14px; color: var(--fg-2); flex: 1 1 200px; min-width: 0; }
+input, select { height: 44px; border-radius: 12px; border: 1px solid var(--line); background: var(--card); padding: 0 14px; font-size: 16px; color: var(--fg); width: 100%; }
+input[type=file] { padding: 9px 14px; }
+.msg { margin: 0; padding: 12px 16px; border-radius: 12px; font-size: 15px; overflow-wrap: anywhere; }
+.msg.ok { color: var(--ok); background: var(--ok-bg); }
+.msg.err { color: var(--bad); background: var(--bad-bg); }
+.msg.info { color: var(--fg-2); background: var(--soft); }
+.key { font: 600 20px var(--mono); letter-spacing: .04em; padding: 16px 18px; border-radius: 14px; background: var(--soft); user-select: all; overflow-wrap: anywhere; }
+.link-box { font: 13px var(--mono); padding: 12px 14px; border-radius: 12px; background: var(--soft); user-select: all; overflow-wrap: anywhere; }
+table { width: 100%; border-collapse: collapse; font-size: 15px; }
+th { text-align: left; font-weight: 500; color: var(--fg-3); font-size: 13px; padding: 0 12px 10px 0; }
+td { padding: 12px 12px 12px 0; border-top: 1px solid var(--line); vertical-align: top; }
+.mono { font-family: var(--mono); font-size: 13px; overflow-wrap: anywhere; }
+.pill { display: inline-block; font-size: 13px; font-weight: 500; border-radius: 999px; padding: 2px 10px; white-space: nowrap; }
+.pill.ok, .pill.active { color: var(--ok); background: var(--ok-bg); }
+.pill.ending-soon, .pill.paused, .pill.invited, .pill.warn { color: var(--warn); background: var(--warn-bg); }
+.pill.ended, .pill.deactivated, .pill.not-started { color: var(--fg-3); background: var(--soft); }
+.link { border: 0; background: none; color: var(--focus); padding: 0; font-size: 15px; text-align: left; }
+.narrow { max-width: 460px; width: 100%; margin: 6vh auto 0; }
+.muted { color: var(--fg-2); font-size: 14px; margin: 0; }
+.list { display: grid; gap: 0; }
+.item { display: flex; gap: 16px; align-items: center; padding: 16px 0; border-top: 1px solid var(--line); flex-wrap: wrap; }
+.item:first-child { border-top: 0; padding-top: 0; }
+.item .grow { min-width: 0; flex: 1 1 220px; }
+.item b { display: block; }
+.meter { height: 8px; border-radius: 999px; background: var(--soft); overflow: hidden; margin-top: 8px; max-width: 280px; }
+.meter i { display: block; height: 100%; background: var(--ink); border-radius: 999px; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { font-size: 13px; padding: 3px 10px; border-radius: 999px; background: var(--soft); color: var(--fg-2); }
+dl { display: grid; grid-template-columns: max-content 1fr; gap: 10px 24px; margin: 0; }
+dt { color: var(--fg-2); font-size: 15px; } dd { margin: 0; min-width: 0; }
+.steps { margin: 0; padding-left: 20px; color: var(--fg-2); display: grid; gap: 6px; }
+.empty { text-align: center; padding: 40px 20px; color: var(--fg-2); }
+.public-top { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+@media (max-width: 720px) {
+  .kpis { grid-template-columns: minmax(0,1fr) minmax(0,1fr); }
+  .wrap { padding-left: max(16px, env(safe-area-inset-left)); padding-right: max(16px, env(safe-area-inset-right)); }
+  .card { padding: 20px; }
+  .hdr { flex-wrap: wrap; gap: 4px 16px; padding-top: 10px; }
+  nav { order: 3; flex-basis: 100%; gap: 18px; padding-bottom: 6px; }
+  .who { display: none; }
+  main { padding-block: 24px 72px; }
+  dl { grid-template-columns: minmax(0,1fr); gap: 2px; } dd { margin-bottom: 10px; }
+  .hide-sm { display: none; }
+}
+</style>
+</head>
+<body>
+<header hidden id="top">
+  <div class="wrap hdr">
+    <span class="brand">ARKHON<small>Portal</small></span>
+    <nav id="nav" aria-label="Portal">
+      <a href="#overview">Overview</a><a href="#licenses">Licenses</a><a href="#computers">Computers</a><a href="#offline">Offline activation</a><a href="#downloads">Downloads</a><a href="#team">Team</a><a href="#billing">Billing</a>
+    </nav>
+    <span class="grow"></span>
+    <span class="who" id="who"></span>
+    <button class="link" id="signout" type="button">Sign out</button>
+  </div>
+</header>
+
+<main class="wrap">
+  <!-- Sign in -->
+  <section id="v-signin" hidden>
+    <form class="card narrow stack" id="signin-form">
+      <span class="brand">ARKHON</span>
+      <h1 style="font-size:30px">Sign in</h1>
+      <p class="muted">See your licenses, the computers using Arkhon, downloads and your team.</p>
+      <label>Work email<input id="si-email" type="email" autocomplete="username" required></label>
+      <label>Password<input id="si-pass" type="password" autocomplete="current-password" required></label>
+      <label id="si-code-wrap" hidden>6-digit code from your authenticator app<input id="si-code" inputmode="numeric" autocomplete="one-time-code" maxlength="6"></label>
+      <button class="btn primary" type="submit">Sign in</button>
+      <p class="msg err" id="si-msg" hidden></p>
+      <p class="muted">New to Arkhon? <a href="#trial">Start a free 14-day trial</a>. Forgot your password? Ask an owner on your team, or Arkhon, for a reset link.</p>
+    </form>
+  </section>
+
+  <!-- Accept invite / reset -->
+  <section id="v-accept" hidden>
+    <form class="card narrow stack" id="accept-form">
+      <span class="brand">ARKHON</span>
+      <h1 style="font-size:30px">Set your password</h1>
+      <p class="muted">You've been invited to your company's Arkhon account. Choose a password to finish.</p>
+      <label>Your name (optional)<input id="ac-name" autocomplete="name"></label>
+      <label>New password (at least 12 characters)<input id="ac-pass" type="password" autocomplete="new-password" minlength="12" required></label>
+      <label>Type it again<input id="ac-pass2" type="password" autocomplete="new-password" minlength="12" required></label>
+      <button class="btn primary" type="submit">Save password and continue</button>
+      <p class="msg err" id="ac-msg" hidden></p>
+    </form>
+  </section>
+
+  <!-- Trial (public) -->
+  <section id="v-trial" hidden>
+    <div class="narrow stack" style="max-width:560px">
+      <div class="public-top"><span class="brand">ARKHON</span><a href="#signin">Sign in</a></div>
+      <h1>Try Arkhon free for 14 days</h1>
+      <p class="lede">Private AI that runs on your own computers. Nothing you write leaves your office.</p>
+      <form class="card stack" id="trial-form">
+        <label>Company name<input id="tr-company" autocomplete="organization" required></label>
+        <label>Your name<input id="tr-name" autocomplete="name" required></label>
+        <label>Work email<input id="tr-email" type="email" autocomplete="email" required></label>
+        <button class="btn primary" type="submit">Start my free trial</button>
+        <p class="muted">No card needed. Up to 10 people and 2 computers.</p>
+        <p class="msg err" id="tr-msg" hidden></p>
+      </form>
+      <div class="card stack" id="tr-done" hidden>
+        <h2>Your trial is ready</h2>
+        <p class="muted">1. Copy your activation key. It's shown only once: you'll type it into Arkhon on each computer.</p>
+        <div class="key" id="tr-key"></div>
+        <p class="muted">2. Set your password to open your portal.</p>
+        <div class="row"><a class="btn primary" id="tr-go" href="#" style="display:inline-flex;align-items:center;text-decoration:none">Set my password</a></div>
+        <p class="msg info" id="tr-note"></p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Overview -->
+  <section id="v-overview" hidden>
+    <div><h1 id="ov-company">Overview</h1><p class="lede">Your Arkhon account at a glance.</p></div>
+    <div class="card hero"><span class="dot" id="ov-dot"></span><p id="ov-headline">Loading…</p></div>
+    <div class="kpis">
+      <div class="card kpi"><b id="ov-seats">–</b><span>people can use Arkhon</span></div>
+      <div class="card kpi"><b id="ov-comp">–</b><span>computers in use</span></div>
+      <div class="card kpi"><b id="ov-renew">–</b><span>next renewal</span></div>
+    </div>
+    <div class="card"><h2 style="margin-bottom:16px">Licenses</h2><div class="list" id="ov-list"></div></div>
+  </section>
+
+  <!-- Licenses -->
+  <section id="v-licenses" hidden>
+    <div><h1>Licenses</h1><p class="lede">What your company has, and until when.</p></div>
+    <div class="card"><div class="list" id="li-list"></div></div>
+  </section>
+
+  <!-- License detail -->
+  <section id="v-license" hidden>
+    <div><button class="link" type="button" data-go="#licenses">← All licenses</button></div>
+    <div id="ld"></div>
+  </section>
+
+  <!-- Computers -->
+  <section id="v-computers" hidden>
+    <div><h1>Computers</h1><p class="lede">Where Arkhon is activated. Got a new computer? Deactivate the old one here to free its slot.</p></div>
+    <p class="msg" id="co-msg" hidden></p>
+    <div class="card"><div class="list" id="co-list"></div></div>
+  </section>
+
+  <!-- Offline activation -->
+  <section id="v-offline" hidden>
+    <div><h1>Offline activation</h1><p class="lede">For a computer that can't reach the internet, such as on a ship or a secure site.</p></div>
+    <div class="card stack">
+      <ol class="steps">
+        <li>On the offline computer, open Arkhon → Settings → License → <b>Export renewal file</b>.</li>
+        <li>Bring that file to a computer with internet and choose it below.</li>
+        <li>Download the reply file and open it in Arkhon on the offline computer.</li>
+      </ol>
+      <form class="stack" id="off-form">
+        <label>Renewal file from Arkhon<input id="off-file" type="file" required></label>
+        <div class="row"><button class="btn primary" type="submit">Get reply file</button></div>
+      </form>
+      <p class="msg" id="off-msg" hidden></p>
+      <div class="row" id="off-dl" hidden><a class="btn primary" id="off-link" download="arkhon-renewal-response.bin" style="display:inline-flex;align-items:center;text-decoration:none">Download reply file</a></div>
+      <p class="muted">Each renewal file works once. If you need to try again, export a new one.</p>
+    </div>
+  </section>
+
+  <!-- Downloads -->
+  <section id="v-downloads" hidden>
+    <div><h1>Downloads</h1><p class="lede">Engine versions your licenses include. Arkhon installs and updates them for you.</p></div>
+    <div id="dl-list" class="stack"></div>
+    <p class="muted" id="dl-note"></p>
+  </section>
+
+  <!-- Team -->
+  <section id="v-team" hidden>
+    <div><h1>Team</h1><p class="lede">Who can sign in to this portal. Owners can change things; billing sees invoices; viewers can look.</p></div>
+    <form class="card stack" id="tm-form">
+      <h2>Invite someone</h2>
+      <div class="row">
+        <label>Work email<input id="tm-email" type="email" required></label>
+        <label style="flex:0 1 180px">Role<select id="tm-role"><option value="viewer">Viewer</option><option value="billing">Billing</option><option value="owner">Owner</option></select></label>
+        <button class="btn primary" type="submit">Create invite</button>
+      </div>
+      <p class="msg" id="tm-msg" hidden></p>
+      <div id="tm-link" hidden class="stack" style="gap:8px"><p class="muted">Send this link to them yourself (email from Arkhon is coming soon). It works once, for 7 days.</p><div class="link-box" id="tm-linktext"></div></div>
+    </form>
+    <div class="card"><div class="list" id="tm-list"></div></div>
+    <div class="card stack" id="tm-2fa">
+      <h2>Your sign-in</h2>
+      <p class="muted" id="tf-state"></p>
+      <div class="row"><button class="btn" type="button" id="tf-start">Turn on two-step sign-in</button></div>
+      <div id="tf-setup" hidden class="stack">
+        <p class="muted">In your authenticator app, add an account and type this key:</p>
+        <div class="link-box" id="tf-secret"></div>
+        <div class="row"><label style="flex:0 1 200px">6-digit code<input id="tf-code" inputmode="numeric" maxlength="6"></label><button class="btn primary" type="button" id="tf-confirm">Confirm</button></div>
+      </div>
+      <p class="msg" id="tf-msg" hidden></p>
+    </div>
+  </section>
+
+  <!-- Billing -->
+  <section id="v-billing" hidden>
+    <div><h1>Billing</h1><p class="lede">Invoices and payment.</p></div>
+    <div class="card stack" id="bi-card"></div>
+  </section>
+</main>
+
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const day = t => t ? new Date(t * 1000).toLocaleDateString([], { year: 'numeric', month: 'short', day: 'numeric' }) : '–';
+  const ago = t => { const d = Math.floor((Date.now() / 1000 - t) / 86400); return d <= 0 ? 'today' : d === 1 ? 'yesterday' : `${d} days ago`; };
+  const size = n => n >= 1e9 ? (n / 1e9).toFixed(1) + ' GB' : n >= 1e6 ? (n / 1e6).toFixed(1) + ' MB' : n >= 1e3 ? (n / 1e3).toFixed(0) + ' KB' : n + ' bytes';
+  const stateWord = { ok: 'Working', 'ending-soon': 'Ends soon', paused: 'Paused', ended: 'Ended', 'not-started': 'Not started' };
+  const roleWord = { owner: 'Owner', billing: 'Billing', viewer: 'Viewer' };
+  let token = null, me = null;
+  try { token = sessionStorage.getItem('arkhon-portal'); } catch (_) {}
+
+  function show(el, text, kind) { el.hidden = false; el.className = 'msg ' + (kind === true ? 'ok' : kind === false || !kind ? 'err' : kind); el.textContent = text; }
+  async function api(method, path, body, raw) {
+    const headers = Object.assign(raw ? { 'content-type': 'application/octet-stream' } : { 'content-type': 'application/json' }, token ? { authorization: 'Bearer ' + token } : {});
+    const r = await fetch(path, { method, headers, body: raw ? body : body ? JSON.stringify(body) : undefined });
+    if (raw && r.ok) return r.blob();
+    const data = await r.json().catch(() => ({}));
+    if (r.status === 401 && token && !data.totp_required) { signOut(); throw new Error(data.error || 'Sign in again.'); }
+    if (!r.ok) { const e = new Error(data.error || 'That didn’t work. Try again.'); e.data = data; throw e; }
+    return data;
+  }
+  function setToken(t) { token = t; try { t ? sessionStorage.setItem('arkhon-portal', t) : sessionStorage.removeItem('arkhon-portal'); } catch (_) {} }
+  function signOut() { if (token) fetch('/portal/logout', { method: 'POST', headers: { authorization: 'Bearer ' + token } }).catch(() => {}); setToken(null); me = null; location.hash = '#signin'; route(); }
+  $('signout').addEventListener('click', signOut);
+  document.addEventListener('click', e => { const g = e.target.closest('[data-go]'); if (g) location.hash = g.dataset.go; });
+
+  // ------------------------------------------------------------- public views
+  $('signin-form').addEventListener('submit', async e => {
+    e.preventDefault();
+    try {
+      const d = await api('POST', '/portal/login', { email: $('si-email').value, password: $('si-pass').value, code: $('si-code').value || undefined });
+      setToken(d.token); $('si-pass').value = ''; $('si-code').value = ''; $('si-msg').hidden = true; $('si-code-wrap').hidden = true;
+      location.hash = '#overview'; route();
+    } catch (err) {
+      if (err.data && err.data.totp_required) { $('si-code-wrap').hidden = false; $('si-code').focus(); }
+      show($('si-msg'), err.message, false);
+    }
+  });
+
+  let acceptToken = '';
+  $('accept-form').addEventListener('submit', async e => {
+    e.preventDefault();
+    if ($('ac-pass').value !== $('ac-pass2').value) return show($('ac-msg'), 'The two passwords don’t match.', false);
+    try {
+      const d = await api('POST', '/portal/invites/accept', { token: acceptToken, password: $('ac-pass').value, name: $('ac-name').value });
+      setToken(d.token); $('ac-pass').value = $('ac-pass2').value = '';
+      history.replaceState(null, '', '#overview'); route();
+    } catch (err) { show($('ac-msg'), err.message, false); }
+  });
+
+  $('trial-form').addEventListener('submit', async e => {
+    e.preventDefault();
+    try {
+      const d = await api('POST', '/portal/trial', { company: $('tr-company').value, name: $('tr-name').value, email: $('tr-email').value });
+      $('trial-form').hidden = true; $('tr-done').hidden = false;
+      $('tr-key').textContent = d.activation_key; $('tr-go').href = d.invite_link;
+      $('tr-note').textContent = `Your trial runs until ${day(d.trial_ends_at)}. We'll email you links like this once email is set up; for now, keep this page open until you've set your password.`;
+    } catch (err) { show($('tr-msg'), err.message, false); }
+  });
+
+  // ------------------------------------------------------------- router
+  const priv = ['overview', 'licenses', 'license', 'computers', 'offline', 'downloads', 'team', 'billing'];
+  const all = ['signin', 'accept', 'trial', ...priv];
+  async function route() {
+    const h = location.hash.slice(1);
+    let [v, arg] = h.split(/[=/]/);
+    if (v === 'accept') { acceptToken = h.slice(7); }
+    if (!all.includes(v)) v = token ? 'overview' : 'signin';
+    if (priv.includes(v) && !token) v = 'signin';
+    if (v === 'signin' && token) v = 'overview';
+    all.forEach(n => { $('v-' + n).hidden = n !== v; });
+    $('top').hidden = !priv.includes(v);
+    const navv = v === 'license' ? 'licenses' : v;
+    document.querySelectorAll('#nav a').forEach(a => { if (a.getAttribute('href') === '#' + navv) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
+    window.scrollTo(0, 0);
+    if (!priv.includes(v)) return;
+    try {
+      if (!me) { me = await api('GET', '/portal/me'); $('who').textContent = `${me.company} · ${roleWord[me.role]}`; }
+      document.querySelector('#nav a[href="#billing"]').hidden = me.role === 'viewer';
+      await ({ overview: loadOverview, licenses: loadLicenses, license: () => loadLicense(decodeURIComponent(arg || '')), computers: loadComputers, offline: async () => {}, downloads: loadDownloads, team: loadTeam, billing: loadBilling })[v]();
+    } catch (err) { console.warn(err.message); }
+  }
+  addEventListener('hashchange', route);
+
+  // ------------------------------------------------------------- overview & licenses
+  function licenseItem(l) {
+    const pct = l.max_computers ? Math.min(100, Math.round(100 * l.computers_in_use / l.max_computers)) : 0;
+    return `<div class="item"><div class="grow"><b>${esc(l.plan_label)} <span class="pill ${esc(l.state)}">${esc(stateWord[l.state] || l.state)}</span></b>
+      <span class="muted">${esc(l.status_text)}</span>
+      <div class="muted" style="margin-top:6px">${l.seats} people · ${l.computers_in_use} of ${l.max_computers} computers · ${l.state === 'ended' ? 'ended' : 'until'} ${day(l.expires_at)}</div>
+      <div class="meter" aria-hidden="true"><i style="width:${pct}%"></i></div></div>
+      <button class="btn" type="button" data-go="#license/${esc(l.id)}">Details</button></div>`;
+  }
+  async function loadOverview() {
+    const o = await api('GET', '/portal/overview');
+    $('ov-company').textContent = o.company; $('ov-headline').textContent = o.headline;
+    const states = o.licenses.map(l => l.state);
+    $('ov-dot').className = 'dot' + (states.includes('paused') || (states.length && states.every(s => s === 'ended')) ? ' bad' : states.includes('ending-soon') || !states.length ? ' warn' : '');
+    $('ov-seats').textContent = o.seats; $('ov-comp').textContent = `${o.computers_in_use} of ${o.max_computers}`;
+    $('ov-renew').textContent = o.next_renewal ? day(o.next_renewal) : '–';
+    $('ov-list').innerHTML = o.licenses.map(licenseItem).join('') || '<div class="empty">No licenses yet. <a href="#trial">Start a free trial</a> or contact Arkhon.</div>';
+  }
+  async function loadLicenses() {
+    const list = await api('GET', '/portal/licenses');
+    $('li-list').innerHTML = list.map(licenseItem).join('') || '<div class="empty">No licenses yet.</div>';
+  }
+  function computerItem(c, owner) {
+    const active = c.status === 'active';
+    return `<div class="item"><div class="grow"><b>Computer #${c.id} <span class="pill ${esc(c.status)}">${active ? 'In use' : 'Deactivated'}</span>${c.not_seen_30_days ? ' <span class="pill warn">Not seen for 30+ days</span>' : ''}</b>
+      <span class="muted">${esc(c.security)} · activated ${day(c.activated_at)} · ${active ? 'last seen ' + ago(c.last_seen_at) : 'deactivated ' + day(c.deactivated_at)}</span></div>
+      ${active && owner ? `<button class="btn danger" type="button" data-free="${c.id}">Deactivate</button>` : ''}</div>`;
+  }
+  async function loadLicense(id) {
+    const l = await api('GET', '/portal/licenses/' + encodeURIComponent(id));
+    const owner = me.role === 'owner';
+    $('ld').innerHTML = `<div class="stack">
+      <div><h1>${esc(l.plan_label)}</h1><p class="lede">${esc(l.status_text)}</p></div>
+      <div class="card"><dl>
+        <dt>Status</dt><dd><span class="pill ${esc(l.state)}">${esc(stateWord[l.state] || l.state)}</span></dd>
+        <dt>People</dt><dd>${l.seats}</dd>
+        <dt>Computers</dt><dd>${l.computers_in_use} of ${l.max_computers} in use</dd>
+        <dt>Valid</dt><dd>${day(l.starts_at)} – ${day(l.expires_at)}</dd>
+        <dt>Updates included until</dt><dd>${day(l.update_window_end)}</dd>
+        <dt>Works offline for</dt><dd>${l.offline_grace_days} days between check-ins</dd>
+        <dt>Workspaces</dt><dd><div class="chips">${l.workspaces.map(w => `<span class="chip">${esc(w)}</span>`).join('')}</div></dd>
+        <dt>Engines</dt><dd><div class="chips">${l.engines.map(w => `<span class="chip">${esc(w)}</span>`).join('')}</div></dd>
+        <dt>License id</dt><dd class="mono">${esc(l.id)}</dd>
+      </dl></div>
+      <div class="card stack"><h2>Activation key</h2>
+        <p class="muted">${esc(l.activation_key_note)}</p>
+        ${owner ? `<p class="muted">A new key lets you activate more computers if the old one is lost. Computers already running Arkhon keep working; the old key stops activating new ones.</p>
+        <div class="row"><button class="btn" type="button" id="ld-newkey">Request a new activation key</button></div>` : '<p class="muted">Ask an owner on your team if you need a new key.</p>'}
+        <p class="msg" id="ld-msg" hidden></p><div class="key" id="ld-key" hidden></div></div>
+      <div class="card"><h2 style="margin-bottom:16px">Computers on this license</h2><div class="list" id="ld-comps">${l.computers.map(c => computerItem(c, owner)).join('') || '<div class="empty">Not activated on any computer yet. Install Arkhon and type your activation key.</div>'}</div></div>
+    </div>`;
+    const nk = $('ld-newkey');
+    if (nk) nk.addEventListener('click', async () => {
+      if (nk.dataset.confirm !== '1') { nk.dataset.confirm = '1'; nk.textContent = 'Click again to create a new key'; return; }
+      try { const d = await api('POST', `/portal/licenses/${encodeURIComponent(id)}/new-key`); $('ld-key').hidden = false; $('ld-key').textContent = d.activation_key; show($('ld-msg'), d.note, true); nk.disabled = true; nk.textContent = 'New key created'; }
+      catch (err) { show($('ld-msg'), err.message, false); }
+    });
+  }
+
+  // ------------------------------------------------------------- computers
+  async function freeComputer(btn, after) {
+    if (btn.dataset.confirm !== '1') { btn.dataset.confirm = '1'; btn.textContent = 'Click again to deactivate'; return null; }
+    const d = await api('POST', `/portal/computers/${btn.dataset.free}/deactivate`);
+    await after(); return d;
+  }
+  async function loadComputers() {
+    const list = await api('GET', '/portal/computers');
+    const owner = me.role === 'owner';
+    const active = list.filter(c => c.status === 'active'), old = list.filter(c => c.status !== 'active').slice(0, 10);
+    $('co-list').innerHTML = (active.map(c => computerItem(c, owner)).join('') || '<div class="empty">No computers are using Arkhon yet.</div>')
+      + (old.length ? `<h3 style="margin:24px 0 4px">Recently deactivated</h3>` + old.map(c => computerItem(c, owner)).join('') : '');
+  }
+  document.addEventListener('click', async e => {
+    const b = e.target.closest('[data-free]'); if (!b) return;
+    const inDetail = !!b.closest('#ld');
+    try {
+      const d = await freeComputer(b, inDetail ? () => loadLicense(decodeURIComponent(location.hash.split('/')[1] || '')) : loadComputers);
+      if (d) { if (inDetail) show($('ld-msg'), d.message, true); else show($('co-msg'), d.message, true); }
+    } catch (err) { show(inDetail ? $('ld-msg') : $('co-msg'), err.message, false); }
+  });
+
+  // ------------------------------------------------------------- offline activation
+  let lastBlobUrl = null;
+  $('off-form').addEventListener('submit', async e => {
+    e.preventDefault(); $('off-dl').hidden = true;
+    const f = $('off-file').files[0]; if (!f) return;
+    try {
+      const blob = await api('POST', '/portal/offline/renew', await f.arrayBuffer(), true);
+      if (lastBlobUrl) URL.revokeObjectURL(lastBlobUrl);
+      lastBlobUrl = URL.createObjectURL(blob);
+      $('off-link').href = lastBlobUrl; $('off-dl').hidden = false;
+      show($('off-msg'), 'Done. Download the reply file and open it in Arkhon on the offline computer.', true);
+    } catch (err) { show($('off-msg'), err.message, false); }
+  });
+
+  // ------------------------------------------------------------- downloads
+  async function loadDownloads() {
+    const d = await api('GET', '/portal/downloads');
+    $('dl-note').textContent = d.note;
+    $('dl-list').innerHTML = d.licenses.map(l => `<div class="card"><h2>${esc(l.plan_label)}</h2><p class="muted" style="margin:4px 0 16px">Updates included until ${day(l.update_window_end)}</p>
+      <div class="list">${l.releases.map(r => `<div class="item"><div class="grow"><b>${esc(r.engine)} <span class="muted">version ${esc(r.version)}</span></b><span class="muted">Released ${day(r.released_at)}</span>
+        ${r.files.map(f => `<div class="muted" style="margin-top:6px">${esc(f.name)} · ${size(f.size)}<div class="mono" style="color:var(--fg-3)">SHA-256 ${esc(f.sha256)}</div></div>`).join('')}</div></div>`).join('') || '<div class="empty">No releases yet.</div>'}</div></div>`).join('')
+      || '<div class="card empty">No licenses yet.</div>';
+  }
+
+  // ------------------------------------------------------------- team
+  async function loadTeam() {
+    const list = await api('GET', '/portal/team');
+    const owner = me.role === 'owner';
+    $('tm-form').hidden = !owner;
+    $('tm-list').innerHTML = list.map(p => `<div class="item"><div class="grow"><b>${esc(p.name || p.email)}${p.you ? ' <span class="muted">(you)</span>' : ''}</b>
+      <span class="muted">${esc(p.email)} · ${roleWord[p.role]}${p.two_step ? ' · two-step on' : ''}</span></div>
+      ${p.status === 'invited' ? '<span class="pill invited">Invited</span>' : ''}
+      ${owner && !p.you ? `<button class="link" type="button" data-reset="${esc(p.id)}">${p.status === 'invited' ? 'New invite link' : 'Password reset link'}</button><button class="btn danger" type="button" data-remove="${esc(p.id)}">Remove</button>` : ''}</div>`).join('');
+    $('tf-state').textContent = me.two_step ? 'Two-step sign-in is on: you enter a code from your authenticator app when you sign in.' : 'Add a second step to sign-in with an authenticator app. Recommended for owners.';
+    $('tf-start').hidden = me.two_step;
+  }
+  $('tm-form').addEventListener('submit', async e => {
+    e.preventDefault(); $('tm-link').hidden = true;
+    try { const d = await api('POST', '/portal/team', { email: $('tm-email').value, role: $('tm-role').value });
+      show($('tm-msg'), `Invite created for ${d.email}.`, true); $('tm-linktext').textContent = location.origin + d.invite_link; $('tm-link').hidden = false; $('tm-email').value = ''; loadTeam();
+    } catch (err) { show($('tm-msg'), err.message, false); }
+  });
+  $('tm-list').addEventListener('click', async e => {
+    const rm = e.target.closest('[data-remove]'), rs = e.target.closest('[data-reset]');
+    try {
+      if (rm) { if (rm.dataset.confirm !== '1') { rm.dataset.confirm = '1'; rm.textContent = 'Click again to remove'; return; }
+        await api('POST', `/portal/team/${encodeURIComponent(rm.dataset.remove)}/remove`); show($('tm-msg'), 'Removed. They can no longer sign in.', true); $('tm-link').hidden = true; loadTeam(); }
+      else if (rs) { const d = await api('POST', `/portal/team/${encodeURIComponent(rs.dataset.reset)}/reset-link`);
+        show($('tm-msg'), `New link for ${d.email}.`, true); $('tm-linktext').textContent = location.origin + d.invite_link; $('tm-link').hidden = false; }
+    } catch (err) { show($('tm-msg'), err.message, false); }
+  });
+  $('tf-start').addEventListener('click', async () => {
+    try { const d = await api('POST', '/portal/me/totp'); $('tf-secret').textContent = d.secret.replace(/(.{4})/g, '$1 ').trim(); $('tf-setup').hidden = false; }
+    catch (err) { show($('tf-msg'), err.message, false); }
+  });
+  $('tf-confirm').addEventListener('click', async () => {
+    try { await api('POST', '/portal/me/totp/confirm', { code: $('tf-code').value }); me.two_step = true; $('tf-setup').hidden = true; show($('tf-msg'), 'Two-step sign-in is on.', true); loadTeam(); }
+    catch (err) { show($('tf-msg'), err.message, false); }
+  });
+
+  // ------------------------------------------------------------- billing
+  async function loadBilling() {
+    try {
+      const b = await api('GET', '/portal/invoices');
+      $('bi-card').innerHTML = `<div class="hero"><span class="dot warn"></span><p>${esc(b.title)}</p></div><p class="muted">${esc(b.message)}</p>
+        <div class="empty" style="padding:24px 0 8px">No invoices to show here yet.</div>`;
+    } catch (err) { $('bi-card').innerHTML = `<p class="muted">${esc(err.message)}</p>`; }
+  }
+
+  route();
+})();
+</script>
+</body>
+</html>
