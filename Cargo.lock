@@ -72,6 +72,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "arkhon-keygen"
+version = "0.0.1"
+dependencies = [
+ "arkhon-license",
+ "ed25519-dalek",
+ "rand_core 0.6.4",
+ "zeroize",
+]
+
+[[package]]
 name = "arkhon-license"
 version = "0.0.1"
 dependencies = [
