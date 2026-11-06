@@ -17,9 +17,11 @@ use std::io::Write as _;
 use std::path::{Path, PathBuf};
 
 pub mod connector;
+mod demo_work;
 pub mod queue;
 pub mod value;
 pub mod vault;
+pub mod work;
 
 use arkhon_org::connections::{
     Access, App, AppPolicy, Audience, Availability, ConnError, ConnStatus, Connection, Connections,
@@ -36,6 +38,7 @@ pub use queue::{
 };
 pub use value::{MonthlyReport, Totals, ValueEvent, ValueKind, ValueSettings, WeekView};
 pub use vault::{Credential, MailLogin, Secret, TokenVault};
+pub use work::{AskResult, WorkData};
 
 use value::{day_number, DayValue, DAY};
 
@@ -92,6 +95,9 @@ pub struct State {
     /// companies leave this empty and use the clock.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub example_today: Option<u64>,
+    /// Workspace content, privacy settings and setup progress.
+    #[serde(default)]
+    pub work: WorkData,
 }
 
 /// Who a connection is for, as chosen in the Connect sheet.
@@ -218,6 +224,22 @@ pub enum Command {
     SetHourlyRate {
         /// Whole dollars per hour.
         dollars: u32,
+    },
+    /// How long finished work and history are kept, in days; 0 keeps it until deleted (admins).
+    SetRetention {
+        /// Days (30, 90, 365 or 0).
+        days: u32,
+    },
+    /// Erase everything Arkhon read, prepared and learned, and every connection (admins).
+    /// People and roles are kept so the company can still sign in.
+    DeleteAllData {
+        /// The company name, typed to confirm.
+        confirm: String,
+    },
+    /// Choose the industry pack (people who may install packs).
+    SetIndustryPack {
+        /// Pack key, e.g. `trades`.
+        pack: String,
     },
 }
 
@@ -555,6 +577,75 @@ impl Suite {
                 self.state.value_settings.hourly_rate_cents = dollars * 100;
                 Ok(format!("Time saved is now valued at ${dollars} an hour."))
             }
+            Command::SetRetention { days } => {
+                self.require(actor, Permission::ManageOrganization)?;
+                if !work::RETENTION_CHOICES.contains(&days) {
+                    return Err(bad("Pick 30 days, 90 days, 1 year or until you delete it."));
+                }
+                self.state.work.privacy.retention_days = days;
+                Ok(if days == 0 {
+                    "Arkhon will keep finished work until you delete it.".to_owned()
+                } else {
+                    format!(
+                        "Arkhon will keep finished work for {}.",
+                        retention_words(days)
+                    )
+                })
+            }
+            Command::DeleteAllData { confirm } => {
+                self.require(actor, Permission::ManageOrganization)?;
+                let name = self.state.org.name.clone();
+                if !confirm.trim().eq_ignore_ascii_case(name.trim()) {
+                    return Err(bad(format!(
+                        "Type the company name, {name}, to confirm. Nothing was deleted."
+                    )));
+                }
+                Ok(self.delete_all())
+            }
+            Command::SetIndustryPack { pack } => {
+                self.require(actor, Permission::ManageUpdates)?;
+                let Some((key, label, _, available)) =
+                    work::PACKS.iter().find(|p| p.0 == pack.trim())
+                else {
+                    return Err(bad("That industry pack doesn't exist."));
+                };
+                if !available {
+                    return Err(bad(format!("{label} is coming soon.")));
+                }
+                self.state.work.setup.industry_pack = Some((*key).to_owned());
+                Ok(format!("Arkhon will use the {label} pack."))
+            }
+        }
+    }
+
+    /// Erase everything except people, roles, teams and settings.
+    fn delete_all(&mut self) -> String {
+        let ids: Vec<u64> = self.state.connections.all().map(|c| c.id).collect();
+        let mut kept = 0;
+        if let Some(vault) = &self.vault {
+            kept = ids.iter().filter(|id| vault.remove(**id).is_err()).count();
+        }
+        self.state.connections = Connections::new();
+        self.state.queue = Queue::default();
+        self.state.value.clear();
+        self.state.activity.clear();
+        let w = &mut self.state.work;
+        *w = WorkData {
+            privacy: w.privacy.clone(),
+            setup: work::SetupState {
+                industry_pack: w.setup.industry_pack.clone(),
+                files_read: 0,
+                files_total: 0,
+            },
+            ..WorkData::default()
+        };
+        if kept > 0 {
+            format!(
+                "Deleted all Arkhon data. {kept} saved sign-in(s) couldn't be erased; delete the vault file to finish."
+            )
+        } else {
+            "Deleted all Arkhon data on this computer. People and roles were kept so you can still sign in."
+                .to_owned()
         }
     }
 
@@ -835,6 +926,16 @@ impl Suite {
                 format!("Count \"{}\" as {minutes} minutes each", kind.label())
             }
             Command::SetHourlyRate { dollars } => format!("Value time at ${dollars} an hour"),
+            Command::SetRetention { days } => format!(
+                "Keep finished work {}",
+                if *days == 0 {
+                    "until deleted".to_owned()
+                } else {
+                    format!("for {}", retention_words(*days))
+                }
+            ),
+            Command::DeleteAllData { .. } => "Delete all Arkhon data".to_owned(),
+            Command::SetIndustryPack { pack } => format!("Choose the \"{pack}\" industry pack"),
         }
     }
 
@@ -984,6 +1085,17 @@ impl Suite {
                 .collect(),
             needs_you: self.needs_you(viewer),
             this_week: self.this_week(viewer),
+            nav: self.nav(viewer),
+            inbox: self.inbox_view(viewer),
+            desk: self.desk_view(viewer),
+            docs: self.docs_view(viewer),
+            knowledge: self.knowledge_view(viewer),
+            meetings: self.meetings_view(viewer),
+            growth: self.growth_view(viewer),
+            insights: self.insights_view(viewer),
+            privacy: self.privacy_view(viewer),
+            setup: self.setup_view(viewer),
+            example: self.state.example_today.is_some(),
         }
     }
 
@@ -1016,7 +1128,7 @@ impl Suite {
         }
     }
 
-    fn item_view(&self, viewer: MemberId, i: &ReviewItem) -> ItemView {
+    pub(crate) fn item_view(&self, viewer: MemberId, i: &ReviewItem) -> ItemView {
         let blocked = self
             .may_decide(viewer, i)
             .and_then(|()| self.connection_ok(viewer, i))
@@ -1045,8 +1157,10 @@ impl Suite {
             }),
             action: i.kind.verb().to_owned(),
             done_word: i.kind.done_word().to_owned(),
-            can_approve: blocked.is_none(),
-            blocked,
+            can_approve: i.status == ItemStatus::Waiting && blocked.is_none(),
+            blocked: blocked.filter(|_| i.status == ItemStatus::Waiting),
+            status: i.status,
+            final_text: i.final_text.clone(),
         }
     }
 
@@ -1229,6 +1343,28 @@ pub struct View {
     pub needs_you: NeedsYouView,
     /// Home: time given back in the last 7 days.
     pub this_week: WeekView,
+    /// Header links to the viewer's workspaces.
+    pub nav: Vec<work::NavLink>,
+    /// Email page (absent without the workspace).
+    pub inbox: Option<work::InboxView>,
+    /// Customer replies page.
+    pub desk: Option<work::DeskView>,
+    /// Documents page.
+    pub docs: Option<work::DocsView>,
+    /// Company answers page.
+    pub knowledge: Option<work::KnowledgeView>,
+    /// Meeting notes page.
+    pub meetings: Option<work::MeetingsView>,
+    /// Quotes & marketing page.
+    pub growth: Option<work::GrowthView>,
+    /// Reports page.
+    pub insights: Option<work::InsightsView>,
+    /// Privacy Center.
+    pub privacy: work::PrivacyView,
+    /// First-run setup.
+    pub setup: work::SetupView,
+    /// Example company (sample data).
+    pub example: bool,
 }
 
 /// Home's "Needs you".
@@ -1282,6 +1418,10 @@ pub struct ItemView {
     pub can_approve: bool,
     /// Why not, in words.
     pub blocked: Option<String>,
+    /// Waiting, approved, edited or dismissed.
+    pub status: ItemStatus,
+    /// What was sent or filed, once decided.
+    pub final_text: Option<String>,
 }
 
 /// What the viewer may do (drives which controls are shown).
@@ -1435,6 +1575,13 @@ fn join_words(v: &[String]) -> String {
         [] => String::new(),
         [a] => a.clone(),
         [rest @ .., last] => format!("{} and {last}", rest.join(", ")),
+    }
+}
+
+fn retention_words(days: u32) -> String {
+    match days {
+        365 => "1 year".to_owned(),
+        d => format!("{d} days"),
     }
 }
 
@@ -1653,15 +1800,16 @@ pub fn demo_state() -> (State, DemoIds) {
             Access::Draft,
         )
         .expect("seed");
-    c.connect_company(
-        &org,
-        admin,
-        App::LocalFolder,
-        r"\\office-nas\jobs",
-        Audience::Everyone,
-        Access::Read,
-    )
-    .expect("seed");
+    let nas = c
+        .connect_company(
+            &org,
+            admin,
+            App::LocalFolder,
+            r"\\office-nas\jobs",
+            Audience::Everyone,
+            Access::Read,
+        )
+        .expect("seed");
     let drive = c
         .connect_company(
             &org,
@@ -1695,7 +1843,7 @@ pub fn demo_state() -> (State, DemoIds) {
         .expect("seed");
 
     let today = demo_today();
-    let queue = demo_queue(
+    let mut queue = demo_queue(
         today,
         &DemoQueueIds {
             owner,
@@ -1703,6 +1851,21 @@ pub fn demo_state() -> (State, DemoIds) {
             tech,
             service,
             books,
+            dana_mail,
+            tia_mail,
+        },
+    );
+    let work = demo_work::demo_work(
+        today,
+        &mut queue,
+        &demo_work::Ids {
+            owner,
+            admin,
+            dispatcher,
+            tech,
+            service,
+            books,
+            nas,
             dana_mail,
             tia_mail,
         },
@@ -1718,6 +1881,7 @@ pub fn demo_state() -> (State, DemoIds) {
             value,
             value_settings: ValueSettings::default(),
             example_today: Some(today),
+            work,
         },
         DemoIds {
             owner,
@@ -1956,5 +2120,7 @@ fn demo_value(today: u64, people: &[MemberId]) -> Vec<ValueEvent> {
 
 #[cfg(test)]
 mod tests;
+#[cfg(test)]
+mod tests_pages;
 #[cfg(test)]
 mod tests_work;
