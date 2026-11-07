@@ -10,6 +10,7 @@ use std::path::PathBuf;
 
 use arkhon_engine::vault::DevFileKeyProvider;
 use arkhon_engine::{demo_state, Store, Suite, SystemClock, TokenVault};
+use arkhon_suite_dev::chat::ChatConfig;
 use arkhon_suite_dev::{router, AppState};
 
 #[tokio::main]
@@ -39,6 +40,7 @@ async fn main() -> std::io::Result<()> {
             other => eprintln!("ignoring unknown argument {other}"),
         }
     }
+    let chat = ChatConfig::from_env().map_err(std::io::Error::other)?;
     let store = Store::new(&data);
     // Sign-ins live in their own encrypted file, never in the organization JSON. The key file
     // is the development-only provider; the desktop app uses the TPM / OS key store.
@@ -69,7 +71,8 @@ async fn main() -> std::io::Result<()> {
             Suite::new(state, Box::new(SystemClock)).with_vault(vault),
             Some(store),
             ids.owner,
-        ),
+        )
+        .with_chat(chat.clone()),
         static_dir,
         port,
     );
@@ -79,6 +82,14 @@ async fn main() -> std::io::Result<()> {
     println!(
         "Arkhon dev server: http://{addr}/dashboard.html#people  (data: {})",
         data.display()
+    );
+    println!(
+        "Chat: {}",
+        if chat.runtime.is_some() {
+            "forwarding to the local Arkhon runtime (ARKHON_RUNTIME_URL)"
+        } else {
+            "demo replies (set ARKHON_RUNTIME_URL=http://127.0.0.1:PORT to use the local runtime)"
+        }
     );
     axum::serve(listener, app).await
 }
