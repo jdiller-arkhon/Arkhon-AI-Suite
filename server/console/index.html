@@ -328,7 +328,7 @@ precision mediump float;
 uniform vec2 uRes; uniform float uTime, uHy, uDolly, uDark, uMode, uNT, uNS, uLevel, uIntro, uOct, uLay, uHaze, uGrow, uAsp;
 uniform vec3 uSkyTop, uSkyLow, uGlow, uGround, uLand, uSage, uBar;
 uniform vec4 uSun; uniform vec4 uTw[16]; uniform float uSer[16];
-uniform vec3 uMon; uniform vec4 uEv; uniform vec2 uSpan; uniform float uPan;
+uniform vec3 uMon; uniform vec4 uEv; uniform vec2 uSpan; uniform float uPan, uDH;
 float h1(float n){return fract(sin(mod(n,4096.))*43758.5453);}
 float h2(vec2 p){return fract(sin(dot(mod(p,4096.),vec2(127.1,311.7)))*43758.5453);}
 float n1(float x){float i=floor(x),f=fract(x);f=f*f*(3.-2.*f);return mix(h1(i),h1(i+1.),f);}
@@ -429,7 +429,8 @@ void main(){
   // volumetric haze drifting along the horizon
   if(uHaze>0.){float f=exp(-abs(p.y-uHy-.012)*13.)*(.55+.45*n2(vec2(p.x*2.5+t*.025+uPan*.2,p.y*7.)));col+=uGlow*f*.28*uHaze;}
   // ---- data
-  float base=uHy-curv(p.x)+.002;
+  float base=uHy-curv(p.x)+.002, nar=step(uAsp,1.);
+  vec3 ACC=mix(vec3(.12,.36,.24),vec3(.62,.95,.78),uDark), INK=mix(vec3(.15,.15,.17),vec3(.97),uDark); // data light reads on any sky
   if(uMode<2.5){
     float beam=uMode>1.5?mix(uSpan.x-.05,uSpan.y+.05,fract(t/4.2)):-9.;
     for(int i=0;i<16;i++){if(float(i)>=uNT)break;vec4 w=uTw[i];
@@ -446,43 +447,43 @@ void main(){
       vec2 tip=vec2(w.x,bx+hh+.012*g); float dt=length(p-tip);
       if(p.y>bx+hh&&p.y<tip.y&&dx<.0009&&!(hit>=0.&&hit<.9))col=mix(col,mix(uBar,vec3(.9),lit),.9);
       float blink=lit>.5?(.65+.35*sin(t*2.4+float(i))):.45;
-      col+=mix(uGlow,uSage*2.2+.2,lit*.6)*exp(-dt*(lit>.5?70.:150.))*blink*g*(lit*.9+.25);}
+      col=mix(col,lit>.5?ACC:INK,clamp(exp(-dt*(lit>.5?70.:150.))*blink*g*(lit*.9+.25),0.,1.));}
     if(uMode>1.5&&uMode<2.5){float bd=abs(p.x-beam);
-      col+=uGlow*exp(-bd*240.)*smoothstep(base-.01,base+.28,p.y)*smoothstep(base+.36,base+.05,p.y)*.9;
-      col+=uSage*1.5*exp(-bd*900.)*exp(-abs(p.y-base)*120.)*.8;}
+      col=mix(col,ACC,clamp(exp(-bd*240.)*smoothstep(base-.01,base+.2,p.y)*smoothstep(base+.26-nar*.12,base+.03,p.y)*.75,0.,1.));
+      col=mix(col,INK,clamp(exp(-bd*900.)*exp(-abs(p.y-base)*120.),0.,1.));}
   }
   if(uMode>3.5&&uMode<4.5){ // reports: a light trail drawing the series across the land
     float best=1e3,along=0.,tot=0.,at=0.; vec2 prev=vec2(0);
     for(int i=0;i<16;i++){if(float(i)>=uNS)break;float xi=mix(uSpan.x,uSpan.y,float(i)/max(uNS-1.,1.));
-      vec2 cur=vec2(xi,uHy-curv(xi)+.03+uSer[i]*.2);
+      vec2 cur=vec2(xi,uHy-curv(xi)+.03+uSer[i]*uDH);
       if(i>0){vec2 e=cur-prev,w=p-prev;float hseg=clamp(dot(w,e)/dot(e,e),0.,1.);float d=length(w-e*hseg);
         if(d<best){best=d;at=tot+hseg*length(e);} tot+=length(e);}
       prev=cur;}
     float prog=uLevel*tot; float on=step(at,prog);
-    col+=mix(uGlow,uSage*2.+.15,.5)*(exp(-best*900.)*1.1+exp(-best*90.)*.35)*on*(.5+.5*smoothstep(prog-.6,prog,at));
+    col=mix(col,ACC,clamp((exp(-best*900.)*1.1+exp(-best*110.)*.3)*on*(.55+.45*smoothstep(prog-.6,prog,at)),0.,1.));
     // the comet head
     float hx=0.; vec2 hp=vec2(0); prev=vec2(0); tot=0.;
     for(int i=0;i<16;i++){if(float(i)>=uNS)break;float xi=mix(uSpan.x,uSpan.y,float(i)/max(uNS-1.,1.));
-      vec2 cur=vec2(xi,uHy-curv(xi)+.03+uSer[i]*.2); if(i>0){float l=length(cur-prev); if(prog>=tot&&prog<=tot+l+1e-4){hp=mix(prev,cur,(prog-tot)/max(l,1e-4));hx=1.;} tot+=l;} prev=cur;}
-    col+=vec3(1.)*exp(-length(p-hp)*160.)*hx*1.2;
+      vec2 cur=vec2(xi,uHy-curv(xi)+.03+uSer[i]*uDH); if(i>0){float l=length(cur-prev); if(prog>=tot&&prog<=tot+l+1e-4){hp=mix(prev,cur,(prog-tot)/max(l,1e-4));hx=1.;} tot+=l;} prev=cur;}
+    col=mix(col,INK,clamp(exp(-length(p-hp)*160.)*hx*1.2,0.,1.));
   }
   if(uMode>5.5){ // privacy: a translucent dome closes over the land; activity stays inside
-    vec2 c=vec2(mix(uSpan.x,uSpan.y,.5),base); vec2 rr=vec2((uSpan.y-uSpan.x)*.58,.26)*uLevel;
+    vec2 c=vec2(mix(uSpan.x,uSpan.y,.5),base); vec2 rr=vec2((uSpan.y-uSpan.x)*mix(.58,.5,nar),uDH*1.25)*uLevel;
     vec2 dq=(p-vec2(c.x,uHy-curv(c.x)))/max(rr,vec2(1e-3)); float d=length(dq)-1.;
     if(p.y>uHy-curv(p.x)-.004&&rr.x>.01){
       float fres=exp(-abs(d)*38.)*1.2+(d<0.?pow(clamp(1.+d,0.,1.),5.)*.35:0.);
       float lat=d<0.?smoothstep(.02,0.,abs(fract(dq.y*5.)-.5)*.6)*.18+smoothstep(.03,0.,abs(fract(dq.x*4.+.5)-.5)*.5)*.12:0.;
-      col+=mix(uGlow,uSage*1.8+.15,.45)*(fres+lat*(1.+d))*.9; if(d<0.)col=mix(col,uSkyLow,.08);}
+      col=mix(col,ACC,clamp((fres+lat*(1.+d))*.75,0.,1.)); if(d<0.)col=mix(col,ACC,.05);}
     for(int i=0;i<16;i++){if(float(i)>=uNT)break;vec4 w=uTw[i];
       vec2 dp=vec2(c.x+(w.x-.5)*rr.x*1.5,uHy-curv(c.x)+.01+abs(sin(t*(1.1+w.z*.6)+float(i)*1.3))*rr.y*.62*w.y);
-      col+=mix(uGlow,uSage*2.2+.2,.6)*exp(-length(p-dp)*150.)*uLevel;}
+      col=mix(col,ACC,clamp(exp(-length(p-dp)*150.)*uLevel*1.2,0.,1.));}
   }
   // ---- the horizon line, drawn from the centre outward during the intro
   float hl=exp(-abs(p.y-(uHy-curv(p.x)))*uRes.y*.9)*smoothstep(I*1.2*uAsp,I*1.2*uAsp-.1,abs(p.x-uMon.x*.4));
   col+=uGlow*hl*(.35+.65*(1.-smoothstep(.85,1.,I)));
   // ---- events: an approved card landing (ring) and the all-clear burst
   if(uEv.x>=0.&&uEv.x<1.){vec2 e=(p-vec2(uEv.z,base+.004))/vec2(1.,.28);float r=.03+.16*(1.-pow(1.-uEv.x,3.));
-    col+=uGlow*exp(-abs(length(e)-r)*200.)*(1.-uEv.x)*1.2;}
+    col=mix(col,INK,clamp(exp(-abs(length(e)-r)*200.)*(1.-uEv.x)*1.2,0.,1.));}
   if(uEv.y>=0.&&uEv.y<1.){float r=length((p-vec2(uEv.z,base))*vec2(1.,1.4));float R=.05+uAsp*.7*(1.-pow(1.-uEv.y,3.));
     col+=uGlow*exp(-abs(r-R)*14.)*(1.-uEv.y)*.9+uSage*exp(-abs(r-R*.8)*30.)*(1.-uEv.y)*.5;}
   // ---- intro exposure (pre-dawn to day)
@@ -525,7 +526,7 @@ void main(){
     const buf = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, buf);
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
     gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
-    const U = {}; ['uRes', 'uTime', 'uHy', 'uDolly', 'uDark', 'uMode', 'uNT', 'uNS', 'uLevel', 'uIntro', 'uOct', 'uLay', 'uHaze', 'uGrow', 'uAsp', 'uSkyTop', 'uSkyLow', 'uGlow', 'uBar', 'uGround', 'uLand', 'uSage', 'uSun', 'uTw', 'uSer', 'uMon', 'uEv', 'uSpan', 'uPan']
+    const U = {}; ['uRes', 'uTime', 'uHy', 'uDolly', 'uDark', 'uMode', 'uNT', 'uNS', 'uLevel', 'uIntro', 'uOct', 'uLay', 'uHaze', 'uGrow', 'uAsp', 'uSkyTop', 'uSkyLow', 'uGlow', 'uBar', 'uGround', 'uLand', 'uSage', 'uSun', 'uTw', 'uSer', 'uMon', 'uEv', 'uSpan', 'uPan', 'uDH']
       .forEach(n => { U[n] = gl.getUniformLocation(pr, n); });
     const dbg = gl.getExtension('WEBGL_debug_renderer_info');
     const renderer = String(dbg ? gl.getParameter(dbg.UNMASKED_RENDERER_WEBGL) : gl.getParameter(gl.RENDERER));
@@ -563,7 +564,7 @@ void main(){
 
     function layoutTowers() {
       const [x0, x1] = span(), list = S.data.towers, n = Math.min(16, list.length), max = Math.max(1e-6, ...list.map(b => b.v || 0));
-      const narrow = S.W / S.H < 1, hMax = narrow ? .12 : .2;
+      const narrow = S.W / S.H < 1, hMax = narrow ? .09 : .2;
       S.nt = n;
       for (let i = 0; i < n; i++) {
         const b = list[i], x = n === 1 ? (x0 + x1) / 2 : x0 + (x1 - x0) * (i + .5) / n;
@@ -606,7 +607,10 @@ void main(){
       const narrow = a < 1, monX = narrow ? .22 * a : (opts.lite ? .3 * a : .22 * a), monS = narrow ? .14 : (opts.lite ? .2 : .26);
       gl.uniform4f(U.uSun, monX + T.x * a * .5 - pan * .01, .5 - hyPx / S.cssH + T.y, T.k, T.n);
       gl.uniform3f(U.uMon, monX - pan * .004, monS, 0);
+      // Data never climbs into the title: its height scales with the room between the top and the horizon.
+      const room = Math.max(.45, Math.min(1, hyPx / S.cssH / .72)), dh = (a < 1 ? .06 : .2) * room; gl.uniform1f(U.uDH, dh);
       const tw = S.tw.slice(0, Math.max(4, S.nt * 4));
+      if (S.mode !== 6) for (let i = 0; i < S.nt; i++) tw[i * 4 + 1] *= dh / (a < 1 ? .09 : .2);
       const fx = Math.max(-1.4 * a, Math.min(1.4 * a, fly * .55));
       if (fx && S.mode !== 6) for (let i = 0; i < S.nt; i++) tw[i * 4] -= fx;
       gl.uniform4fv(U.uTw, new Float32Array(64).map((_, i) => tw[i] || 0)); gl.uniform1f(U.uNT, S.nt);
