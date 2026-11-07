@@ -70,7 +70,7 @@ fn approve(item: ItemId) -> Command {
 fn needs_you_shows_three_urgent_first_with_total() {
     let (s, ids) = suite();
     let n = s.view(ids.owner).needs_you;
-    assert_eq!(n.total, 4);
+    assert_eq!(n.total, 5);
     assert_eq!(n.items.len(), 3);
     assert_eq!(n.items[0].title, "Reply to Marisol Vega");
     assert_eq!(n.items[0].urgency, Urgency::Urgent);
@@ -90,8 +90,8 @@ fn needs_you_shows_three_urgent_first_with_total() {
 #[test]
 fn team_items_show_for_the_teams_approvers_only() {
     let (s, ids) = suite();
-    // Lena is the assignee of the Front office item.
-    assert_eq!(s.view(ids.dispatcher).needs_you.total, 1);
+    // Lena is the assignee of the five Front office items.
+    assert_eq!(s.view(ids.dispatcher).needs_you.total, 5);
     // Max approves for Field techs, so he sees Tia's meeting notes, but can't send them
     // through Tia's personal Gmail.
     let max = s.view(ids.manager).needs_you;
@@ -103,8 +103,9 @@ fn team_items_show_for_the_teams_approvers_only() {
         .unwrap()
         .contains("which you can't use"));
     // Ari (admin, on Front office) approves for that team too; Tia sees her own item.
-    assert_eq!(s.view(ids.admin).needs_you.total, 1);
-    assert_eq!(s.view(ids.tech).needs_you.total, 1);
+    // Ari also has her own receipt to file; Tia has a supplier reply too.
+    assert_eq!(s.view(ids.admin).needs_you.total, 6);
+    assert_eq!(s.view(ids.tech).needs_you.total, 2);
     // Sam is on Field techs but can't approve for the team.
     let sam = s
         .state()
@@ -145,7 +146,7 @@ fn assignee_approves_records_activity_and_value() {
     let after = s.this_week(ids.owner);
     assert_eq!(after.totals.drafts, before.totals.drafts + 1);
     assert_eq!(after.totals.minutes, before.totals.minutes + 4);
-    assert_eq!(s.view(ids.owner).needs_you.total, 3);
+    assert_eq!(s.view(ids.owner).needs_you.total, 4);
 }
 
 #[test]

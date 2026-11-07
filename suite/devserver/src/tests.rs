@@ -182,7 +182,7 @@ fn embedded_preview_snapshot_matches_the_engine() {
 async fn approving_from_home_updates_needs_you_and_this_week() {
     let (app, ids) = app();
     let (_, v) = send(&app, req("GET", "/api/view", Some(ids.owner), None)).await;
-    assert_eq!(v["needs_you"]["total"], 4);
+    assert_eq!(v["needs_you"]["total"], 5);
     let first = &v["needs_you"]["items"][0];
     assert_eq!(first["title"], "Reply to Marisol Vega");
     let drafts = v["this_week"]["totals"]["drafts"].as_u64().unwrap();
@@ -200,7 +200,7 @@ async fn approving_from_home_updates_needs_you_and_this_week() {
     )
     .await;
     assert_eq!(s, StatusCode::OK, "{v}");
-    assert_eq!(v["view"]["needs_you"]["total"], 3);
+    assert_eq!(v["view"]["needs_you"]["total"], 4);
     assert_eq!(v["view"]["this_week"]["totals"]["drafts"], drafts + 1);
 }
 
@@ -265,4 +265,49 @@ async fn mail_passwords_go_to_the_vault_and_are_never_echoed() {
     assert!(!saved.contains(secret));
     let vault = std::fs::read_to_string(dir.path().join("vault.json")).unwrap();
     assert!(!vault.contains(secret));
+}
+
+#[tokio::test]
+async fn ask_answers_from_files_or_says_not_found() {
+    let (app, ids) = app();
+    let (s, a) = send(
+        &app,
+        req(
+            "GET",
+            "/api/ask?q=How%20much%20is%20a%20diagnostic%20visit",
+            Some(ids.tech),
+            None,
+        ),
+    )
+    .await;
+    assert_eq!(s, StatusCode::OK);
+    assert_eq!(a["found"], true);
+    assert_eq!(a["sources"][0]["label"], "Price list 2026");
+    let (_, a) = send(
+        &app,
+        req("GET", "/api/ask?q=wifi%20password", Some(ids.tech), None),
+    )
+    .await;
+    assert_eq!(a["found"], false);
+    let (s, _) = send(&app, req("GET", "/api/ask?q=", Some(ids.tech), None)).await;
+    assert_eq!(s, StatusCode::BAD_REQUEST);
+}
+
+#[tokio::test]
+async fn workspace_pages_and_delete_all_follow_the_rules() {
+    let (app, ids) = app();
+    let (_, v) = send(&app, req("GET", "/api/view", Some(ids.tech), None)).await;
+    assert!(v["desk"].is_null(), "Tia has no Customer replies workspace");
+    assert!(v["docs"]["documents"].is_array());
+    let del = r#"{"command":"delete-all-data","confirm":"Coastline Mechanical"}"#;
+    let (s, _) = send(&app, req("POST", "/api/command", Some(ids.tech), Some(del))).await;
+    assert_eq!(s, StatusCode::FORBIDDEN);
+    let (s, v) = send(
+        &app,
+        req("POST", "/api/command", Some(ids.owner), Some(del)),
+    )
+    .await;
+    assert_eq!(s, StatusCode::OK, "{v}");
+    assert_eq!(v["view"]["needs_you"]["total"], 0);
+    assert_eq!(v["view"]["connections"].as_array().unwrap().len(), 0);
 }

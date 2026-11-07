@@ -8,6 +8,7 @@
 //! | POST | `/api/command` | [`arkhon_engine::Command`] | `{ "message": "..." }` and the new view |
 //! | GET | `/api/activity` | — | activity log (admins) |
 //! | GET | `/api/report?month=YYYY-MM` | — | [`arkhon_engine::MonthlyReport`] (own numbers unless the viewer sees company reports) |
+//! | GET | `/api/ask?q=...` | — | [`arkhon_engine::AskResult`]: an answer from the company's files, or an honest "not found" |
 //! | GET | `/api/people` | — | `[{id, name, role}]` for the dev "View as" switcher |
 //!
 //! **Dev-only identity:** the acting person is chosen with the `x-arkhon-as` header (a member id).
@@ -62,6 +63,7 @@ pub fn router(state: AppState, static_dir: PathBuf, port: u16) -> Router {
         .route("/api/activity", get(activity))
         .route("/api/report", get(report))
         .route("/api/people", get(people))
+        .route("/api/ask", get(ask))
         .with_state(state);
     Router::new()
         .merge(api)
@@ -189,6 +191,27 @@ async fn report(
     };
     match suite.monthly_report(actor(&headers, s.default_actor), year, month) {
         Ok(r) => Json(r).into_response(),
+        Err(r) => refusal(&r),
+    }
+}
+
+/// `?q=question`.
+#[derive(serde::Deserialize)]
+struct AskQuery {
+    q: Option<String>,
+}
+
+async fn ask(
+    State(s): State<AppState>,
+    headers: HeaderMap,
+    Query(query): Query<AskQuery>,
+) -> Response {
+    let suite = s.suite.lock().await;
+    match suite.ask(
+        actor(&headers, s.default_actor),
+        query.q.as_deref().unwrap_or(""),
+    ) {
+        Ok(a) => Json(a).into_response(),
         Err(r) => refusal(&r),
     }
 }
