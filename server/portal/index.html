@@ -667,14 +667,19 @@ void main(){
       const C = S.colors, T = C.T, tier = TIERS[S.tier], a = S.W / S.H;
       const time = still ? 12 : (t - S.t0) / 1000;
       // camera: pan eases towards the page's place; the pointer adds a little parallax
+      S.prevGap = S.prevT && !still ? t - S.prevT : 0;
       const dt = S.prevT ? Math.min(.1, (t - S.prevT) / 1000) : .016; S.prevT = still ? 0 : t;
       const k = r => 1 - Math.exp(-dt * r); // frame-rate independent easing
       if (!still) { S.pan += (S.panT - S.pan) * k(3.4); S.ptr += (S.ptrT - S.ptr) * k(3.6); } else { S.pan = S.panT; }
       const pan = S.pan + (still ? 0 : S.ptr * .35);
       const fly = S.panT - S.pan; // towers ride with the land while flying
       let grow = 1; if (!still && S.growAt > 0) grow = Math.min(1, (t - S.growAt) / 1200); if (still) grow = 1;
-      let intro = 1; if (S.introAt > 0 && !still) { intro = Math.min(1, (t - S.introAt) / S.introDur); if (intro >= 1) { S.introAt = -1; const f = S.onIntroEnd; S.onIntroEnd = null; if (f) f(); } }
-      if (S.introAt > 0) grow = Math.min(grow, Math.max(0, (intro - .3) / .5));
+      // The intro clock starts on the first frame actually drawn, and a stalled frame (page load,
+      // a busy main thread) doesn't eat into it.
+      if (S.introPending && !still) { S.introPending = false; S.introAt = t; }
+      if (S.introAt > 0 && !still && S.prevGap > 300) S.introAt += S.prevGap - 16;
+      let intro = S.introPending ? 0 : 1; if (S.introAt > 0 && !still) { intro = Math.min(1, (t - S.introAt) / S.introDur); if (intro >= 1) { S.introAt = -1; const f = S.onIntroEnd; S.onIntroEnd = null; if (f) f(); } }
+      if (S.introAt > 0 || S.introPending) grow = Math.min(grow, Math.max(0, (intro - .3) / .5));
       if (!still) S.level += (S.levelT - S.level) * k(S.mode === 4 ? 1.4 : 2.6); else S.level = S.levelT;
       const ex = S.mode === 4 && still ? 1 : S.level;
       gl.viewport(0, 0, S.W, S.H);
@@ -767,8 +772,9 @@ void main(){
       pulse() { if (!reduce.matches) { S.pulseAt = performance.now(); kick(); } },
       burst() { if (!reduce.matches) { S.burstAt = performance.now(); kick(); } },
       /** Play the sunrise intro; resolves when it ends (or at once under reduced motion). */
-      intro(dur) { return new Promise(res => { if (reduce.matches) return res(); S.introDur = dur || 2500; S.introAt = performance.now(); S.onIntroEnd = res; kick(); }); },
-      skipIntro() { if (S.introAt > 0) { S.introAt = performance.now() - S.introDur; kick(); } },
+      intro(dur) { return new Promise(res => { if (reduce.matches) return res(); S.introDur = dur || 2500; S.introAt = -1; S.introPending = true; S.onIntroEnd = res; kick();
+        setTimeout(() => { if (S.onIntroEnd === res) this.skipIntro(); }, S.introDur * 4); /* never strand the page behind an intro */ }); },
+      skipIntro() { S.introPending = false; S.introAt = -1; const f = S.onIntroEnd; S.onIntroEnd = null; if (f) f(); kick(); },
       setVisible(v) { if (S.visible !== v) { S.visible = v; kick(); } },
       stop() { S.running = false; kick(); }, start() { S.running = true; kick(); },
       target() { const [x0, x1] = span(); const r = canvas.getBoundingClientRect(); const hy = S.hyPx == null ? S.cssH * .72 : S.hyPx;
