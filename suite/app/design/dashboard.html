@@ -2569,8 +2569,10 @@ window.ArkHero = (() => {
   }
   function heroStat(id, html, n) {
     const el = $(id); if (!el) return; el.hidden = !html;
-    if (el.dataset.html === (html || '')) return; el.dataset.html = html || ''; el.innerHTML = html || '';
-    const b = el.querySelector('b'); if (b && n != null) { b.dataset.n = 0; countUp(b, n); }
+    if (el.dataset.html === (html || '')) return;
+    const old = el.querySelector('b'), was = old && old.dataset.n != null ? old.dataset.n : 0;
+    el.dataset.html = html || ''; el.innerHTML = html || '';
+    const b = el.querySelector('b'); if (b && n != null) { b.dataset.n = was; countUp(b, n); }
   }
   /* Time of day: the local clock, except for the example company (a fixed demo time) or ?t=HH:MM,
      so screenshots and tests are stable. */
@@ -2649,9 +2651,12 @@ window.ArkHero = (() => {
     const go = approve && from ? flyToHorizon(from.rect, from.label) : Promise.resolve();
     go.then(() => {
       countUp($('left-n'), now);
-      if (before > 0 && now === 0 && window.ArkHero) {
-        window.ArkHero.burst('home');
-        const sec = $('needs'); if (sec && !reduceMotion()) { sec.classList.remove('clear'); void sec.offsetWidth; sec.classList.add('clear'); }
+      if (before > 0 && now === 0 && window.ArkHero && !reduceMotion()) {
+        const sec = $('needs'); if (sec) { sec.classList.remove('clear'); void sec.offsetWidth; sec.classList.add('clear'); }
+        // The burst happens in the hero: bring it into view first if the reader scrolled down.
+        const hero = document.querySelector('[data-hero="home"]'), off = hero && hero.getBoundingClientRect().bottom < 120;
+        if (off) scrollTo({ top: 0, behavior: 'smooth' });
+        setTimeout(() => window.ArkHero.burst('home'), off ? 650 : 0);
       }
     });
   }
