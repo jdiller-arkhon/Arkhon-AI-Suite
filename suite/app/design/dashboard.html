@@ -1,5 +1,5 @@
 <meta charset="utf-8">
-<title>Arkhon Command</title>
+<title>Arkhon Suite</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -379,6 +379,279 @@ label.f { display: grid; gap: 6px; font-size: 14px; color: var(--fg-2); }
   .answer-big { font-size: 19px; }
 }
 </style>
+<style>
+/* =====================================================================================
+   HORIZON — Arkhon Suite's own visual system (v4).
+   The mark's three parts become the architecture:
+     horizon arc  → every page is a stage that rises from a curved horizon (hero band)
+     skyline bars → the page's real numbers stand on that horizon
+     chrome       → a slow sheen and the dock's brushed-metal accents
+   Tokens are defined here and mirrored in tokens.css (see README "Horizon").
+   ===================================================================================== */
+:root {
+  --bg: #eceef2; --stage: #eceef2; --card: #ffffff; --soft: #e4e7ec; --line: #d9dde4;
+  --fg: #111113; --fg-2: #4d525b; --fg-3: #636873;
+  --ink: #2b2b2e; --ink-fg: #ffffff;
+  --ok: #24653f; --ok-bg: #dcefe4; --warn: #94430a; --warn-bg: #f8ead9; --bad: #b42318; --bad-bg: #fbe5e2;
+  --focus: #1f5fbf;
+  --sky-top: #cfd5de; --sky-low: #f4f6f9; --glow: rgba(255,255,255,.95); --glow-2: rgba(47,122,85,.10);
+  --bar: #9aa1ad; --bar-lit-a: #fdfdfe; --bar-lit-b: #7b818c; --bar-lit-c: #2b2b2e; --arc: #2b2b2e; --dust: rgba(43,43,46,.32);
+  --dock-bg: rgba(255,255,255,.72); --dock-line: rgba(17,17,19,.08);
+  --shadow: 0 1px 0 rgba(255,255,255,.7) inset, 0 1px 2px rgba(17,17,19,.05), 0 18px 40px -24px rgba(17,17,19,.22);
+  --r: 20px; --r-sm: 14px;
+  --ease: cubic-bezier(.22,1,.36,1);           /* brand ease-out (site) */
+  --ease-in: cubic-bezier(.55,0,.75,.2);
+  --spring: cubic-bezier(.34,1.36,.64,1);       /* small overshoot: list entrances, presses */
+  --dur-press: 140ms; --dur-quick: 220ms; --dur-enter: 560ms; --dur-wipe: 760ms; --stagger: 55ms;
+  --dock-h: 64px;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0c0e12; --stage: #0c0e12; --card: #14171c; --soft: #1d2128; --line: #272c35;
+  --fg: #f2f3f6; --fg-2: #b4b9c4; --fg-3: #8e94a0;
+  --ink: #f2f3f6; --ink-fg: #111113;
+  --ok: #5cc994; --ok-bg: rgba(92,201,148,.13); --warn: #f0a640; --warn-bg: rgba(240,166,64,.13); --bad: #ff7b70; --bad-bg: rgba(255,123,112,.13);
+  --focus: #6aa8ff;
+  --sky-top: #07080b; --sky-low: #1a1f27; --glow: rgba(214,220,232,.30); --glow-2: rgba(47,122,85,.20);
+  --bar: #3a404b; --bar-lit-a: #ffffff; --bar-lit-b: #9aa0ab; --bar-lit-c: #4a4e57; --arc: #c9ccd3; --dust: rgba(242,243,246,.42);
+  --dock-bg: rgba(20,23,28,.74); --dock-line: rgba(242,243,246,.10);
+  --shadow: 0 0 0 1px var(--line);
+  color-scheme: dark;
+} }
+:root[data-theme="dark"] {
+  --bg: #0c0e12; --stage: #0c0e12; --card: #14171c; --soft: #1d2128; --line: #272c35;
+  --fg: #f2f3f6; --fg-2: #b4b9c4; --fg-3: #8e94a0;
+  --ink: #f2f3f6; --ink-fg: #111113;
+  --ok: #5cc994; --ok-bg: rgba(92,201,148,.13); --warn: #f0a640; --warn-bg: rgba(240,166,64,.13); --bad: #ff7b70; --bad-bg: rgba(255,123,112,.13);
+  --focus: #6aa8ff;
+  --sky-top: #07080b; --sky-low: #1a1f27; --glow: rgba(214,220,232,.30); --glow-2: rgba(47,122,85,.20);
+  --bar: #3a404b; --bar-lit-a: #ffffff; --bar-lit-b: #9aa0ab; --bar-lit-c: #4a4e57; --arc: #c9ccd3; --dust: rgba(242,243,246,.42);
+  --dock-bg: rgba(20,23,28,.74); --dock-line: rgba(242,243,246,.10);
+  --shadow: 0 0 0 1px var(--line);
+  color-scheme: dark;
+}
+:root[data-theme="light"] { color-scheme: light; }
+
+html { background: var(--bg); }
+body { background: var(--bg); padding-bottom: calc(var(--dock-h) + 56px + env(safe-area-inset-bottom, 0px)); overflow-x: hidden; }
+body::before { display: none; }
+.wrap { max-width: 960px; }
+.card { border: 1px solid var(--line); }
+:root[data-theme="dark"] .card, :root:not([data-theme="light"]) .card { border-color: var(--line); }
+h1 { font-weight: 650; letter-spacing: -.04em; }
+h2 { font-weight: 600; }
+.example { color: var(--warn); background: var(--warn-bg); font-weight: 500; }
+.eyebrow { display: block; font-size: 12px; font-weight: 600; letter-spacing: .16em; text-transform: uppercase; color: var(--fg-2); margin-bottom: 14px; }
+
+/* Press feedback: every button sinks a little and springs back. */
+.btn, .ask button, .ideas button, .qbtn, .dock a, .dock button, .chat-send, .conv-new, .pal-item {
+  transition: transform var(--dur-press) var(--spring), background-color var(--dur-quick) var(--ease), color var(--dur-quick) var(--ease), opacity var(--dur-quick);
+}
+.btn:active, .ask button:active, .ideas button:active, .qbtn:active, .dock a:active, .dock button:active, .chat-send:active, .conv-new:active { transform: scale(.94); }
+
+/* ---------- Hero band (stage top) ---------- */
+.hero { position: relative; isolation: isolate; overflow: hidden; min-height: clamp(320px, 46vh, 460px); padding-block: 72px 132px; }
+.hero > .hz { position: absolute; inset: 0; width: 100%; height: 100%; z-index: -1; display: block; }
+.hero .hero-in { position: relative; }
+.hero h1 { font-size: clamp(38px, 6vw, 64px); max-width: 14ch; }
+.hero .lede { max-width: 34ch; color: var(--fg-2); }
+.hero .example { margin-bottom: 18px; }
+.hero-stat { margin: 22px 0 0; display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; color: var(--fg-2); font-size: 15px; }
+.hero-stat b { font-size: 34px; font-weight: 650; letter-spacing: -.04em; color: var(--fg); font-variant-numeric: tabular-nums; }
+.hero.compact { min-height: 0; padding-block: 48px 88px; }
+.hero.compact h1 { font-size: clamp(32px, 4.6vw, 46px); }
+.hero-home { min-height: clamp(460px, 62vh, 600px); padding-block: 64px 150px; }
+.hero-home .hello { padding: 0; text-align: left; justify-items: start; }
+.hero-home .hello h1 { max-width: 13ch; }
+.hero-home .ask { margin-top: 18px; max-width: 560px; border: 1px solid var(--line); }
+.hero-home .ideas { justify-content: flex-start; max-width: 560px; }
+.ideas button { border: 1px solid var(--line); box-shadow: none; background: color-mix(in srgb, var(--card) 80%, transparent); color: var(--fg-2); }
+
+/* Stage: calm column below the hero. The first band overlaps the horizon slightly. */
+.view > .band:first-of-type, .hero + .band { position: relative; }
+.pg-head + .band { padding-block-start: 8px !important; }
+.hero-home + .band { padding-block-start: 8px; }
+.set-hero + .band { padding-block-start: 8px !important; }
+
+/* Staggered spring entrance (never leaves content hidden at rest: fill-mode backwards). */
+@media (prefers-reduced-motion: no-preference) {
+  .view.enter :is(.needs, .stack, .roles, .teams, .lib, .facts, .list, .people, .conv-list) > * { animation: rise var(--dur-enter) var(--spring) backwards; }
+  .view.enter :is(.needs, .stack, .roles, .teams, .lib, .facts, .list, .people, .conv-list) > :nth-child(2) { animation-delay: calc(var(--stagger) * 1); }
+  .view.enter :is(.needs, .stack, .roles, .teams, .lib, .facts, .list, .people, .conv-list) > :nth-child(3) { animation-delay: calc(var(--stagger) * 2); }
+  .view.enter :is(.needs, .stack, .roles, .teams, .lib, .facts, .list, .people, .conv-list) > :nth-child(4) { animation-delay: calc(var(--stagger) * 3); }
+  .view.enter :is(.needs, .stack, .roles, .teams, .lib, .facts, .list, .people, .conv-list) > :nth-child(5) { animation-delay: calc(var(--stagger) * 4); }
+  .view.enter :is(.needs, .stack, .roles, .teams, .lib, .facts, .list, .people, .conv-list) > :nth-child(n+6) { animation-delay: calc(var(--stagger) * 5); }
+  @keyframes rise { from { opacity: .001; transform: translateY(14px) scale(.985); } }
+  .hero .hero-in > * { animation: lift 700ms var(--ease) backwards; }
+  .hero .hero-in > :nth-child(2) { animation-delay: 60ms; } .hero .hero-in > :nth-child(3) { animation-delay: 120ms; }
+  .hero .hero-in > :nth-child(n+4) { animation-delay: 180ms; }
+  @keyframes lift { from { opacity: .001; transform: translateY(10px); } }
+  .msg:not([hidden]) { animation: rise 420ms var(--spring) backwards; }
+}
+.view:not([hidden]) { animation: none; }
+@media (prefers-reduced-motion: no-preference) {
+  html:not(.vt) .view:not([hidden]) { animation: fade .5s var(--ease) both; }
+}
+
+/* ---------- View transitions ---------- */
+.dock { view-transition-name: dock; }
+.pal { view-transition-name: palette; }
+@media (prefers-reduced-motion: no-preference) {
+  ::view-transition-old(root) { animation: var(--dur-wipe) var(--ease) both vt-settle; }
+  ::view-transition-new(root) { animation: var(--dur-wipe) var(--ease) both vt-horizon; }
+  @keyframes vt-horizon {
+    from { clip-path: ellipse(140% 0% at 50% 100%); }
+    to   { clip-path: ellipse(140% 160% at 50% 100%); }
+  }
+  @keyframes vt-settle { to { opacity: .35; transform: translateY(-2%) scale(.985); filter: blur(2px); } }
+  html.vt-soft::view-transition-old(root) { animation: 240ms var(--ease) both vt-out; }
+  html.vt-soft::view-transition-new(root) { animation: 320ms var(--ease) both vt-in; }
+  @keyframes vt-out { to { opacity: 0; } }
+  @keyframes vt-in { from { opacity: 0; transform: translateY(6px); } }
+  ::view-transition-group(vt-title), ::view-transition-group(vt-card) { animation-duration: 620ms; animation-timing-function: var(--ease); }
+  ::view-transition-old(vt-title), ::view-transition-new(vt-title) { height: 100%; width: auto; }
+  ::view-transition-group(dock), ::view-transition-group(palette) { animation: none; }
+}
+
+/* ---------- Dock ---------- */
+.dock { position: fixed; z-index: 30; left: 50%; bottom: calc(18px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%);
+  display: flex; align-items: center; gap: 2px; padding: 7px; border-radius: 999px; max-width: calc(100vw - 24px);
+  background: var(--dock-bg); border: 1px solid var(--dock-line); backdrop-filter: saturate(170%) blur(22px); -webkit-backdrop-filter: saturate(170%) blur(22px);
+  box-shadow: 0 1px 0 rgba(255,255,255,.35) inset, 0 20px 50px -18px rgba(0,0,0,.35); }
+.dock a, .dock button { position: relative; width: 48px; height: 48px; border-radius: 999px; border: 0; background: none; color: var(--fg-2); display: grid; place-items: center; text-decoration: none; flex: none; }
+.dock svg { width: 21px; height: 21px; stroke: currentColor; fill: none; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+.dock a:hover, .dock button:hover { color: var(--fg); background: var(--soft); }
+.dock a[aria-current="page"] { background: var(--ink); color: var(--ink-fg); }
+.dock a[aria-current="page"]::after { content: ""; position: absolute; bottom: -5px; width: 14px; height: 2px; border-radius: 2px; background: linear-gradient(90deg, #9aa0ab, #f4f5f7, #9aa0ab); }
+.dock .home svg { width: 26px; height: 23px; stroke: none; }
+.dock .sep { width: 1px; height: 26px; background: var(--line); margin: 0 6px; flex: none; }
+.dock .lbl { position: absolute; bottom: calc(100% + 12px); left: 50%; transform: translate(-50%, 4px); white-space: nowrap; pointer-events: none;
+  font-size: 13px; font-weight: 500; padding: 6px 11px; border-radius: 10px; background: var(--ink); color: var(--ink-fg); opacity: 0;
+  transition: opacity var(--dur-quick) var(--ease), transform var(--dur-quick) var(--ease); }
+.dock a:hover .lbl, .dock a:focus-visible .lbl, .dock button:hover .lbl, .dock button:focus-visible .lbl { opacity: 1; transform: translate(-50%, 0); }
+.dock .me { width: 40px; height: 40px; margin-left: 4px; font-size: 13px; font-weight: 600; background: linear-gradient(140deg, #f4f5f7, #9aa0ab 45%, #3a3d44); color: #111113; }
+.dock .me:hover { background: linear-gradient(140deg, #ffffff, #a7adba 45%, #3a3d44); color: #111113; }
+.dock .kbd { font-size: 11px; opacity: .7; margin-left: 6px; }
+.dock .more { display: none; }
+@media (max-width: 760px) {
+  .dock .ws { display: none; }
+  .dock .more { display: grid; }
+  .dock a, .dock button { width: 46px; height: 46px; }
+  .dock .sep { margin: 0 2px; }
+}
+
+/* ---------- Command palette ---------- */
+.pal { position: fixed; inset: 0; z-index: 40; display: grid; justify-items: center; align-content: start; padding: 14vh 16px 16px; background: color-mix(in srgb, var(--bg) 40%, rgba(0,0,0,.35)); }
+.pal[hidden] { display: none; }
+.pal-box { width: min(640px, 100%); border-radius: 22px; overflow: hidden; background: var(--card); border: 1px solid var(--line); box-shadow: 0 40px 90px -30px rgba(0,0,0,.5); }
+@media (prefers-reduced-motion: no-preference) { .pal:not([hidden]) .pal-box { animation: pal-in 320ms var(--spring) both; } @keyframes pal-in { from { opacity: 0; transform: translateY(-8px) scale(.97); } } }
+.pal-in { display: flex; align-items: center; gap: 12px; padding: 0 20px; border-bottom: 1px solid var(--line); }
+.pal-in svg { width: 20px; height: 20px; stroke: var(--fg-3); fill: none; stroke-width: 1.8; flex: none; }
+.pal-in input { flex: 1; min-width: 0; height: 60px; border: 0; outline: 0; background: none; font-size: 18px; }
+.pal-in kbd { font: 500 12px var(--font); color: var(--fg-3); border: 1px solid var(--line); border-radius: 6px; padding: 2px 6px; }
+.pal-list { list-style: none; margin: 0; padding: 8px; max-height: min(52vh, 460px); overflow-y: auto; }
+.pal-group { font-size: 12px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; color: var(--fg-3); padding: 12px 12px 6px; }
+.pal-item { display: flex; align-items: center; gap: 14px; padding: 11px 12px; border-radius: 12px; cursor: pointer; font-size: 16px; }
+.pal-item svg { width: 19px; height: 19px; stroke: var(--fg-2); fill: none; stroke-width: 1.7; flex: none; stroke-linecap: round; stroke-linejoin: round; }
+.pal-item small { margin-left: auto; color: var(--fg-3); font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 45%; }
+.pal-item[aria-selected="true"] { background: var(--soft); }
+.pal-empty { padding: 22px 14px; color: var(--fg-2); }
+
+/* ---------- Home stage ---------- */
+.task { border-radius: var(--r); }
+.task h3 .open { border: 0; background: none; padding: 0; font: inherit; color: inherit; text-align: left; cursor: pointer; }
+.task h3 .open:hover { text-decoration: underline; text-underline-offset: 3px; }
+.week { position: relative; overflow: hidden; }
+
+/* Company settings hero */
+.set-hero h1 { max-width: none; }
+.set-tools { display: grid; gap: 18px; }
+
+/* ---------- Chat ---------- */
+.chat { display: grid; grid-template-columns: 260px minmax(0, 1fr); gap: 18px; align-items: start; }
+.conv-side { position: sticky; top: 18px; padding: 10px; display: grid; gap: 6px; }
+.conv-new { display: flex; align-items: center; gap: 10px; justify-content: center; height: 46px; border-radius: 999px; border: 0; background: var(--ink); color: var(--ink-fg); font-weight: 500; font-size: 15px; }
+.conv-new svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 2; }
+.conv-list { list-style: none; margin: 4px 0 0; padding: 0; display: grid; gap: 2px; max-height: 56vh; overflow-y: auto; }
+.conv { display: flex; align-items: center; gap: 4px; border-radius: 12px; }
+.conv:hover, .conv[aria-current="true"] { background: var(--soft); }
+.conv > button:first-child { flex: 1; min-width: 0; text-align: left; border: 0; background: none; padding: 10px 12px; font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--fg); }
+.conv .mini { width: 32px; height: 32px; border: 0; background: none; border-radius: 8px; color: var(--fg-3); display: grid; place-items: center; flex: none; opacity: 0; }
+.conv:hover .mini, .conv[aria-current="true"] .mini, .conv .mini:focus-visible { opacity: 1; }
+.conv .mini:hover { color: var(--fg); background: var(--card); }
+.mini svg { width: 15px; height: 15px; stroke: currentColor; fill: none; stroke-width: 1.8; }
+.conv-note { font-size: 13px; color: var(--fg-2); padding: 8px 10px 4px; margin: 0; }
+.thread-wrap { display: grid; gap: 14px; min-width: 0; }
+.chat-top { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.chip-run { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 500; color: var(--ok); background: var(--ok-bg); border-radius: 999px; padding: 4px 12px; }
+.chip-run::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+.chip-demo { font-size: 13px; font-weight: 500; color: var(--warn); background: var(--warn-bg); border-radius: 999px; padding: 4px 12px; }
+.conv-toggle { display: none; }
+.thread { display: grid; gap: 22px; padding: 28px 30px; min-height: 320px; align-content: start; }
+.m { display: grid; gap: 8px; min-width: 0; }
+.m.user { justify-items: end; }
+.m.user .body { background: var(--ink); color: var(--ink-fg); border-radius: 20px 20px 6px 20px; padding: 12px 18px; max-width: min(78%, 60ch); white-space: pre-wrap; overflow-wrap: anywhere; }
+.m.assistant { grid-template-columns: 30px minmax(0, 1fr); column-gap: 14px; }
+.m.assistant .av-m { width: 30px; height: 28px; margin-top: 2px; }
+.m.assistant .body { min-width: 0; overflow-wrap: anywhere; }
+.m .tools { display: flex; gap: 4px; grid-column: 2; }
+.m.user .tools { grid-column: auto; }
+.m .tools button { border: 0; background: none; color: var(--fg-3); font-size: 13px; padding: 4px 8px; border-radius: 8px; display: inline-flex; gap: 6px; align-items: center; }
+.m .tools button:hover { color: var(--fg); background: var(--soft); }
+.m .src { grid-column: 2; font-size: 14px; color: var(--fg-2); margin: 0; }
+.m .err { grid-column: 2; }
+.md > :first-child { margin-top: 0; } .md > :last-child { margin-bottom: 0; }
+.md p, .md ul, .md ol { margin: 0 0 12px; }
+.md ul, .md ol { padding-left: 22px; } .md li + li { margin-top: 4px; }
+.md h1, .md h2, .md h3, .md h4 { margin: 18px 0 8px; font-size: 19px; letter-spacing: -.015em; line-height: 1.3; font-weight: 600; max-width: none; }
+.md h1 { font-size: 23px; } .md h2 { font-size: 21px; }
+.md code { font: 14px var(--ark-mono, ui-monospace, "SF Mono", Menlo, Consolas, monospace); background: var(--soft); border-radius: 6px; padding: 1px 6px; }
+.md blockquote { margin: 0 0 12px; padding-left: 14px; border-left: 3px solid var(--line); color: var(--fg-2); }
+.codeblk { position: relative; margin: 0 0 12px; border-radius: 14px; background: #111317; color: #e9ebef; overflow: hidden; }
+.codeblk .bar { display: flex; align-items: center; justify-content: space-between; padding: 6px 8px 6px 14px; font-size: 12px; color: #a7adba; border-bottom: 1px solid #23272e; }
+.codeblk .bar button { border: 0; background: none; color: #d4d7de; font-size: 12px; padding: 4px 8px; border-radius: 6px; }
+.codeblk .bar button:hover { background: #23272e; }
+.codeblk pre { margin: 0; padding: 14px 16px; overflow-x: auto; }
+.codeblk code { background: none; padding: 0; color: inherit; font-size: 13.5px; line-height: 1.55; }
+.caret { display: inline-block; width: 8px; height: 1.05em; vertical-align: -2px; margin-left: 2px; border-radius: 2px; background: var(--fg-2); }
+@media (prefers-reduced-motion: no-preference) { .caret { animation: blink 1s steps(2, start) infinite; } @keyframes blink { to { visibility: hidden; } } }
+.starters { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.starter { text-align: left; border: 1px solid var(--line); background: var(--card); border-radius: 16px; padding: 16px 18px; font-size: 15px; color: var(--fg); display: grid; gap: 4px; }
+.starter span { color: var(--fg-2); font-size: 14px; }
+.starter:hover { border-color: var(--fg-3); }
+.empty-chat { display: grid; gap: 18px; justify-items: start; }
+.empty-chat h2 { font-size: 26px; }
+.composer { position: sticky; bottom: calc(var(--dock-h) + 30px + env(safe-area-inset-bottom, 0px)); z-index: 5; padding: 10px; display: grid; gap: 8px; border-radius: 24px; }
+.composer:focus-within { box-shadow: 0 0 0 3px color-mix(in srgb, var(--focus) 30%, transparent), var(--shadow); }
+.composer .row-c { display: flex; align-items: flex-end; gap: 8px; }
+.composer textarea { flex: 1; min-width: 0; resize: none; border: 0; outline: 0; background: none; font-size: 17px; line-height: 1.45; padding: 10px 8px 10px 12px; max-height: 220px; min-height: 46px; }
+.composer .ic { width: 44px; height: 44px; border-radius: 50%; border: 0; background: var(--soft); color: var(--fg-2); display: grid; place-items: center; flex: none; }
+.composer .ic svg, .chat-send svg { width: 19px; height: 19px; stroke: currentColor; fill: none; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
+.chat-send { width: 44px; height: 44px; border-radius: 50%; border: 0; background: var(--ink); color: var(--ink-fg); display: grid; place-items: center; flex: none; }
+.chat-send:disabled { opacity: .3; cursor: default; }
+.attach-chip { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; background: var(--soft); border-radius: 999px; padding: 4px 6px 4px 12px; justify-self: start; max-width: 100%; }
+.attach-chip span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.attach-chip button { border: 0; background: none; color: var(--fg-2); width: 22px; height: 22px; border-radius: 50%; }
+.composer .hint { font-size: 12px; color: var(--fg-3); padding: 0 12px 2px; margin: 0; }
+@media (max-width: 760px) {
+  .chat { grid-template-columns: minmax(0, 1fr); }
+  .conv-side { position: static; }
+  .conv-side[data-open="false"] .conv-list, .conv-side[data-open="false"] .conv-note { display: none; }
+  .conv-toggle { display: inline-flex; }
+  .thread { padding: 20px 18px; }
+  .starters { grid-template-columns: minmax(0, 1fr); }
+  .m.user .body { max-width: 88%; }
+  .composer .hint { display: none; }
+}
+
+/* Mobile hero + stage */
+@media (max-width: 720px) {
+  .hero { padding-block: 44px 112px; min-height: 0; }
+  .hero-home { padding-block: 40px 128px; }
+  .hero.compact { padding-block: 36px 80px; }
+  .hero-stat b { font-size: 28px; }
+}
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+</style>
 
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
   <defs>
@@ -401,39 +674,16 @@ label.f { display: grid; gap: 6px; font-size: 14px; color: var(--fg-2); }
   </defs>
 </svg>
 
-<header>
-  <div class="wrap hdr">
-    <a class="logo" href="#home"><svg role="img" aria-label="Arkhon"><use href="#mark"/></svg><span class="hide-xs">ARKHON</span></a>
-    <nav class="links" aria-label="Main">
-      <a href="#home" data-nav="home">Home</a>
-      <div class="wmenu">
-        <button class="navbtn" type="button" id="ws-btn" data-nav="work" aria-haspopup="true" aria-expanded="false" aria-controls="ws-pop">Workspaces<svg viewBox="0 0 12 12"><path d="M3 4.5l3 3 3-3"/></svg></button>
-        <div class="card pop" id="ws-pop" hidden>
-          <span class="lbl">Your workspaces</span>
-          <div id="ws-links"></div>
-          <hr>
-          <a href="#report">Value report</a>
-          <a href="#privacy">Privacy Center</a>
-          <a href="#welcome">Set-up guide</a>
-          <a href="#help">Help</a>
-        </div>
-      </div>
-      <a href="#people" data-nav="settings">Company</a>
-      <a href="#help" class="hide-sm" data-nav="help">Help</a>
-    </nav>
-    <span class="grow"></span>
-    <button class="me" type="button" aria-label="Dana Ruiz, Owner">DR</button>
-  </div>
-</header>
 
 <!-- ================= HOME ================= -->
 <main class="view" id="v-home">
-  <section class="wrap hello">
-    <span class="example">Example company · sample data</span>
+  <section class="hero hero-home" data-hero="home"><canvas class="hz" aria-hidden="true"></canvas>
+  <div class="wrap hello hero-in">
+    <span class="example" data-ex>Example company · sample data</span>
     <h1 id="hello">Good morning, Dana.</h1>
     <p class="lede" id="lede">Three things need you today. Everything else is handled.</p>
     <form class="ask" id="ask">
-      <input id="q" type="text" autocomplete="off" aria-label="Ask Arkhon anything" placeholder="Ask anything about your business">
+      <input id="q" type="text" autocomplete="off" aria-label="Ask Arkhon anything" placeholder="Ask anything. Opens a private chat">
       <button type="submit" id="send" aria-label="Ask" disabled><svg viewBox="0 0 20 20"><path d="M10 16V4M5 9l5-5 5 5"/></svg></button>
     </form>
     <div class="ideas" id="ideas">
@@ -441,10 +691,8 @@ label.f { display: grid; gap: 6px; font-size: 14px; color: var(--fg-2); }
       <button type="button">What's on tomorrow?</button>
       <button type="button">Write a follow-up for the Ortiz quote</button>
     </div>
-    <div class="card reply" id="reply" hidden>
-      <p id="reply-text"></p>
-      <span class="src" id="reply-src"></span>
-    </div>
+    <p class="hero-stat" id="home-stat" hidden></p>
+  </div>
   </section>
 
   <section class="wrap band" aria-labelledby="needs-h">
@@ -477,13 +725,19 @@ label.f { display: grid; gap: 6px; font-size: 14px; color: var(--fg-2); }
 
 <!-- ================= COMPANY SETTINGS ================= -->
 <main class="view" id="v-settings" hidden>
-  <section class="wrap band" style="padding-block-start:56px">
-    <div class="card viewas" id="viewas" hidden><label for="as-sel">Viewing as</label><select id="as-sel"></select><span>Development only: see exactly what each person can do.</span></div>
+  <section class="hero set-hero" data-hero="settings"><canvas class="hz" aria-hidden="true"></canvas>
+  <div class="wrap hero-in">
+    <span class="eyebrow">Company</span>
     <p class="example" id="preview-note" hidden style="margin-bottom:16px">Preview: read-only snapshot from the Arkhon engine</p>
-    <h1 style="font-size:clamp(34px,5vw,48px)" id="org-name">Coastline Mechanical</h1>
-    <p class="lede" style="max-width:none" id="org-sub">Business plan · Choose who can use Arkhon and what they can do.</p>
-    <p style="margin:10px 0 0;color:var(--fg-3);font-size:15px" id="ws-line"></p>
-    <nav class="seg" aria-label="Company settings" style="margin-top:28px">
+    <h1 id="org-name">Coastline Mechanical</h1>
+    <p class="lede" style="max-width:40ch" id="org-sub">Business plan · Choose who can use Arkhon and what they can do.</p>
+    <p class="hero-stat" id="settings-stat" hidden></p>
+  </div>
+  </section>
+  <section class="wrap band set-tools">
+    <div class="card viewas" id="viewas" hidden style="margin:0"><label for="as-sel">Viewing as</label><select id="as-sel"></select><span>Development only: see exactly what each person can do.</span></div>
+    <p style="margin:0;color:var(--fg-2);font-size:15px" id="ws-line"></p>
+    <nav class="seg" aria-label="Company settings">
       <a href="#people" data-tab="people">People</a>
       <a href="#roles" data-tab="roles">Roles</a>
       <a href="#teams" data-tab="teams">Teams</a>
@@ -577,10 +831,14 @@ label.f { display: grid; gap: 6px; font-size: 14px; color: var(--fg-2); }
 
 <!-- ================= EMAIL ================= -->
 <main class="view wsp" id="v-inbox" hidden>
-  <section class="wrap pg-head">
+  <section class="hero pg-head" data-hero="inbox"><canvas class="hz" aria-hidden="true"></canvas>
+  <div class="wrap hero-in">
+    <span class="eyebrow">Workspace</span>
     <span class="example" data-ex>Example company · sample data</span>
     <h1>Email</h1>
     <p class="lede" id="inbox-lede"></p>
+    <p class="hero-stat" id="inbox-stat" hidden></p>
+  </div>
   </section>
   <section class="wrap band" style="padding-block-start:36px">
     <p class="msg" data-msg hidden></p>
@@ -591,10 +849,14 @@ label.f { display: grid; gap: 6px; font-size: 14px; color: var(--fg-2); }
 
 <!-- ================= CUSTOMER REPLIES ================= -->
 <main class="view wsp" id="v-desk" hidden>
-  <section class="wrap pg-head">
+  <section class="hero pg-head" data-hero="desk"><canvas class="hz" aria-hidden="true"></canvas>
+  <div class="wrap hero-in">
+    <span class="eyebrow">Workspace</span>
     <span class="example" data-ex>Example company · sample data</span>
     <h1>Customer replies</h1>
     <p class="lede" id="desk-lede"></p>
+    <p class="hero-stat" id="desk-stat" hidden></p>
+  </div>
   </section>
   <section class="wrap band" style="padding-block-start:36px">
     <p class="msg" data-msg hidden></p>
@@ -605,10 +867,14 @@ label.f { display: grid; gap: 6px; font-size: 14px; color: var(--fg-2); }
 
 <!-- ================= DOCUMENTS ================= -->
 <main class="view wsp" id="v-docs" hidden>
-  <section class="wrap pg-head">
+  <section class="hero pg-head" data-hero="docs"><canvas class="hz" aria-hidden="true"></canvas>
+  <div class="wrap hero-in">
+    <span class="eyebrow">Workspace</span>
     <span class="example" data-ex>Example company · sample data</span>
     <h1>Documents</h1>
     <p class="lede" id="docs-lede"></p>
+    <p class="hero-stat" id="docs-stat" hidden></p>
+  </div>
   </section>
   <section class="wrap band" style="padding-block-start:36px">
     <p class="msg" data-msg hidden></p>
@@ -619,10 +885,14 @@ label.f { display: grid; gap: 6px; font-size: 14px; color: var(--fg-2); }
 
 <!-- ================= COMPANY ANSWERS ================= -->
 <main class="view wsp" id="v-knowledge" hidden>
-  <section class="wrap pg-head">
+  <section class="hero pg-head" data-hero="knowledge"><canvas class="hz" aria-hidden="true"></canvas>
+  <div class="wrap hero-in">
+    <span class="eyebrow">Workspace</span>
     <span class="example" data-ex>Example company · sample data</span>
     <h1>Company answers</h1>
     <p class="lede" id="knowledge-lede"></p>
+    <p class="hero-stat" id="knowledge-stat" hidden></p>
+  </div>
   </section>
   <section class="wrap band" style="padding-block-start:36px">
     <p class="msg" data-msg hidden></p>
@@ -633,10 +903,14 @@ label.f { display: grid; gap: 6px; font-size: 14px; color: var(--fg-2); }
 
 <!-- ================= MEETING NOTES ================= -->
 <main class="view wsp" id="v-meetings" hidden>
-  <section class="wrap pg-head">
+  <section class="hero pg-head" data-hero="meetings"><canvas class="hz" aria-hidden="true"></canvas>
+  <div class="wrap hero-in">
+    <span class="eyebrow">Workspace</span>
     <span class="example" data-ex>Example company · sample data</span>
     <h1>Meeting notes</h1>
     <p class="lede" id="meetings-lede"></p>
+    <p class="hero-stat" id="meetings-stat" hidden></p>
+  </div>
   </section>
   <section class="wrap band" style="padding-block-start:36px">
     <p class="msg" data-msg hidden></p>
@@ -647,10 +921,13 @@ label.f { display: grid; gap: 6px; font-size: 14px; color: var(--fg-2); }
 
 <!-- ================= QUOTES &AMP; MARKETING ================= -->
 <main class="view wsp" id="v-growth" hidden>
-  <section class="wrap pg-head">
+  <section class="hero pg-head" data-hero="growth"><canvas class="hz" aria-hidden="true"></canvas>
+  <div class="wrap hero-in">
+    <span class="eyebrow">Workspace</span>
     <span class="example" data-ex>Example company · sample data</span>
     <h1>Quotes &amp; marketing</h1>
     <p class="lede" id="growth-lede"></p>
+  </div>
   </section>
   <section class="wrap band" style="padding-block-start:36px">
     <p class="msg" data-msg hidden></p>
@@ -661,10 +938,13 @@ label.f { display: grid; gap: 6px; font-size: 14px; color: var(--fg-2); }
 
 <!-- ================= REPORTS ================= -->
 <main class="view wsp" id="v-insights" hidden>
-  <section class="wrap pg-head">
+  <section class="hero pg-head" data-hero="insights"><canvas class="hz" aria-hidden="true"></canvas>
+  <div class="wrap hero-in">
+    <span class="eyebrow">Workspace</span>
     <span class="example" data-ex>Example company · sample data</span>
     <h1>Reports</h1>
     <p class="lede" id="insights-lede"></p>
+  </div>
   </section>
   <section class="wrap band" style="padding-block-start:36px">
     <p class="msg" data-msg hidden></p>
@@ -675,10 +955,14 @@ label.f { display: grid; gap: 6px; font-size: 14px; color: var(--fg-2); }
 
 <!-- ================= VALUE REPORT ================= -->
 <main class="view wsp" id="v-report" hidden>
-  <section class="wrap pg-head">
+  <section class="hero pg-head" data-hero="report"><canvas class="hz" aria-hidden="true"></canvas>
+  <div class="wrap hero-in">
+    <span class="eyebrow">Value</span>
     <span class="example" data-ex>Example company · sample data</span>
     <h1>Value report</h1>
     <p class="lede" id="report-lede"></p>
+    <p class="hero-stat" id="report-stat" hidden></p>
+  </div>
   </section>
   <section class="wrap band" style="padding-block-start:36px">
     <p class="msg" data-msg hidden></p>
@@ -689,10 +973,13 @@ label.f { display: grid; gap: 6px; font-size: 14px; color: var(--fg-2); }
 
 <!-- ================= PRIVACY CENTER ================= -->
 <main class="view wsp" id="v-privacy" hidden>
-  <section class="wrap pg-head">
+  <section class="hero pg-head" data-hero="privacy"><canvas class="hz" aria-hidden="true"></canvas>
+  <div class="wrap hero-in">
+    <span class="eyebrow">Trust</span>
     <span class="example" data-ex>Example company · sample data</span>
     <h1>Privacy Center</h1>
     <p class="lede" id="privacy-lede"></p>
+  </div>
   </section>
   <section class="wrap band" style="padding-block-start:36px">
     <p class="msg" data-msg hidden></p>
@@ -703,10 +990,13 @@ label.f { display: grid; gap: 6px; font-size: 14px; color: var(--fg-2); }
 
 <!-- ================= WELCOME TO ARKHON ================= -->
 <main class="view wsp" id="v-welcome" hidden>
-  <section class="wrap pg-head">
+  <section class="hero pg-head" data-hero="welcome"><canvas class="hz" aria-hidden="true"></canvas>
+  <div class="wrap hero-in">
+    <span class="eyebrow">Getting started</span>
     <span class="example" data-ex>Example company · sample data</span>
     <h1>Welcome to Arkhon</h1>
     <p class="lede" id="welcome-lede"></p>
+  </div>
   </section>
   <section class="wrap band" style="padding-block-start:36px">
     <p class="msg" data-msg hidden></p>
@@ -717,10 +1007,13 @@ label.f { display: grid; gap: 6px; font-size: 14px; color: var(--fg-2); }
 
 <!-- ================= HELP ================= -->
 <main class="view wsp" id="v-help" hidden>
-  <section class="wrap pg-head">
+  <section class="hero pg-head" data-hero="help"><canvas class="hz" aria-hidden="true"></canvas>
+  <div class="wrap hero-in">
+    <span class="eyebrow">Support</span>
     <span class="example" data-ex>Example company · sample data</span>
     <h1>Help</h1>
     <p class="lede" id="help-lede">Short answers to common questions, and how to reach a person.</p>
+  </div>
   </section>
   <section class="wrap band" style="padding-block-start:36px">
     <p class="msg" data-msg hidden></p>
@@ -744,12 +1037,254 @@ label.f { display: grid; gap: 6px; font-size: 14px; color: var(--fg-2); }
   </section>
 </main>
 
+<!-- ================= CHAT ================= -->
+<main class="view" id="v-chat" hidden>
+  <section class="hero compact pg-head" data-hero="chat"><canvas class="hz" aria-hidden="true"></canvas>
+    <div class="wrap hero-in">
+      <span class="eyebrow">Private assistant</span>
+      <h1>Chat</h1>
+      <p class="lede">Ask anything, draft anything. Your conversations stay on this computer.</p>
+    </div>
+  </section>
+  <section class="wrap band" style="padding-block-start:8px">
+    <div class="chat">
+      <aside class="card conv-side" id="conv-side" data-open="false" aria-label="Conversations">
+        <button class="conv-new" id="conv-new" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>New chat</button>
+        <button class="btn conv-toggle" id="conv-toggle" type="button" aria-expanded="false" aria-controls="conv-list">Your chats</button>
+        <ul class="conv-list" id="conv-list"></ul>
+        <p class="conv-note">Saved in this browser only. Never sent anywhere.</p>
+      </aside>
+      <div class="thread-wrap">
+        <div class="chat-top"><span class="chip-run">Running on this computer</span><span class="chip-demo" id="chat-demo">Demo replies</span></div>
+        <div class="card thread" id="thread" aria-label="Conversation"></div>
+        <form class="card composer" id="composer">
+          <span class="attach-chip" id="attach-chip" hidden></span>
+          <div class="row-c">
+            <label class="ic" title="Attach a text file" style="cursor:pointer"><input type="file" id="chat-file" accept=".txt,.md,.csv,.json,.log,.html,.xml,.yaml,.yml,text/*" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11.5l-8 8a5 5 0 0 1-7-7l8.5-8.5a3.3 3.3 0 0 1 4.7 4.7L9.7 17.2a1.7 1.7 0 0 1-2.4-2.4L15 7.2"/></svg><span class="sr">Attach a text file</span></label>
+            <textarea id="chat-in" rows="1" placeholder="Message Arkhon" aria-label="Message Arkhon"></textarea>
+            <button class="chat-send" id="chat-go" type="submit" aria-label="Send" disabled><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 19V5M6 11l6-6 6 6"/></svg></button>
+            <button class="chat-send" id="chat-stop" type="button" aria-label="Stop" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="7" width="10" height="10" rx="2" style="fill:currentColor;stroke:none"/></svg></button>
+          </div>
+          <p class="hint">Enter to send · Shift+Enter for a new line · Files are read on this computer</p>
+        </form>
+      </div>
+    </div>
+  </section>
+</main>
+
+<!-- ================= DOCK + PALETTE ================= -->
+<nav class="dock" id="dock" aria-label="Main"></nav>
+<div class="pal" id="pal" hidden>
+  <div class="pal-box" role="dialog" aria-modal="true" aria-label="Search and commands">
+    <div class="pal-in"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></svg>
+      <input id="pal-q" type="text" autocomplete="off" role="combobox" aria-expanded="true" aria-controls="pal-list" aria-label="Search pages, people and actions" placeholder="Search pages, people and actions"><kbd>Esc</kbd></div>
+    <ul class="pal-list" id="pal-list" role="listbox" aria-label="Results"></ul>
+  </div>
+</div>
+
 <script type="application/json" id="snapshot">{"company":"Coastline Mechanical","plan":"Business","seats":10,"seats_used":8,"viewer":{"id":1,"name":"Dana Ruiz","email":"dana@coastline.com","role":"Owner","status":"active"},"can":{"manage_people":true,"assign_roles":true,"manage_billing":true,"manage_connections":true,"view_activity":true},"people":[{"id":1,"name":"Dana Ruiz","email":"dana@coastline.com","role":"Owner","status":"active"},{"id":2,"name":"Ari Patel","email":"ari@coastline.com","role":"Admin","status":"active"},{"id":3,"name":"Max Okafor","email":"max@coastline.com","role":"Manager","status":"active"},{"id":4,"name":"Lena Cho","email":"lena@coastline.com","role":"Dispatcher","status":"active"},{"id":5,"name":"Tia Alvarez","email":"tia@coastline.com","role":"Member","status":"active"},{"id":6,"name":"Sam Brooks","email":"sam@coastline.com","role":"Member","status":"active"},{"id":7,"name":"Rae Kim","email":"rae@coastline.com","role":"Member","status":"invited"},{"id":8,"name":"Jon Weiss","email":"jon@coastline.com","role":"Member","status":"active"},{"id":9,"name":"Pat Doyle","email":"pat@coastline.com","role":"Member","status":"suspended"}],"roles":[{"name":"Owner","description":"Runs the account, including plan and billing.","can":["Manage plan and billing","Change company settings","Invite and remove people","Change people's roles","Create custom roles","Manage teams","Connect company accounts","Turn on company automations","Approve work for their team","See company time-saved reports","See everyone's activity history","Install updates and industry packs"],"workspaces":["Email","Customer replies","Documents","Company answers","Meeting notes","Quotes & marketing","Reports","Coding & IT"],"people":1,"custom":false},{"name":"Admin","description":"Runs Arkhon day to day for the company.","can":["Change company settings","Invite and remove people","Change people's roles","Create custom roles","Manage teams","Connect company accounts","Turn on company automations","Approve work for their team","See company time-saved reports","See everyone's activity history","Install updates and industry packs"],"workspaces":["Email","Customer replies","Documents","Company answers","Meeting notes","Quotes & marketing","Reports","Coding & IT"],"people":1,"custom":false},{"name":"Manager","description":"Leads a team and signs off on their work.","can":["Manage teams","Approve work for their team","See company time-saved reports"],"workspaces":["Email","Customer replies","Documents","Company answers","Meeting notes","Quotes & marketing","Reports","Coding & IT"],"people":1,"custom":false},{"name":"Member","description":"Uses Arkhon for their own work.","can":[],"workspaces":["Email","Documents","Company answers"],"people":5,"custom":false},{"name":"Dispatcher","description":"A role your company created.","can":["Approve work for their team"],"workspaces":["Email","Customer replies","Company answers","Quotes & marketing"],"people":1,"custom":true}],"teams":[{"name":"Field techs","members":["Max Okafor","Tia Alvarez","Sam Brooks","Jon Weiss"],"workspaces":["Documents","Meeting notes"],"is_member":false},{"name":"Front office","members":["Ari Patel","Lena Cho","Rae Kim"],"workspaces":["Customer replies","Quotes & marketing"],"is_member":false}],"connections":[{"id":1,"app":"outlook","app_name":"Outlook","account":"service@coastline.com","mine":false,"personal":false,"shared_with":"Front office","connected_by":"Ari Patel","status":"active","can_disconnect":true},{"id":2,"app":"quick-books","app_name":"QuickBooks Online","account":"coastline mechanical books","mine":false,"personal":false,"shared_with":"Owners and Admins","connected_by":"Dana Ruiz","status":"active","can_disconnect":true},{"id":3,"app":"local-folder","app_name":"Folder or network drive","account":"\\\\office-nas\\jobs","mine":false,"personal":false,"shared_with":"Everyone","connected_by":"Ari Patel","status":"active","can_disconnect":true},{"id":4,"app":"google-drive","app_name":"Google Drive","account":"price books & manuals","mine":false,"personal":false,"shared_with":"Everyone","connected_by":"Ari Patel","status":"needs-sign-in","can_disconnect":true},{"id":5,"app":"outlook","app_name":"Outlook","account":"dana@coastline.com","mine":true,"personal":true,"shared_with":"Only Dana Ruiz","connected_by":"Dana Ruiz","status":"active","can_disconnect":true},{"id":6,"app":"google-calendar","app_name":"Google Calendar","account":"dana@coastline.com","mine":true,"personal":true,"shared_with":"Only Dana Ruiz","connected_by":"Dana Ruiz","status":"active","can_disconnect":true},{"id":7,"app":"gmail","app_name":"Gmail","account":"tia@coastline.com","mine":false,"personal":true,"shared_with":"Only Tia Alvarez","connected_by":"Tia Alvarez","status":"active","can_disconnect":true}],"apps":[{"app":"outlook","name":"Outlook","category":"Email & calendar","policy":"own-accounts","available":true,"connected":2,"can_connect_me":true,"can_connect_team":true,"can_connect_everyone":true},{"app":"one-drive","name":"OneDrive & SharePoint","category":"Files","policy":"own-accounts","available":true,"connected":0,"can_connect_me":true,"can_connect_team":true,"can_connect_everyone":true},{"app":"microsoft-teams","name":"Microsoft Teams","category":"Chat & meetings","policy":"admins-only","available":false,"connected":0,"can_connect_me":true,"can_connect_team":true,"can_connect_everyone":true},{"app":"gmail","name":"Gmail","category":"Email & calendar","policy":"own-accounts","available":true,"connected":1,"can_connect_me":true,"can_connect_team":true,"can_connect_everyone":true},{"app":"google-calendar","name":"Google Calendar","category":"Email & calendar","policy":"own-accounts","available":true,"connected":1,"can_connect_me":true,"can_connect_team":true,"can_connect_everyone":true},{"app":"google-drive","name":"Google Drive","category":"Files","policy":"own-accounts","available":true,"connected":1,"can_connect_me":true,"can_connect_team":true,"can_connect_everyone":true},{"app":"other-email","name":"Other email (IMAP)","category":"Email & calendar","policy":"own-accounts","available":true,"connected":0,"can_connect_me":true,"can_connect_team":true,"can_connect_everyone":true},{"app":"local-folder","name":"Folder or network drive","category":"Files","policy":"admins-only","available":true,"connected":1,"can_connect_me":true,"can_connect_team":true,"can_connect_everyone":true},{"app":"dropbox","name":"Dropbox","category":"Files","policy":"admins-only","available":false,"connected":0,"can_connect_me":true,"can_connect_team":true,"can_connect_everyone":true},{"app":"quick-books","name":"QuickBooks Online","category":"Accounting","policy":"admins-only","available":true,"connected":1,"can_connect_me":true,"can_connect_team":true,"can_connect_everyone":true},{"app":"xero","name":"Xero","category":"Accounting","policy":"admins-only","available":true,"connected":0,"can_connect_me":true,"can_connect_team":true,"can_connect_everyone":true},{"app":"hub-spot","name":"HubSpot","category":"Customers & sales","policy":"admins-only","available":true,"connected":0,"can_connect_me":true,"can_connect_team":true,"can_connect_everyone":true},{"app":"service-titan","name":"ServiceTitan","category":"Jobs & scheduling","policy":"admins-only","available":false,"connected":0,"can_connect_me":true,"can_connect_team":true,"can_connect_everyone":true},{"app":"jobber","name":"Jobber","category":"Jobs & scheduling","policy":"team-accounts","available":false,"connected":0,"can_connect_me":true,"can_connect_team":true,"can_connect_everyone":true},{"app":"housecall-pro","name":"Housecall Pro","category":"Jobs & scheduling","policy":"admins-only","available":false,"connected":0,"can_connect_me":true,"can_connect_team":true,"can_connect_everyone":true},{"app":"stripe","name":"Stripe","category":"Payments","policy":"admins-only","available":false,"connected":0,"can_connect_me":true,"can_connect_team":true,"can_connect_everyone":true},{"app":"square","name":"Square","category":"Payments","policy":"admins-only","available":false,"connected":0,"can_connect_me":true,"can_connect_team":true,"can_connect_everyone":true},{"app":"slack","name":"Slack","category":"Chat & meetings","policy":"admins-only","available":false,"connected":0,"can_connect_me":true,"can_connect_team":true,"can_connect_everyone":true},{"app":"zoom","name":"Zoom","category":"Chat & meetings","policy":"admins-only","available":false,"connected":0,"can_connect_me":true,"can_connect_team":true,"can_connect_everyone":true},{"app":"docu-sign","name":"DocuSign","category":"Signatures","policy":"admins-only","available":false,"connected":0,"can_connect_me":true,"can_connect_team":true,"can_connect_everyone":true}],"workspaces":["Email","Customer replies","Documents","Company answers","Meeting notes","Quotes & marketing","Reports","Coding & IT"],"needs_you":{"total":5,"items":[{"id":1,"kind":"draft-reply","workspace":"Email","title":"Reply to Marisol Vega","summary":"Her AC is blowing warm. Arkhon offered today's 1–3 pm slot and confirmed her unit is under warranty.","draft":"Hi Marisol,\n\nSorry to hear the AC is blowing warm. We can come out today between 1 and 3 pm. Your unit was installed in May 2024, so the visit and any covered parts are under warranty.\n\nDana\nCoastline Mechanical","question":null,"sources":[{"label":"Price list 2026","reference":"file:\\\\office-nas\\jobs\\price-list-2026.pdf#p2"},{"label":"Job #4471, Vega residence","reference":"file:\\\\office-nas\\jobs\\4471\\invoice.pdf"},{"label":"Warranty policy","reference":"file:\\\\office-nas\\jobs\\policies\\warranty.docx"}],"confidence":"high","confidence_label":"Sure","urgency":"urgent","created_at":1793952000,"assignee":"Dana Ruiz","team":null,"connection":"Outlook (dana@coastline.com)","action":"Send","done_word":"Sent","can_approve":true,"blocked":null,"status":"waiting","final_text":null},{"id":2,"kind":"file-bill","workspace":"Documents","title":"File a Ferguson bill for $2,418.36","summary":"It matches purchase order 1187 exactly and belongs to the Harbor Dental job.","draft":null,"question":null,"sources":[{"label":"Ferguson invoice 88213","reference":"mail:service@coastline.com/88213"},{"label":"Purchase order 1187","reference":"file:\\\\office-nas\\jobs\\po\\1187.pdf"}],"confidence":"high","confidence_label":"Sure","urgency":"normal","created_at":1793944800,"assignee":"Dana Ruiz","team":null,"connection":"QuickBooks Online (coastline mechanical books)","action":"File it","done_word":"Filed","can_approve":true,"blocked":null,"status":"waiting","final_text":null},{"id":3,"kind":"knowledge-gap","workspace":"Company answers","title":"A customer asked about Mitsubishi units","summary":"Your files don't say whether you service them, so Arkhon didn't guess. Answer once and it will remember.","draft":null,"question":"Do we service Mitsubishi mini-split units?","sources":[],"confidence":"not-found","confidence_label":"Not sure","urgency":"normal","created_at":1793948400,"assignee":"Dana Ruiz","team":null,"connection":null,"action":"Answer","done_word":"Answered","can_approve":true,"blocked":null,"status":"waiting","final_text":null}]},"this_week":{"scope":"company","hours":16.1,"dollars":935,"hourly_rate":58,"totals":{"drafts":120,"documents":69,"meetings":9,"answers":20,"minutes":967,"hours":16.1,"dollars":935},"previous_hours":12.4,"days":[{"date":"2026-10-24","label":"S","weekday":"Saturday","minutes":36,"hours":0.6},{"date":"2026-10-25","label":"S","weekday":"Sunday","minutes":27,"hours":0.5},{"date":"2026-10-26","label":"M","weekday":"Monday","minutes":113,"hours":1.9},{"date":"2026-10-27","label":"T","weekday":"Tuesday","minutes":143,"hours":2.4},{"date":"2026-10-28","label":"W","weekday":"Wednesday","minutes":172,"hours":2.9},{"date":"2026-10-29","label":"T","weekday":"Thursday","minutes":136,"hours":2.3},{"date":"2026-10-30","label":"F","weekday":"Friday","minutes":114,"hours":1.9},{"date":"2026-10-31","label":"S","weekday":"Saturday","minutes":34,"hours":0.6},{"date":"2026-11-01","label":"S","weekday":"Sunday","minutes":18,"hours":0.3},{"date":"2026-11-02","label":"M","weekday":"Monday","minutes":136,"hours":2.3},{"date":"2026-11-03","label":"T","weekday":"Tuesday","minutes":186,"hours":3.1},{"date":"2026-11-04","label":"W","weekday":"Wednesday","minutes":257,"hours":4.3},{"date":"2026-11-05","label":"T","weekday":"Thursday","minutes":195,"hours":3.3},{"date":"2026-11-06","label":"F","weekday":"Friday","minutes":141,"hours":2.4}],"example":true},"nav":[{"key":"inbox","label":"Email"},{"key":"desk","label":"Customer replies"},{"key":"docs","label":"Documents"},{"key":"knowledge","label":"Company answers"},{"key":"meetings","label":"Meeting notes"},{"key":"growth","label":"Quotes & marketing"},{"key":"insights","label":"Reports"}],"inbox":{"threads":[{"id":1,"customer":"Marisol Vega","subject":"AC blowing warm air","summary":"Her AC is blowing warm and she wants someone out today.","message":"Hi, our AC has been blowing warm air since last night. Can someone come out today? We're home all afternoon. Thanks, Marisol","urgency":"urgent","received":"1 hour ago","account":"Outlook (dana@coastline.com)","item":{"id":1,"kind":"draft-reply","workspace":"Email","title":"Reply to Marisol Vega","summary":"Her AC is blowing warm. Arkhon offered today's 1–3 pm slot and confirmed her unit is under warranty.","draft":"Hi Marisol,\n\nSorry to hear the AC is blowing warm. We can come out today between 1 and 3 pm. Your unit was installed in May 2024, so the visit and any covered parts are under warranty.\n\nDana\nCoastline Mechanical","question":null,"sources":[{"label":"Price list 2026","reference":"file:\\\\office-nas\\jobs\\price-list-2026.pdf#p2"},{"label":"Job #4471, Vega residence","reference":"file:\\\\office-nas\\jobs\\4471\\invoice.pdf"},{"label":"Warranty policy","reference":"file:\\\\office-nas\\jobs\\policies\\warranty.docx"}],"confidence":"high","confidence_label":"Sure","urgency":"urgent","created_at":1793952000,"assignee":"Dana Ruiz","team":null,"connection":"Outlook (dana@coastline.com)","action":"Send","done_word":"Sent","can_approve":true,"blocked":null,"status":"waiting","final_text":null}},{"id":2,"customer":"Greg Lund","subject":"Heat pump or furnace?","summary":"Comparing a heat pump with a furnace before winter.","message":"Dana, thanks for coming by. Before we decide: is a heat pump worth it here, or should we just replace the furnace? -Greg","urgency":"low","received":"5 hours ago","account":"Outlook (dana@coastline.com)","item":{"id":7,"kind":"draft-reply","workspace":"Email","title":"Reply to Greg Lund","summary":"He's comparing a heat pump with a new furnace. Arkhon explained both and said Lena will send a quote.","draft":"Hi Greg,\n\nGood question. A heat pump heats and cools with one system and costs less to run in our climate; a furnace costs less up front. For your 1,800 sq ft home we'd suggest a 3-ton heat pump. Lena will send you a written quote today.\n\nDana\nCoastline Mechanical","question":null,"sources":[{"label":"Price book 2026","reference":"file:\\\\office-nas\\jobs\\price-book-2026.pdf#p8"},{"label":"Lund site visit notes","reference":"file:\\\\office-nas\\jobs\\4519\\visit.docx"}],"confidence":"medium","confidence_label":"Check this","urgency":"low","created_at":1793937600,"assignee":"Dana Ruiz","team":null,"connection":"Outlook (dana@coastline.com)","action":"Send","done_word":"Sent","can_approve":true,"blocked":null,"status":"waiting","final_text":null}}],"waiting":2},"desk":{"tickets":[{"id":1,"customer":"Priya Shah, Harbor Dental","channel":"Email","question":"Can we move Tuesday's maintenance visit to Thursday morning?","received":"2 hours ago","item":{"id":5,"kind":"draft-reply","workspace":"Customer replies","title":"Confirm Harbor Dental's maintenance visit","summary":"They asked to move Tuesday's visit to Thursday morning; Thursday 8 am is open.","draft":"Hi Priya,\n\nThursday at 8 am works. We'll see you then.\n\nCoastline Mechanical","question":null,"sources":[{"label":"Dispatch calendar","reference":"calendar:service@coastline.com"}],"confidence":"high","confidence_label":"Sure","urgency":"normal","created_at":1793948400,"assignee":"Lena Cho","team":"Front office","connection":"Outlook (service@coastline.com)","action":"Send","done_word":"Sent","can_approve":false,"blocked":"This would go out through Outlook (service@coastline.com), which you can't use. Ask someone who can to approve it.","status":"waiting","final_text":null}},{"id":2,"customer":"Tom Becker","channel":"Web form","question":"How often should I change my furnace filter?","received":"50 min ago","item":{"id":13,"kind":"draft-reply","workspace":"Customer replies","title":"Answer Tom Becker about filter changes","summary":"He asked how often to change filters. Arkhon answered from your maintenance guide.","draft":"Hi Tom,\n\nFor the 1-inch filter in your return, change it every 2 to 3 months, or every month if you have pets. Comfort Club members get filters at each tune-up.\n\nCoastline Mechanical","question":null,"sources":[{"label":"Homeowner maintenance guide","reference":"file:\\\\office-nas\\jobs\\policies\\maintenance-guide.pdf#p1"}],"confidence":"high","confidence_label":"Sure","urgency":"normal","created_at":1793952600,"assignee":"Lena Cho","team":"Front office","connection":"Outlook (service@coastline.com)","action":"Send","done_word":"Sent","can_approve":false,"blocked":"This would go out through Outlook (service@coastline.com), which you can't use. Ask someone who can to approve it.","status":"waiting","final_text":null}},{"id":3,"customer":"Caller, (805) 555-0199","channel":"Phone message","question":"Do you charge extra to come out on a Saturday?","received":"1 hour ago","item":{"id":12,"kind":"knowledge-gap","workspace":"Customer replies","title":"A customer asked about weekend rates","summary":"Your price list doesn't mention weekends, so Arkhon didn't guess. Answer once and it will remember.","draft":null,"question":"Do we charge extra for weekend service calls?","sources":[],"confidence":"not-found","confidence_label":"Not sure","urgency":"normal","created_at":1793950200,"assignee":"Lena Cho","team":"Front office","connection":null,"action":"Answer","done_word":"Answered","can_approve":true,"blocked":null,"status":"waiting","final_text":null}},{"id":4,"customer":"Alan Whitford","channel":"Email","question":"Do you service Mitsubishi mini-splits?","received":"2 hours ago","item":{"id":3,"kind":"knowledge-gap","workspace":"Company answers","title":"A customer asked about Mitsubishi units","summary":"Your files don't say whether you service them, so Arkhon didn't guess. Answer once and it will remember.","draft":null,"question":"Do we service Mitsubishi mini-split units?","sources":[],"confidence":"not-found","confidence_label":"Not sure","urgency":"normal","created_at":1793948400,"assignee":"Dana Ruiz","team":null,"connection":null,"action":"Answer","done_word":"Answered","can_approve":true,"blocked":null,"status":"waiting","final_text":null}}],"not_found":2},"docs":{"documents":[{"id":1,"doc_type":"supplier-bill","type_label":"Supplier bill","title":"Ferguson invoice 88213","from":"Ferguson Enterprises","received":"3 hours ago","fields":[{"label":"Supplier","value":"Ferguson Enterprises"},{"label":"Invoice number","value":"88213"},{"label":"Invoice date","value":"Nov 4, 2026"},{"label":"Due","value":"Dec 4, 2026 (net 30)"},{"label":"Amount","value":"$2,418.36"},{"label":"Purchase order","value":"PO-1187"},{"label":"Job","value":"Harbor Dental, #4502"}],"check":"ok","check_text":"Matches PO-1187","note":"Every line and the total match the purchase order.","item":{"id":2,"kind":"file-bill","workspace":"Documents","title":"File a Ferguson bill for $2,418.36","summary":"It matches purchase order 1187 exactly and belongs to the Harbor Dental job.","draft":null,"question":null,"sources":[{"label":"Ferguson invoice 88213","reference":"mail:service@coastline.com/88213"},{"label":"Purchase order 1187","reference":"file:\\\\office-nas\\jobs\\po\\1187.pdf"}],"confidence":"high","confidence_label":"Sure","urgency":"normal","created_at":1793944800,"assignee":"Dana Ruiz","team":null,"connection":"QuickBooks Online (coastline mechanical books)","action":"File it","done_word":"Filed","can_approve":true,"blocked":null,"status":"waiting","final_text":null}},{"id":2,"doc_type":"receipt","type_label":"Receipt","title":"Home Depot receipt","from":"Tia Alvarez (phone photo)","received":"4 hours ago","fields":[{"label":"Store","value":"The Home Depot #6618"},{"label":"Date","value":"Nov 5, 2026"},{"label":"Amount","value":"$186.40"},{"label":"Paid with","value":"Company card ending 4417"},{"label":"Job","value":"Vega residence, #4471"}],"check":"ok","check_text":"Matches card ending 4417","note":"Arkhon matched the receipt to the Vega job from Tia's schedule.","item":{"id":9,"kind":"file-bill","workspace":"Documents","title":"File a Home Depot receipt for $186.40","summary":"Fittings and copper for the Vega job, paid with the company card ending 4417.","draft":null,"question":null,"sources":[{"label":"Receipt photo from Tia","reference":"mail:service@coastline.com/rcpt-1105"}],"confidence":"high","confidence_label":"Sure","urgency":"normal","created_at":1793941200,"assignee":"Ari Patel","team":null,"connection":"QuickBooks Online (coastline mechanical books)","action":"File it","done_word":"Filed","can_approve":true,"blocked":null,"status":"waiting","final_text":null}},{"id":3,"doc_type":"lien-waiver","type_label":"Lien waiver","title":"Conditional lien waiver","from":"Pacific Sheet Metal","received":"7 hours ago","fields":[{"label":"Subcontractor","value":"Pacific Sheet Metal"},{"label":"Job","value":"Harbor Dental, #4502"},{"label":"Through","value":"Oct 31, 2026"},{"label":"Amount","value":"$3,200.00"},{"label":"Signed","value":"No"}],"check":"missing","check_text":"Not signed yet","note":"Saved to the Harbor Dental job folder. Get a signed copy before you pay them.","item":null},{"id":5,"doc_type":"work-order","type_label":"Work order","title":"Work order WO-4471","from":"Jobber","received":"20 hours ago","fields":[{"label":"Customer","value":"Marisol Vega"},{"label":"Job","value":"#4471, AC not cooling"},{"label":"Technician","value":"Tia Alvarez"},{"label":"Scheduled","value":"Nov 6, 2026, 1–3 pm"}],"check":"ok","check_text":"Linked to job #4471","note":"Saved with the job.","item":null},{"id":4,"doc_type":"insurance-certificate","type_label":"Insurance certificate","title":"Certificate of insurance","from":"Pacific Sheet Metal","received":"Yesterday","fields":[{"label":"Insured","value":"Pacific Sheet Metal"},{"label":"General liability","value":"$1,000,000 each occurrence"},{"label":"Workers' comp","value":"Yes"},{"label":"Expires","value":"Nov 30, 2026"}],"check":"warn","check_text":"Expires in 24 days","note":"Arkhon will remind you two weeks before it expires.","item":null},{"id":6,"doc_type":"change-order","type_label":"Change order","title":"Change order CO-12","from":"Bayview Apartments","received":"2 days ago","fields":[{"label":"Job","value":"Bayview Apartments, #4488"},{"label":"Change","value":"Add condensate lines in six units"},{"label":"Amount","value":"+$2,940.00"},{"label":"Customer signature","value":"Missing"}],"check":"missing","check_text":"Customer signature missing","note":"Don't start the extra work until the property manager signs.","item":null},{"id":7,"doc_type":"permit","type_label":"Permit","title":"Mechanical permit M-26-1043","from":"City of Ventura","received":"3 days ago","fields":[{"label":"Address","value":"418 Seaward Ave"},{"label":"Work","value":"Replace furnace and add AC"},{"label":"Status","value":"Approved"},{"label":"Inspection","value":"Nov 12, 2026"}],"check":"ok","check_text":"Approved","note":"The inspection is on the shared calendar.","item":null}],"to_file":2,"types":["Supplier bill","Receipt","Purchase order","Work order","Change order","Quote","Lien waiver","Insurance certificate","Permit"]},"knowledge":{"examples":["What is our warranty on new installs?","How much is a diagnostic visit?","What's in the Comfort Club plan?","Who do we use for sheet metal work?","Where are the job folders?","What do I do if a customer isn't home?","How do I order parts?","How do I log my hours?"],"answers":[{"question":"What is our warranty on new installs?","answer":"10 years on parts and 2 years on labor for systems we install, as long as the customer keeps up yearly maintenance.","sources":[{"label":"Warranty policy","reference":"file:\\\\office-nas\\jobs\\policies\\warranty.docx"}]},{"question":"How much is a diagnostic visit?","answer":"$129. It's waived if the customer goes ahead with the repair on the same visit.","sources":[{"label":"Price list 2026","reference":"file:\\\\office-nas\\jobs\\price-list-2026.pdf#p2"}]},{"question":"What's in the Comfort Club plan?","answer":"Two tune-ups a year, 15% off repairs, priority scheduling and no overtime fees, for $19 a month.","sources":[{"label":"Comfort Club plan","reference":"file:\\\\office-nas\\jobs\\policies\\comfort-club.pdf"}]},{"question":"Who do we use for sheet metal work?","answer":"Pacific Sheet Metal. Their insurance certificate expires on Nov 30, 2026.","sources":[{"label":"Vendor list","reference":"file:\\\\office-nas\\jobs\\vendors.xlsx"},{"label":"Certificate of insurance","reference":"file:\\\\office-nas\\jobs\\coi\\pacific.pdf"}]},{"question":"Where are the job folders?","answer":"On the office drive under Jobs, one folder per job number, like Jobs\\4471 for the Vega job.","sources":[{"label":"Employee handbook","reference":"file:\\\\office-nas\\jobs\\policies\\handbook.pdf"}]},{"question":"What do I do if a customer isn't home?","answer":"Wait 15 minutes, call the customer and the office, then leave a door tag. The office reschedules; there's no trip charge the first time.","sources":[{"label":"Employee handbook","reference":"file:\\\\office-nas\\jobs\\policies\\handbook.pdf"}]},{"question":"How do I order parts?","answer":"Text the part number and job number to the office. Lena orders from Ferguson or Johnstone and tells you when it's ready for pickup.","sources":[{"label":"Employee handbook","reference":"file:\\\\office-nas\\jobs\\policies\\handbook.pdf"}]},{"question":"How do I log my hours?","answer":null,"sources":[]}],"starter_questions":["Where are the job folders?","What do I do if a customer isn't home?","How do I order parts?","How do I log my hours?","What is our warranty on new installs?"],"remembered":0},"meetings":{"meetings":[{"id":1,"title":"Bayview Apartments walk-through","when":"23 hours ago","minutes":42,"attendees":["Tia Alvarez","Max Okafor","Rosa Medina (Bayview)"],"summary":"Walked all twelve units. Six have cracked or clogged condensate lines; the rest are fine. Rosa wants the work done before the holidays.","decisions":["Replace condensate lines in units 2B, 2C, 3A, 3D, 4A and 4C.","Do the work in two visits so tenants are only out of AC for one afternoon."],"actions":[{"who":"Max Okafor","what":"Send Rosa the quote and change order","due":"Monday"},{"who":"Tia Alvarez","what":"Order PVC and fittings for six units","due":"Tuesday"},{"who":"Rosa Medina","what":"Give tenants 48 hours' notice","due":"Before the first visit"}],"item":{"id":6,"kind":"meeting-notes","workspace":"Meeting notes","title":"Share notes from the Bayview Apartments walk-through","summary":"Six units need new condensate lines; Arkhon listed parts and next steps.","draft":"Notes from Thursday's walk-through at Bayview Apartments:\n- Units 2B, 2C, 3A, 3D, 4A and 4C need new condensate lines.\n- Parts list attached.\n- Next: quote to the property manager by Monday.","question":null,"sources":[{"label":"Walk-through recording","reference":"meeting:2026-11-05-bayview"}],"confidence":"medium","confidence_label":"Check this","urgency":"normal","created_at":1793898000,"assignee":"Tia Alvarez","team":"Field techs","connection":"Gmail (tia@coastline.com)","action":"Send","done_word":"Sent","can_approve":false,"blocked":"This would go out through Gmail (tia@coastline.com), which you can't use. Ask someone who can to approve it.","status":"waiting","final_text":null}},{"id":2,"title":"Monday dispatch huddle","when":"4 days ago","minutes":15,"attendees":["Dana Ruiz","Lena Cho","Max Okafor","Tia Alvarez","Sam Brooks"],"summary":"Busy week ahead with the first cold snap. Two installs, 23 service calls booked.","decisions":["Sam takes all no-heat calls on Wednesday and Thursday."],"actions":[{"who":"Lena Cho","what":"Move non-urgent tune-ups to next week","due":"Today"}],"item":null}]},"growth":{"quotes":[{"id":1,"customer":"Greg Lund","title":"3-ton heat pump, installed","lines":[{"description":"Carrier 3-ton heat pump, 17 SEER2","qty":1,"unit_cents":895000,"total_cents":895000},{"description":"Variable-speed air handler","qty":1,"unit_cents":240000,"total_cents":240000},{"description":"Line set, pad and disconnect","qty":1,"unit_cents":64000,"total_cents":64000},{"description":"40-amp electrical circuit","qty":1,"unit_cents":48000,"total_cents":48000},{"description":"Permit and inspection","qty":1,"unit_cents":27500,"total_cents":27500},{"description":"Remove and recycle old furnace","qty":1,"unit_cents":35000,"total_cents":35000}],"total_cents":1309500,"price_book":"Price book 2026","valid_days":30,"item":{"id":10,"kind":"send-quote","workspace":"Quotes & marketing","title":"Send the Lund heat-pump quote","summary":"3-ton heat pump with air handler, installed, from the 2026 price book: $13,095.","draft":"Hi Greg,\n\nAs promised, here's your quote for a 3-ton heat pump with a new air handler, fully installed, for $13,095. It includes the permit, removal of the old furnace and our 10-year parts warranty. The quote is good for 30 days.\n\nLena\nCoastline Mechanical","question":null,"sources":[{"label":"Price book 2026","reference":"file:\\\\office-nas\\jobs\\price-book-2026.pdf#p8"},{"label":"Warranty policy","reference":"file:\\\\office-nas\\jobs\\policies\\warranty.docx"}],"confidence":"medium","confidence_label":"Check this","urgency":"normal","created_at":1793944800,"assignee":"Lena Cho","team":"Front office","connection":"Outlook (service@coastline.com)","action":"Send","done_word":"Sent","can_approve":false,"blocked":"This would go out through Outlook (service@coastline.com), which you can't use. Ask someone who can to approve it.","status":"waiting","final_text":null}},{"id":2,"customer":"Luis Ortiz","title":"Replacement furnace, installed","lines":[{"description":"96% gas furnace, 80,000 BTU","qty":1,"unit_cents":498000,"total_cents":498000},{"description":"Installation labor","qty":1,"unit_cents":105000,"total_cents":105000},{"description":"Venting kit","qty":1,"unit_cents":24500,"total_cents":24500},{"description":"Permit","qty":1,"unit_cents":17500,"total_cents":17500}],"total_cents":645000,"price_book":"Price list 2026","valid_days":30,"item":{"id":4,"kind":"send-quote","workspace":"Quotes & marketing","title":"Send the Ortiz furnace quote","summary":"Replacement furnace, $6,450 installed, using this year's price list.","draft":"Hi Mr. Ortiz,\n\nAttached is the quote we discussed: a new 96% furnace, installed, for $6,450. It's good for 30 days.\n\nDana","question":null,"sources":[{"label":"Price list 2026","reference":"file:\\\\office-nas\\jobs\\price-list-2026.pdf#p5"}],"confidence":"medium","confidence_label":"Check this","urgency":"low","created_at":1793883600,"assignee":"Dana Ruiz","team":null,"connection":"Outlook (dana@coastline.com)","action":"Send","done_word":"Sent","can_approve":true,"blocked":null,"status":"waiting","final_text":null}}],"outreach":[{"id":1,"audience":"Past customers due for a fall tune-up","recipients":38,"item":{"id":11,"kind":"draft-reply","workspace":"Quotes & marketing","title":"Send fall tune-up reminders","summary":"A friendly reminder to 38 past customers whose furnace hasn't been checked this year.","draft":"Hi {first name},\n\nCold mornings are on the way. It's been over a year since we checked your furnace, and a tune-up now helps avoid a no-heat call in January. Reply to this email or call (805) 555-0142 to book. Comfort Club members get it free.\n\nCoastline Mechanical","question":null,"sources":[{"label":"Customer list","reference":"app:quickbooks/customers"},{"label":"Comfort Club plan","reference":"file:\\\\office-nas\\jobs\\policies\\comfort-club.pdf"}],"confidence":"high","confidence_label":"Sure","urgency":"low","created_at":1793934000,"assignee":"Lena Cho","team":"Front office","connection":"Outlook (service@coastline.com)","action":"Send","done_word":"Sent","can_approve":false,"blocked":"This would go out through Outlook (service@coastline.com), which you can't use. Ask someone who can to approve it.","status":"waiting","final_text":null}}]},"insights":{"insights":[{"id":1,"question":"Who hasn't paid yet?","answer":"Three customers owe you $6,912.40. Harbor Dental is the largest at $4,180, now 41 days late.","unit":"money","bars":[{"label":"Harbor Dental","value":418000},{"label":"Bayview Apartments","value":192240},{"label":"Luis Ortiz","value":81000}],"assumptions":["Counts invoices more than 30 days past their due date.","Partial payments are already subtracted."],"sources":[{"label":"QuickBooks invoices","reference":"app:quickbooks/invoices"}]},{"id":2,"question":"What brought in the most money in October?","answer":"October brought in $116,670. New installs were the biggest share, about 53%.","unit":"money","bars":[{"label":"New installs","value":6140000},{"label":"Repairs","value":2835000},{"label":"Commercial service","value":1780000},{"label":"Maintenance plans","value":912000}],"assumptions":["Uses every invoice dated October 1–31, paid or not.","Job type comes from the item on each invoice.","Sales tax is left out."],"sources":[{"label":"QuickBooks invoices","reference":"app:quickbooks/invoices"}]},{"id":3,"question":"How many jobs did we finish each week?","answer":"41 jobs last week, the busiest week in a month.","unit":"count","bars":[{"label":"Oct 12","value":31},{"label":"Oct 19","value":36},{"label":"Oct 26","value":29},{"label":"Nov 2","value":41}],"assumptions":["A job counts when its work order is marked complete in Jobber."],"sources":[{"label":"Jobber work orders","reference":"app:jobber/work-orders"}]}]},"privacy":{"where_data_lives":["Your email, files and answers are read and stored on this computer, in one encrypted folder.","Arkhon's AI runs on this computer too. Your customers' information is never sent to an AI company.","Sign-ins to your apps are kept in an encrypted vault that only this computer can open.","Arkhon only connects to the apps you connected, to read new items and to send what you approved."],"network":[{"service":"Microsoft Outlook","address":"outlook.office365.com","purpose":"Checked service@coastline.com for new email.","when":"5 min ago","sent_customer_data":false},{"service":"QuickBooks","address":"quickbooks.api.intuit.com","purpose":"Read open bills and unpaid invoices.","when":"20 min ago","sent_customer_data":false},{"service":"Gmail","address":"gmail.googleapis.com","purpose":"Checked tia@coastline.com for new email.","when":"35 min ago","sent_customer_data":false},{"service":"Google Calendar","address":"www.googleapis.com","purpose":"Read Dana's calendar for today's open slots.","when":"1 hour ago","sent_customer_data":false},{"service":"Arkhon updates","address":"updates.arkhonindustries.com","purpose":"Checked for an update to the Trades pack. Nothing about your company was sent.","when":"2 hours ago","sent_customer_data":false},{"service":"Arkhon license","address":"license.arkhonindustries.com","purpose":"Confirmed your license is active. Only the license number was sent.","when":"Yesterday","sent_customer_data":false}],"customer_data_sent":0,"retention_days":365,"retention_choices":[30,90,365,0],"can_manage":true,"delete_covers":["Everything Arkhon read and learned from your email and files","Drafts, answers, documents, meeting notes and quotes","Every connection and saved sign-in","Time-saved history and the connection list on this page"]},"setup":{"computer":{"tier":"Standard","words":"This computer can run Arkhon well. Most answers take a few seconds.","checks":["Enough memory for Arkhon's AI","Enough free space for your files","Security chip found, so sign-ins can be locked to this computer"]},"email_connected":true,"files_connected":true,"packs":[{"key":"trades","name":"Trades & field services","description":"HVAC, plumbing, electrical and contractors: supplier bills, work orders, lien waivers, quotes.","available":true},{"key":"professional","name":"Professional services","description":"Accountants, agencies and consultants.","available":false},{"key":"health","name":"Clinics & dental","description":"Front desk, scheduling and insurance paperwork.","available":false},{"key":"general","name":"General business","description":"Email, documents and answers for any small business.","available":true}],"industry_pack":"trades","files_read":12480,"files_total":14200,"can_choose_pack":true},"example":true}</script>
+<script>
+/* =====================================================================================
+   Horizon heroes: Canvas 2D, no libraries.
+   Layers per hero:
+     static (cached per size/theme): sky gradient, light rising behind the horizon, grain,
+                                     the ground below the arc (= page background)
+     per frame: breathing glow, skyline bars (grow to the page's real numbers),
+                chrome sheen sweeping across arc + bars, drifting dust.
+   Runs only while visible (IntersectionObserver + visibilitychange). Under
+   prefers-reduced-motion one finished still frame is drawn and nothing animates.
+   ===================================================================================== */
+window.ArkHero = (() => {
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)');
+  const heroes = new Map();
+  const stats = { frames: 0, ms: 0, worst: 0 };
+  const ease = t => 1 - Math.pow(1 - t, 3); // ease-out cubic
+  let colors = null;
+
+  function readColors() {
+    const s = getComputedStyle(document.documentElement);
+    const g = k => s.getPropertyValue(k).trim();
+    colors = { skyTop: g('--sky-top'), skyLow: g('--sky-low'), glow: g('--glow'), glow2: g('--glow-2'), ground: g('--bg'),
+      bar: g('--bar'), litA: g('--bar-lit-a'), litB: g('--bar-lit-b'), litC: g('--bar-lit-c'), arc: g('--arc'), dust: g('--dust'), fg3: g('--fg-3') };
+  }
+
+  // Seeded noise so the grain and dust look the same on every load (a finished first frame).
+  function rng(seed) { let s = seed >>> 0 || 1; return () => (s = (s * 1664525 + 1013904223) >>> 0) / 4294967296; }
+
+  let grain = null;
+  function grainTile() {
+    if (grain) return grain;
+    grain = document.createElement('canvas'); grain.width = grain.height = 128;
+    const g = grain.getContext('2d'), img = g.createImageData(128, 128), r = rng(7);
+    for (let i = 0; i < img.data.length; i += 4) { const v = r() * 255; img.data[i] = img.data[i + 1] = img.data[i + 2] = v; img.data[i + 3] = 14; }
+    g.putImageData(img, 0, 0); return grain;
+  }
+
+  class Hero {
+    constructor(canvas) {
+      this.c = canvas; this.ctx = canvas.getContext('2d', { alpha: false });
+      this.bars = [{ v: 24 }, { v: 38 }, { v: 54, lit: true }, { v: 36 }, { v: 22 }];
+      this.labels = null; this.grow = 1; this.growFrom = 1; this.growAt = 0;
+      this.visible = false; this.raf = 0; this.t0 = performance.now();
+      this.dust = Array.from({ length: 34 }, (_, i) => { const r = rng(i * 97 + 3); return { x: r(), y: r(), s: .6 + r() * 1.3, v: .15 + r() * .5, p: r() * 6.28 }; });
+      this.io = new IntersectionObserver(es => { this.visible = es[0].isIntersecting; this.kick(); });
+      this.io.observe(canvas);
+      this.ro = new ResizeObserver(() => this.resize()); this.ro.observe(canvas);
+      this.resize();
+    }
+    set(bars, labels) {
+      const key = JSON.stringify([bars, labels]);
+      if (key === this.key) return;
+      this.key = key; this.bars = bars.length ? bars : this.bars; this.labels = labels || null;
+      this.layout(); this.replay();
+    }
+    replay() { this.growFrom = .55; this.grow = .55; this.growAt = performance.now(); if (reduce.matches) this.grow = 1; this.kick(); }
+    resize() {
+      const r = this.c.getBoundingClientRect();
+      if (!r.width || !r.height) return;
+      const dpr = Math.min(devicePixelRatio || 1, 2);
+      this.w = r.width; this.h = r.height; this.dpr = dpr;
+      this.c.width = Math.round(r.width * dpr); this.c.height = Math.round(r.height * dpr);
+      this.paintStatic(); this.layout(); this.frame(performance.now(), true);
+    }
+    geom() {
+      const w = this.w, h = this.h, narrow = w < 720;
+      const horizon = h - (narrow ? 44 : 58);          // top of the arc
+      const R = Math.max(w * 1.5, 900);                 // a big, gentle circle
+      return { w, h, narrow, horizon, R, cx: w / 2, cy: horizon + R };
+    }
+    arcY(x) { const g = this.g; return g.cy - Math.sqrt(Math.max(0, g.R * g.R - (x - g.cx) * (x - g.cx))); }
+    layout() {
+      if (!this.w) return;
+      const g = this.g = this.geom();
+      const n = this.bars.length, max = Math.max(1e-6, ...this.bars.map(b => b.v));
+      const x0 = g.narrow ? g.w * .12 : g.w * .54, x1 = g.narrow ? g.w * .88 : g.w * .94;
+      const span = x1 - x0, step = span / n, bw = Math.max(3, Math.min(26, step * .52));
+      const hMax = g.narrow ? Math.min(56, g.h * .16) : Math.min(g.h * .34, 150);
+      this.cols = this.bars.map((b, i) => {
+        const x = x0 + step * i + step / 2;
+        return { x, w: bw, h: Math.max(4, b.v / max * hMax), base: this.arcY(x), lit: !!b.lit, label: this.labels ? this.labels[i] : null };
+      });
+      this.glowX = x0 + span / 2;
+      this.paintStatic();
+    }
+    paintStatic() {
+      if (!this.w || !colors) return;
+      const g = this.g || (this.g = this.geom());
+      const s = this.stat || (this.stat = document.createElement('canvas'));
+      s.width = this.c.width; s.height = this.c.height;
+      const x = s.getContext('2d'); x.setTransform(this.dpr, 0, 0, this.dpr, 0, 0);
+      const sky = x.createLinearGradient(0, 0, 0, g.horizon);
+      sky.addColorStop(0, colors.skyTop); sky.addColorStop(1, colors.skyLow);
+      x.fillStyle = sky; x.fillRect(0, 0, g.w, g.h);
+      // Light rising behind the horizon.
+      const gx = this.glowX ?? g.w * .7;
+      const glow = x.createRadialGradient(gx, g.horizon, 0, gx, g.horizon, Math.max(g.w * .55, 420));
+      glow.addColorStop(0, colors.glow); glow.addColorStop(.45, colors.glow2); glow.addColorStop(1, 'rgba(0,0,0,0)');
+      x.fillStyle = glow; x.fillRect(0, 0, g.w, g.h);
+      // Grain.
+      x.globalAlpha = .9; x.fillStyle = x.createPattern(grainTile(), 'repeat'); x.fillRect(0, 0, g.w, g.h); x.globalAlpha = 1;
+      // Ground below the arc is the page itself: the stage rises out of the horizon.
+      x.beginPath(); x.arc(g.cx, g.cy, g.R, 0, Math.PI * 2); x.fillStyle = colors.ground; x.fill();
+      this.glowLayer = null;
+    }
+    kick() {
+      if (reduce.matches || document.hidden || !this.visible) { cancelAnimationFrame(this.raf); this.raf = 0; this.frame(performance.now(), true); return; }
+      if (!this.raf) this.raf = requestAnimationFrame(t => this.loop(t));
+    }
+    loop(t) {
+      this.raf = 0;
+      if (reduce.matches || document.hidden || !this.visible) return;
+      const a = performance.now();
+      this.frame(t, false);
+      const d = performance.now() - a;
+      stats.frames++; stats.ms += d; stats.worst = Math.max(stats.worst, d);
+      this.raf = requestAnimationFrame(tt => this.loop(tt));
+    }
+    frame(t, still) {
+      if (!this.w || !this.stat || !this.cols) return;
+      const ctx = this.ctx, g = this.g, el = (t - this.t0) / 1000;
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.drawImage(this.stat, 0, 0);
+      ctx.setTransform(this.dpr, 0, 0, this.dpr, 0, 0);
+      // Grow towards the real numbers.
+      if (this.grow < 1) { const k = Math.min(1, (t - this.growAt) / 1100); this.grow = this.growFrom + (1 - this.growFrom) * ease(k); }
+      const grow = still ? Math.max(this.grow, reduce.matches ? 1 : this.grow) : this.grow;
+      // Breathing glow on the horizon line.
+      const breath = still ? .8 : .65 + .35 * Math.sin(el * .9);
+      // Bars.
+      const lit = ctx.createLinearGradient(0, g.horizon - 200, 0, g.horizon);
+      lit.addColorStop(0, colors.litA); lit.addColorStop(.5, colors.litB); lit.addColorStop(1, colors.litC);
+      const path = new Path2D();
+      let tallest = null;
+      for (const c of this.cols) {
+        const h = c.h * grow, x = c.x - c.w / 2, y = c.base - h;
+        const p = new Path2D(); roundTop(p, x, y, c.w, h + 6, Math.min(3, c.w / 2));
+        ctx.fillStyle = c.lit ? lit : colors.bar; ctx.globalAlpha = c.lit ? 1 : .8; ctx.fill(p);
+        path.addPath(p);
+        if (!tallest || h > tallest.h) tallest = { x: c.x, y, h };
+      }
+      ctx.globalAlpha = 1;
+      // Antenna on the tallest bar (from the mark).
+      if (tallest) { ctx.strokeStyle = colors.arc; ctx.lineWidth = 1.2; ctx.globalAlpha = .55; ctx.beginPath(); ctx.moveTo(tallest.x, tallest.y - 3); ctx.lineTo(tallest.x, tallest.y - 18); ctx.stroke();
+        ctx.beginPath(); ctx.arc(tallest.x, tallest.y - 20, 1.8, 0, 6.29); ctx.fillStyle = colors.arc; ctx.globalAlpha = .4 + .5 * breath; ctx.fill(); ctx.globalAlpha = 1; }
+      // The horizon arc.
+      const arc = new Path2D(); arc.arc(g.cx, g.cy, g.R, Math.PI * 1.05, Math.PI * 1.95);
+      ctx.strokeStyle = colors.arc; ctx.lineWidth = 1.6; ctx.globalAlpha = .7; ctx.stroke(arc); ctx.globalAlpha = 1;
+      // Chrome sheen: a soft band sweeping across arc + bars every 9 s.
+      const cyc = 9, ph = still ? .62 : (el % cyc) / cyc;
+      if (ph < .75) {
+        const sx = -200 + (g.w + 400) * (ph / .75);
+        const band = ctx.createLinearGradient(sx - 120, 0, sx + 120, 0);
+        band.addColorStop(0, 'rgba(255,255,255,0)'); band.addColorStop(.5, 'rgba(255,255,255,.75)'); band.addColorStop(1, 'rgba(255,255,255,0)');
+        ctx.save(); ctx.lineWidth = 3.2; ctx.strokeStyle = band; ctx.stroke(arc);
+        ctx.clip(path); ctx.fillStyle = band; ctx.globalAlpha = .6; ctx.fillRect(sx - 120, 0, 240, g.h); ctx.restore();
+      }
+      // Drifting dust rising out of the light.
+      ctx.fillStyle = colors.dust;
+      for (const d of this.dust) {
+        const y = (d.y - (still ? 0 : el * d.v * .03)) % 1, yy = (y < 0 ? y + 1 : y);
+        const px = (d.x * g.w + Math.sin(el * .3 + d.p) * 8), py = yy * g.horizon;
+        ctx.globalAlpha = Math.min(1, yy * 1.4) * .7; ctx.fillRect(px, py, d.s, d.s);
+      }
+      ctx.globalAlpha = 1;
+      // Day labels under the bars (desktop only).
+      if (!g.narrow && this.cols[0].label) {
+        ctx.fillStyle = colors.fg3; ctx.font = '500 11px Geist, -apple-system, sans-serif'; ctx.textAlign = 'center';
+        for (const c of this.cols) ctx.fillText(c.label, c.x, c.base + 22);
+      }
+    }
+  }
+  function roundTop(p, x, y, w, h, r) { p.moveTo(x, y + h); p.lineTo(x, y + r); p.quadraticCurveTo(x, y, x + r, y); p.lineTo(x + w - r, y); p.quadraticCurveTo(x + w, y, x + w, y + r); p.lineTo(x + w, y + h); p.closePath(); }
+
+  function retheme() { readColors(); heroes.forEach(h => { h.paintStatic(); h.frame(performance.now(), true); }); }
+  matchMedia('(prefers-color-scheme: dark)').addEventListener('change', retheme);
+  new MutationObserver(retheme).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+  document.addEventListener('visibilitychange', () => heroes.forEach(h => h.kick()));
+  reduce.addEventListener('change', () => heroes.forEach(h => { h.grow = 1; h.kick(); }));
+
+  return {
+    /** Set a hero's skyline: bars = [{v, lit}], labels = optional text under each bar. */
+    set(name, bars, labels) {
+      const el = document.querySelector(`[data-hero="${name}"] > canvas.hz`);
+      if (!el) return;
+      if (!colors) readColors();
+      let h = heroes.get(el); if (!h) { h = new Hero(el); heroes.set(el, h); }
+      h.set(bars, labels);
+    },
+    replay(name) { const el = document.querySelector(`[data-hero="${name}"] > canvas.hz`); const h = el && heroes.get(el); if (h) { h.resize(); h.replay(); } },
+    stats() { return { frames: stats.frames, avg_ms: stats.frames ? stats.ms / stats.frames : 0, worst_ms: stats.worst }; },
+    resetStats() { stats.frames = 0; stats.ms = 0; stats.worst = 0; },
+    reducedMotion: () => reduce.matches,
+  };
+})();
+</script>
+
 <script>
 (() => {
   /* ---------- Routing (#home, #people, #roles, #teams) ---------- */
   const tabs = ['people', 'roles', 'teams', 'connections', 'activity'];
-  const PAGES = ['inbox', 'desk', 'docs', 'knowledge', 'meetings', 'growth', 'insights', 'report', 'privacy', 'welcome', 'help'];
+  const PAGES = ['inbox', 'desk', 'docs', 'knowledge', 'meetings', 'growth', 'insights', 'report', 'privacy', 'welcome', 'help', 'chat'];
   const WORK = ['inbox', 'desk', 'docs', 'knowledge', 'meetings', 'growth', 'insights', 'report', 'privacy', 'welcome'];
   function route() {
     const h = (location.hash || '#home').slice(1);
@@ -757,10 +1292,6 @@ label.f { display: grid; gap: 6px; font-size: 14px; color: var(--fg-2); }
     document.getElementById('v-home').hidden = settings || !!page;
     document.getElementById('v-settings').hidden = !settings;
     PAGES.forEach(p => { document.getElementById('v-' + p).hidden = p !== page; });
-    const nav = settings ? 'settings' : page === 'help' ? 'help' : WORK.includes(page) ? 'work' : 'home';
-    document.querySelectorAll('[data-nav]').forEach(a => {
-      if (a.dataset.nav === nav) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current');
-    });
     tabs.forEach(t => {
       document.getElementById('t-' + t).hidden = t !== h;
       const a = document.querySelector(`[data-tab="${t}"]`);
@@ -804,6 +1335,7 @@ label.f { display: grid; gap: 6px; font-size: 14px; color: var(--fg-2); }
     const cls = { high: 'ok', medium: 'warn', low: 'bad', 'not-found': 'bad' }[it.confidence];
     return `<span class="pill-s ${cls}">${esc(it.confidence_label)}</span>`;
   }
+  const openable = it => V && ((V.inbox && V.inbox.threads.some(t => t.item && t.item.id === it.id)) || (V.docs && V.docs.documents.some(d => d.item && d.item.id === it.id)) || (V.desk && V.desk.tickets.some(t => t.item && t.item.id === it.id)));
   function renderHome() {
     const n = V.needs_you, w = V.this_week;
     if (V.viewer) $('hello').textContent = `Good morning, ${V.viewer.name.split(' ')[0]}.`;
@@ -825,7 +1357,7 @@ label.f { display: grid; gap: 6px; font-size: 14px; color: var(--fg-2); }
           : '';
       return `<article class="card task" data-item="${it.id}">
         <span class="ico"><svg viewBox="0 0 24 24">${kindIcon(it.kind)}</svg></span>
-        <div><h3>${esc(it.title)}${pill(it)}</h3><p>${esc(it.summary)}</p>${why}${blocked}${detail}</div>
+        <div><h3>${openable(it) ? `<button class="open" type="button" data-open="${it.id}">${esc(it.title)}</button>` : esc(it.title)}${pill(it)}</h3><p>${esc(it.summary)}</p>${why}${blocked}${detail}</div>
         <div class="acts">${look}${primary}<button class="link" type="button" data-dismiss="${it.id}" style="font-size:15px">Dismiss</button></div>
       </article>`;
     }).join('') || '<article class="card task" style="grid-template-columns:1fr"><p>Nothing is waiting for you. Arkhon will put new work here for you to check.</p></article>';
@@ -863,12 +1395,6 @@ label.f { display: grid; gap: 6px; font-size: 14px; color: var(--fg-2); }
   q.addEventListener('input', () => send.disabled = !q.value.trim());
   document.getElementById('ideas').addEventListener('click', e => {
     const b = e.target.closest('button'); if (!b) return; q.value = b.textContent; send.disabled = false; ask.requestSubmit();
-  });
-  ask.addEventListener('submit', e => {
-    e.preventDefault(); if (!q.value.trim()) return;
-    document.getElementById('reply').hidden = false;
-    document.getElementById('reply-text').textContent = 'Example answer: Three customers owe you $6,912.40 in total. Harbor Dental is the biggest at $4,180, now 41 days late. I wrote friendly reminders for all three. They are waiting for you under Needs you.';
-    document.getElementById('reply-src').textContent = 'From your QuickBooks invoices, updated this morning';
   });
 
   /* ---------- Company settings: wired to the engine (suite/engine via suite/devserver) ----------
@@ -928,6 +1454,7 @@ label.f { display: grid; gap: 6px; font-size: 14px; color: var(--fg-2); }
   const initials = n => n.split(' ').map(w => w[0]).join('').slice(0, 2);
   const statusWord = s => ({ invited: 'Invited', suspended: 'Paused', active: '' }[s]);
   function render() {
+    renderDock();
     renderHome();
     $('org-name').textContent = V.company;
     if (V.viewer) { const me = document.querySelector('.me'); me.textContent = initials(V.viewer.name); me.setAttribute('aria-label', `${V.viewer.name}, ${V.viewer.role}`); }
@@ -969,6 +1496,7 @@ label.f { display: grid; gap: 6px; font-size: 14px; color: var(--fg-2); }
     if (!$('t-activity').hidden) loadActivity();
     renderPages();
     if (location.hash === '#report') loadReport();
+    paintHeroes(); renderChat();
   }
 
   const showHint = () => {
@@ -1286,7 +1814,7 @@ label.f { display: grid; gap: 6px; font-size: 14px; color: var(--fg-2); }
     const r = await fetch('/api/report' + (repMonth ? '?month=' + repMonth : ''), { headers: headers() });
     const body = await r.json();
     if (!r.ok) { $('report-body').innerHTML = empty(esc(body.error || 'The report isn’t available.')); return; }
-    REP = body; repMonth = REP.month; renderReport();
+    REP = body; repMonth = REP.month; renderReport(); paintHeroes();
   }
   function renderReport() {
     const R = REP, t = R.totals, can = V.privacy.can_manage;
@@ -1471,22 +1999,439 @@ label.f { display: grid; gap: 6px; font-size: 14px; color: var(--fg-2); }
 
   function renderPages() {
     ITEMS = {};
-    $('ws-links').innerHTML = V.nav.map(l => `<a href="#${l.key}">${esc(l.label)}</a>`).join('') || '<span class="lbl">No workspaces yet</span>';
     document.querySelectorAll('[data-ex]').forEach(el => { el.hidden = !V.example; });
     renderInbox(); renderDesk(); renderDocs(); renderKnowledge(); renderMeetings(); renderGrowth(); renderInsights(); renderPrivacy(); renderWelcome();
-    const p = currentPage();
-    document.querySelectorAll('#ws-pop a').forEach(a => a.toggleAttribute('aria-current', a.getAttribute('href') === '#' + p));
   }
 
-  /* Workspaces menu */
-  const wsBtn = $('ws-btn'), wsPop = $('ws-pop');
-  const closeMenu = () => { wsPop.hidden = true; wsBtn.setAttribute('aria-expanded', 'false'); };
-  wsBtn.addEventListener('click', e => { e.stopPropagation(); const open = wsPop.hidden; wsPop.hidden = !open; wsBtn.setAttribute('aria-expanded', String(open)); });
-  document.addEventListener('click', e => { if (!wsPop.hidden && !e.target.closest('#ws-pop')) closeMenu(); });
-  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeMenu(); });
-  addEventListener('hashchange', () => { closeMenu(); if (location.hash === '#report') loadReport(); if (V && currentPage()) renderPages(); });
+  addEventListener('hashchange', () => { if (location.hash === '#report') loadReport(); if (V && currentPage()) renderPages(); });
 
-  load();
-  route();
+
+  /* =====================================================================================
+     HORIZON: dock, command palette, heroes, transitions, chat
+     ===================================================================================== */
+  const reduceMotion = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const ICON = {
+    home: '<use href="#mark"/>',
+    inbox: '<path d="M3.5 6.5h17v11h-17z"/><path d="M3.5 7l8.5 6.5L20.5 7"/>',
+    desk: '<path d="M4 5h12v8H9l-4 3v-3H4z"/><path d="M16 9h4v8h-1v3l-3.5-3H11v-2"/>',
+    docs: '<path d="M6 3h8.5L19 7.5V21H6z"/><path d="M14 3v5h5M9 13h7M9 17h5"/>',
+    knowledge: '<path d="M4 5.5C6 4.5 9 4.5 12 6c3-1.5 6-1.5 8-.5V19c-2-1-5-1-8 .5-3-1.5-6-1.5-8-.5z"/><path d="M12 6v13.5"/>',
+    meetings: '<rect x="3.5" y="5" width="17" height="15" rx="2"/><path d="M3.5 10h17M8 3v4M16 3v4"/>',
+    growth: '<path d="M4 18l5.5-6 4 3.5L20 7"/><path d="M15 7h5v5"/>',
+    insights: '<path d="M5 20V11M10 20V5M15 20v-7M20 20V9"/>',
+    report: '<path d="M4 20h16"/><path d="M6 16l4-5 3 3 5-7"/>',
+    privacy: '<path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/><path d="M8.5 12l2.5 2.5 4.5-5"/>',
+    welcome: '<path d="M5 21V4M5 4h11l-2 4 2 4H5"/>',
+    help: '<circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1.6V14M12 17.5v.01"/>',
+    chat: '<path d="M12 4c4.7 0 8.5 3.1 8.5 7s-3.8 7-8.5 7c-1 0-2-.1-2.9-.4L4.5 20l1.2-3.7C4.3 15 3.5 13.1 3.5 11c0-3.9 3.8-7 8.5-7z"/><path d="M8.5 11h.01M12 11h.01M15.5 11h.01"/>',
+    company: '<path d="M4 20V8l8-4 8 4v12"/><path d="M9 20v-5h6v5M9 11h.01M15 11h.01"/>',
+    people: '<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.7-3.5 3.3-5.5 6.5-5.5s5.8 2 6.5 5.5"/><path d="M16 4.6a3.5 3.5 0 0 1 0 6.8M18 14.8c1.9.8 3.1 2.5 3.5 5.2"/>',
+    search: '<circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/>',
+    more: '<circle cx="6" cy="6" r="1.6"/><circle cx="12" cy="6" r="1.6"/><circle cx="18" cy="6" r="1.6"/><circle cx="6" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="18" cy="12" r="1.6"/><circle cx="6" cy="18" r="1.6"/><circle cx="12" cy="18" r="1.6"/><circle cx="18" cy="18" r="1.6"/>',
+    check: '<path d="M5 12.5l4.5 4.5L19 7.5"/>',
+    plus: '<path d="M12 5v14M5 12h14"/>',
+    theme: '<circle cx="12" cy="12" r="8.5"/><path d="M12 3.5v17A8.5 8.5 0 0 0 12 3.5z" style="fill:currentColor"/>',
+  };
+  const svg = (k, cls = '') => `<svg viewBox="0 0 ${k === 'home' ? '120 104' : '24 24'}" aria-hidden="true"${cls ? ` class="${cls}"` : ''}>${ICON[k] || ICON.docs}</svg>`;
+  const TITLES = { home: 'Home', inbox: 'Email', desk: 'Customer replies', docs: 'Documents', knowledge: 'Company answers', meetings: 'Meeting notes',
+    growth: 'Quotes & marketing', insights: 'Reports', report: 'Value report', privacy: 'Privacy Center', welcome: 'Set-up guide', help: 'Help', chat: 'Chat',
+    people: 'People', roles: 'Roles', teams: 'Teams', connections: 'Connections', activity: 'Activity' };
+  const topOf = h => tabs.includes(h) ? 'settings' : (PAGES.includes(h) ? h : 'home');
+
+  /* ---------- Dock: only the viewer's permitted workspaces; Chat, Company, Help always ---------- */
+  function renderDock() {
+    const nav = V ? V.nav : [];
+    const ws = nav.map(l => `<a class="ws" href="#${l.key}" data-dock="${l.key}">${svg(l.key)}<span class="lbl">${esc(l.label)}</span></a>`).join('');
+    const me = V && V.viewer ? V.viewer : null;
+    $('dock').innerHTML = `<a class="home" href="#home" data-dock="home" aria-label="Home">${svg('home')}<span class="lbl">Home</span></a>
+      ${ws}<button class="more" type="button" data-palette="pages" aria-label="Workspaces">${svg('more')}<span class="lbl">Workspaces</span></button>
+      <span class="sep" aria-hidden="true"></span>
+      <a href="#chat" data-dock="chat">${svg('chat')}<span class="lbl">Chat</span></a>
+      <a href="#people" data-dock="settings">${svg('company')}<span class="lbl">Company</span></a>
+      <a href="#help" data-dock="help">${svg('help')}<span class="lbl">Help</span></a>
+      <button type="button" data-palette="all" aria-label="Search and commands (Ctrl+K)" aria-keyshortcuts="Control+K Meta+K">${svg('search')}<span class="lbl">Search <span class="kbd">${/Mac|iPhone|iPad/.test(navigator.platform) ? '⌘K' : 'Ctrl K'}</span></span></button>
+      <button class="me" type="button" data-go="people" aria-label="${me ? esc(me.name + ', ' + me.role) : 'You'}">${me ? esc(initials(me.name)) : ''}</button>`;
+    // Accessible names for icon-only links come from their visible label.
+    $('dock').querySelectorAll('a').forEach(a => a.setAttribute('aria-label', a.querySelector('.lbl').textContent));
+    markDock();
+  }
+  function markDock() {
+    const h = (location.hash || '#home').slice(1), top = topOf(h);
+    $('dock').querySelectorAll('[data-dock]').forEach(a => { if (a.dataset.dock === top) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
+  }
+  $('dock').addEventListener('click', e => {
+    const p = e.target.closest('[data-palette]'); if (p) { openPalette(p.dataset.palette === 'pages' ? 'pages' : ''); return; }
+    const g = e.target.closest('[data-go]'); if (g) { location.hash = '#' + g.dataset.go; return; }
+    const a = e.target.closest('a[data-dock]'); if (a) titleFrom = a;
+  });
+
+  /* ---------- Command palette (⌘K / Ctrl+K) ---------- */
+  const pal = $('pal'), palQ = $('pal-q'), palList = $('pal-list');
+  let palItems = [], palSel = 0, palReturn = null;
+  function paletteEntries() {
+    const out = [];
+    const page = (k, hint) => out.push({ group: 'Pages', icon: k, label: TITLES[k], hint, run: () => { location.hash = '#' + k; } });
+    page('home', 'Start here');
+    (V ? V.nav : []).forEach(l => page(l.key, 'Workspace'));
+    page('chat', 'Private chat'); page('report', 'Time and value');
+    page('privacy', 'What stayed on this computer'); page('welcome', 'Step by step'); page('help', 'Questions');
+    ['people', 'roles', 'teams', 'connections'].forEach(t => out.push({ group: 'Pages', icon: t === 'people' ? 'people' : 'company', label: 'Company · ' + TITLES[t], hint: 'Settings', run: () => { location.hash = '#' + t; } }));
+    if (V && V.can.view_activity) out.push({ group: 'Pages', icon: 'company', label: 'Company · Activity', hint: 'Settings', run: () => { location.hash = '#activity'; } });
+    out.push({ group: 'Actions', icon: 'plus', label: 'New chat', hint: 'Chat', run: () => { chatNew(); location.hash = '#chat'; setTimeout(() => $('chat-in').focus(), 50); } });
+    const next = V && V.needs_you.items.find(i => i.can_approve && i.kind !== 'knowledge-gap');
+    if (next) out.push({ group: 'Actions', icon: 'check', label: 'Approve next item', hint: next.title, run: () => { location.hash = '#home'; run({ command: 'approve', item: next.id }, $('home-msg')); } });
+    out.push({ group: 'Actions', icon: 'knowledge', label: 'Ask the company a question', hint: 'Company answers', run: () => { location.hash = '#knowledge'; setTimeout(() => { const q = $('k-q'); if (q) q.focus(); }, 80); } });
+    if (V && V.can.manage_people) out.push({ group: 'Actions', icon: 'people', label: 'Invite someone', hint: 'People', run: () => { location.hash = '#people'; setTimeout(() => $('inv-email').focus(), 80); } });
+    out.push({ group: 'Actions', icon: 'theme', label: 'Switch light / dark', hint: 'Appearance', run: toggleTheme });
+    (V ? V.people : []).forEach(p => out.push({ group: 'People', icon: 'people', label: p.name, hint: `${p.role} · ${p.email}`, run: () => { location.hash = '#people'; } }));
+    return out;
+  }
+  function openPalette(mode) {
+    palReturn = document.activeElement;
+    pal.hidden = false; palQ.value = ''; palQ.dataset.mode = mode || ''; palSel = 0; paintPalette(); palQ.focus();
+  }
+  function closePalette() { pal.hidden = true; if (palReturn && palReturn.focus) palReturn.focus(); }
+  function paintPalette() {
+    const q = palQ.value.trim().toLowerCase(), mode = palQ.dataset.mode;
+    palItems = paletteEntries().filter(e => (mode !== 'pages' || e.group === 'Pages') && (!q || (e.label + ' ' + e.hint + ' ' + e.group).toLowerCase().includes(q)));
+    if (palSel >= palItems.length) palSel = Math.max(0, palItems.length - 1);
+    let last = '';
+    palList.innerHTML = palItems.map((e, i) => {
+      const head = e.group !== last ? `<li class="pal-group" role="presentation">${esc(e.group)}</li>` : ''; last = e.group;
+      return `${head}<li class="pal-item" role="option" id="pal-${i}" data-i="${i}" aria-selected="${i === palSel}">${svg(e.icon)}<span>${esc(e.label)}</span><small>${esc(e.hint || '')}</small></li>`;
+    }).join('') || '<li class="pal-empty">Nothing matches. Try another word.</li>';
+    palQ.setAttribute('aria-activedescendant', palItems.length ? 'pal-' + palSel : '');
+    const cur = $('pal-' + palSel); if (cur) cur.scrollIntoView({ block: 'nearest' });
+  }
+  function choosePalette(i) { const e = palItems[i]; if (!e) return; pal.hidden = true; e.run(); }
+  palQ.addEventListener('input', () => { palSel = 0; paintPalette(); });
+  palQ.addEventListener('keydown', e => {
+    if (e.key === 'ArrowDown') { e.preventDefault(); palSel = Math.min(palItems.length - 1, palSel + 1); paintPalette(); }
+    else if (e.key === 'ArrowUp') { e.preventDefault(); palSel = Math.max(0, palSel - 1); paintPalette(); }
+    else if (e.key === 'Enter') { e.preventDefault(); choosePalette(palSel); }
+  });
+  palList.addEventListener('click', e => { const it = e.target.closest('[data-i]'); if (it) choosePalette(+it.dataset.i); });
+  palList.addEventListener('mousemove', e => { const it = e.target.closest('[data-i]'); if (it && +it.dataset.i !== palSel) { palSel = +it.dataset.i; paintPalette(); } });
+  pal.addEventListener('click', e => { if (e.target === pal) closePalette(); });
+  document.addEventListener('keydown', e => {
+    if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); pal.hidden ? openPalette('') : closePalette(); }
+    else if (e.key === 'Escape' && !pal.hidden) closePalette();
+  });
+  function toggleTheme() {
+    const dark = matchMedia('(prefers-color-scheme: dark)').matches;
+    const cur = document.documentElement.dataset.theme || (dark ? 'dark' : 'light');
+    document.documentElement.dataset.theme = cur === 'dark' ? 'light' : 'dark';
+    try { localStorage.setItem('arkhon-theme', document.documentElement.dataset.theme); } catch (_) {}
+  }
+  try { const t = localStorage.getItem('arkhon-theme'); if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t; } catch (_) {}
+
+  /* ---------- Heroes: skylines from the page's real numbers ---------- */
+  const MARK = [{ v: 24 }, { v: 38 }, { v: 54, lit: true }, { v: 36 }, { v: 22 }];
+  const isDone = it => it && (it.status === 'approved' || it.status === 'edited');
+  function heroStat(id, html) { const el = $(id); if (!el) return; el.hidden = !html; el.innerHTML = html || ''; }
+  function paintHeroes() {
+    if (!V || !window.ArkHero) return;
+    const H = window.ArkHero, w = V.this_week;
+    const days = w.days.slice(-7);
+    H.set('home', days.map(d => ({ v: d.hours, lit: d.hours === Math.max(...days.map(x => x.hours)) })), days.map(d => d.label));
+    heroStat('home-stat', `<b>${w.hours}</b> hours given back this week`);
+    if (V.inbox) {
+      const th = V.inbox.threads;
+      H.set('inbox', th.length ? th.map(t => ({ v: t.item && t.item.status === 'waiting' ? 2 : 1, lit: !!(t.item && t.item.status === 'waiting') })) : MARK);
+      heroStat('inbox-stat', `<b>${V.inbox.waiting}</b> ${V.inbox.waiting === 1 ? 'reply' : 'replies'} waiting for you`);
+    }
+    if (V.docs) {
+      const ds = V.docs.documents;
+      H.set('docs', ds.length ? ds.map(d => ({ v: isDone(d.item) ? 2 : 1.3, lit: isDone(d.item) })) : MARK);
+      heroStat('docs-stat', `<b>${w.totals.documents}</b> documents filed this week`);
+    }
+    if (V.desk) { const t = V.desk.tickets; H.set('desk', t.length ? t.map(x => ({ v: x.item && x.item.status === 'waiting' ? 2 : 1.2, lit: !!(x.item && x.item.status === 'waiting') })) : MARK); heroStat('desk-stat', `<b>${t.length}</b> customer ${t.length === 1 ? 'question' : 'questions'}`); }
+    if (V.meetings) { const m = V.meetings.meetings; H.set('meetings', m.length ? m.map((_, i) => ({ v: 1 + (i % 3) * .35, lit: i === 0 })) : MARK); heroStat('meetings-stat', `<b>${w.totals.meetings}</b> meetings written up this week`); }
+    if (V.knowledge) { heroStat('knowledge-stat', `<b>${w.totals.answers}</b> questions answered this week`); }
+    ['knowledge', 'growth', 'insights', 'privacy', 'welcome', 'help', 'chat'].forEach(k => H.set(k, MARK));
+    H.set('settings', Array.from({ length: V.seats }, (_, i) => ({ v: 1, lit: i < V.seats_used })));
+    heroStat('settings-stat', `<b>${V.seats_used}</b> of ${V.seats} seats in use`);
+    if (REP && REP.days) {
+      const weeks = []; REP.days.forEach((d, i) => { const k = Math.floor(i / 7); weeks[k] = (weeks[k] || 0) + d.hours; });
+      const top = Math.max(...weeks);
+      H.set('report', weeks.map(v => ({ v: Math.max(v, .05), lit: v === top && v > 0 })), weeks.map((_, i) => 'Week ' + (i + 1)));
+      heroStat('report-stat', `<b>${REP.totals.hours}</b> hours given back in ${esc(monthName(REP.month))}`);
+    } else {
+      H.set('report', days.map(d => ({ v: d.hours, lit: false })), days.map(d => d.label));
+      heroStat('report-stat', `<b>${w.hours}</b> hours given back this week`);
+    }
+  }
+
+  /* ---------- Route changes: horizon wipe + shared-element morphs (View Transitions) ---------- */
+  let titleFrom = null, cardFrom = null, lastTop = topOf((location.hash || '#home').slice(1));
+  function clearVt() { document.querySelectorAll('[style*="view-transition-name"]').forEach(el => { if (el.id !== 'dock' && el.id !== 'pal') el.style.viewTransitionName = ''; }); }
+  function activeTitle() { const v = [...document.querySelectorAll('main.view')].find(m => !m.hidden); return v && v.querySelector('.hero h1'); }
+  function enterView() {
+    const v = [...document.querySelectorAll('main.view')].find(m => !m.hidden);
+    if (!v) return;
+    v.classList.remove('enter'); void v.offsetWidth; v.classList.add('enter');
+    paintHeroes();
+    const hero = v.querySelector('[data-hero]'); if (hero && window.ArkHero) window.ArkHero.replay(hero.dataset.hero);
+  }
+  function navigate() {
+    const h = (location.hash || '#home').slice(1), top = topOf(h), sameTop = top === lastTop;
+    lastTop = top;
+    const update = () => { route(); markDock(); enterView(); };
+    if (!document.startViewTransition || reduceMotion()) { titleFrom = cardFrom = null; update(); return; }
+    document.documentElement.classList.add('vt');
+    document.documentElement.classList.toggle('vt-soft', sameTop);
+    // Old state: the clicked dock item / Home card carry the shared names.
+    clearVt();
+    if (!sameTop && titleFrom) titleFrom.style.viewTransitionName = 'vt-title';
+    else if (!sameTop) { const t = activeTitle(); if (t) t.style.viewTransitionName = 'vt-title'; }
+    if (cardFrom) cardFrom.style.viewTransitionName = 'vt-card';
+    let vt;
+    try {
+      vt = document.startViewTransition(() => {
+        clearVt(); update();
+        if (!sameTop) { const t = activeTitle(); if (t) t.style.viewTransitionName = 'vt-title'; }
+        if (cardFrom) { const p = document.querySelector('#v-inbox .pane, #v-desk .pane, #v-docs .pane'); const vis = [...document.querySelectorAll('main.view:not([hidden]) .pane')][0]; if (vis) vis.style.viewTransitionName = 'vt-card'; else if (p) p.style.viewTransitionName = ''; }
+      });
+    } catch (_) { clearVt(); update(); }
+    titleFrom = cardFrom = null;
+    if (vt) vt.finished.finally(() => { clearVt(); document.documentElement.classList.remove('vt', 'vt-soft'); });
+  }
+  removeEventListener('hashchange', route);
+  addEventListener('hashchange', navigate);
+
+  /* Home "Needs you" card → its workspace detail (shared-element morph). */
+  $('needs').addEventListener('click', e => {
+    const o = e.target.closest('[data-open]'); if (!o) return;
+    const id = +o.dataset.open, card = o.closest('.task');
+    const th = V.inbox && V.inbox.threads.find(t => t.item && t.item.id === id);
+    const doc = V.docs && V.docs.documents.find(d => d.item && d.item.id === id);
+    const tk = V.desk && V.desk.tickets.find(t => t.item && t.item.id === id);
+    cardFrom = card;
+    if (th) { sel.inbox = th.id; location.hash = '#inbox'; }
+    else if (doc) { sel.docs = doc.id; location.hash = '#docs'; }
+    else if (tk) location.hash = '#desk';
+    else cardFrom = null;
+  });
+
+  /* Home ask box → a private chat. */
+  ask.addEventListener('submit', e => {
+    e.preventDefault();
+    const text = q.value.trim(); if (!text) return;
+    q.value = ''; send.disabled = true;
+    chatNew(); location.hash = '#chat'; chatSend(text);
+  });
+
+  /* ---------- Chat: a general assistant, kept on this computer ----------
+     Conversations live in this browser's localStorage only. Replies stream from
+     /api/chat (the local runtime, or labelled demo replies); without the dev server the
+     page answers with the same demo responder in the browser. */
+  const CH_KEY = 'arkhon-chats';
+  let chats = [], chatId = null, chatBusy = null, chatMode = { mode: 'demo', label: 'Demo replies' }, attach = null;
+  try { chats = JSON.parse(localStorage.getItem(CH_KEY) || '[]'); if (!Array.isArray(chats)) chats = []; } catch (_) { chats = []; }
+  const saveChats = () => { try { localStorage.setItem(CH_KEY, JSON.stringify(chats.slice(0, 60))); } catch (_) {} };
+  const curChat = () => chats.find(c => c.id === chatId);
+  function chatNew() {
+    const c = curChat();
+    if (c && !c.messages.length) return c;
+    const n = { id: 'c' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), title: 'New chat', messages: [], updated: Date.now() };
+    chats.unshift(n); chatId = n.id; saveChats(); renderChat(); return n;
+  }
+  async function chatStatus() {
+    if (!live) { chatMode = { mode: 'demo', label: 'Demo replies' }; return paintChatTop(); }
+    try { const r = await fetch('/api/chat', { headers: headers() }); if (r.ok) chatMode = await r.json(); } catch (_) {}
+    paintChatTop();
+  }
+  function paintChatTop() {
+    $('chat-demo').hidden = chatMode.mode !== 'demo';
+  }
+
+  /* Markdown, safely: escape everything first, then add a small set of formatting. */
+  function md(src) {
+    const blocks = [], text = String(src).replace(/```([\w+-]*)\n?([\s\S]*?)(```|$)/g, (_, lang, code) => { blocks.push({ lang, code }); return `\u0000${blocks.length - 1}\u0000`; });
+    const inline = s => esc(s)
+      .replace(/`([^`]+)`/g, '<code>$1</code>')
+      .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+      .replace(/(^|[\s(])\*([^*\s][^*]*)\*/g, '$1<em>$2</em>')
+      .replace(/(^|[\s(])_([^_\s][^_]*)_/g, '$1<em>$2</em>');
+    const out = []; let list = null, para = [];
+    const flushP = () => { if (para.length) { out.push(`<p>${para.map(inline).join('<br>')}</p>`); para = []; } };
+    const flushL = () => { if (list) { out.push(`<${list.t}>${list.items.map(i => `<li>${inline(i)}</li>`).join('')}</${list.t}>`); list = null; } };
+    for (const line of text.split('\n')) {
+      const cb = line.match(/^\u0000(\d+)\u0000$/);
+      const h = line.match(/^(#{1,4})\s+(.*)$/), ul = line.match(/^\s*[-*•]\s+(.*)$/), ol = line.match(/^\s*\d+[.)]\s+(.*)$/), bq = line.match(/^>\s?(.*)$/);
+      if (cb) { flushP(); flushL(); const b = blocks[+cb[1]];
+        out.push(`<div class="codeblk"><div class="bar"><span>${esc(b.lang || 'text')}</span><button type="button" data-copycode>Copy</button></div><pre><code>${esc(b.code.replace(/\n$/, ''))}</code></pre></div>`); }
+      else if (h) { flushP(); flushL(); const n = h[1].length + 1; out.push(`<h${n}>${inline(h[2])}</h${n}>`); }
+      else if (ul || ol) { flushP(); const t = ul ? 'ul' : 'ol'; if (list && list.t !== t) flushL(); list = list || { t, items: [] }; list.items.push((ul || ol)[1]); }
+      else if (bq) { flushP(); flushL(); out.push(`<blockquote>${inline(bq[1])}</blockquote>`); }
+      else if (!line.trim()) { flushP(); flushL(); }
+      else { flushL(); para.push(line); }
+    }
+    flushP(); flushL();
+    // An unfinished inline code block while streaming still renders as code.
+    return out.join('').replace(/\u0000(\d+)\u0000/g, (_, i) => `<pre><code>${esc(blocks[+i].code)}</code></pre>`);
+  }
+
+  const STARTERS = [
+    ['Write a friendly reminder', 'to a customer whose invoice is 30 days late'],
+    ['What is our warranty on new installs?', 'answered from your company files'],
+    ['Plan my Monday', 'turn a messy to-do list into a schedule'],
+    ['Explain this in plain words', 'paste a contract clause or attach a file'],
+  ];
+  function renderChat() {
+    if (!chatId || !curChat()) { if (chats[0]) chatId = chats[0].id; }
+    const c = curChat();
+    $('conv-list').innerHTML = chats.map(x => `<li class="conv" aria-current="${x.id === chatId}"><button type="button" data-conv="${x.id}" title="${esc(x.title)}">${esc(x.title)}</button>
+      <button class="mini" type="button" data-rename="${x.id}" aria-label="Rename ${esc(x.title)}"><svg viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16z"/></svg></button>
+      <button class="mini" type="button" data-del="${x.id}" aria-label="Delete ${esc(x.title)}"><svg viewBox="0 0 24 24"><path d="M5 7h14M10 7V4h4v3M7 7l1 13h8l1-13"/></svg></button></li>`).join('')
+      || '<li class="conv-note">No chats yet.</li>';
+    const th = $('thread');
+    if (!c || !c.messages.length) {
+      th.innerHTML = `<div class="empty-chat"><h2>What can I help with?</h2><p class="meta" style="margin:0">Ask anything. Questions about your company are answered from your own files.</p>
+        <div class="starters">${STARTERS.map(([a, b]) => `<button class="starter" type="button" data-start="${esc(a)}">${esc(a)}<span>${esc(b)}</span></button>`).join('')}</div></div>`;
+      return;
+    }
+    th.innerHTML = c.messages.map((m, i) => msgHtml(m, i, i === c.messages.length - 1)).join('');
+  }
+  function msgHtml(m, i, last) {
+    if (m.role === 'user') {
+      const file = m.file ? `<span class="attach-chip"><span>${esc(m.file)}</span></span>` : '';
+      return `<div class="m user" data-m="${i}">${file}<div class="body">${esc(m.shown != null ? m.shown : m.content)}</div><div class="tools"><button type="button" data-copy="${i}">Copy</button></div></div>`;
+    }
+    const streaming = chatBusy && last;
+    const src = m.sources && m.sources.length ? `<p class="src">From ${esc(words(m.sources.map(s => s.label)))}</p>` : '';
+    const err = m.error ? `<p class="msg err">${esc(m.error)}</p>` : '';
+    const tools = streaming ? '' : `<div class="tools"><button type="button" data-copy="${i}">Copy</button>${last ? '<button type="button" data-regen>Regenerate</button>' : ''}</div>`;
+    return `<div class="m assistant" data-m="${i}"><svg class="av-m" viewBox="0 0 120 104" aria-hidden="true"><use href="#mark"/></svg>
+      <div class="body md" aria-live="${streaming ? 'polite' : 'off'}">${md(m.content)}${streaming ? '<span class="caret" aria-hidden="true"></span>' : ''}</div>${src}${err}${tools}</div>`;
+  }
+  function paintLast() {
+    const c = curChat(); if (!c) return;
+    const i = c.messages.length - 1, el = $('thread').querySelector(`[data-m="${i}"]`);
+    if (el) el.outerHTML = msgHtml(c.messages[i], i, true); else renderChat();
+  }
+  function setBusy(b) {
+    chatBusy = b;
+    $('chat-go').hidden = !!b; $('chat-stop').hidden = !b;
+    $('chat-go').disabled = !$('chat-in').value.trim() && !attach;
+  }
+
+  // The in-browser demo responder mirrors the dev server: company files first, else a labelled demo reply.
+  const SKIP = ['the', 'a', 'an', 'do', 'we', 'our', 'is', 'are', 'what', 'how', 'of', 'to', 'for', 'you'];
+  const kw = s => s.toLowerCase().split(/[^a-z0-9]+/).filter(w => w.length > 1 && !SKIP.includes(w));
+  function demoAnswer(text) {
+    const a = kw(text);
+    let best = null, score = 0;
+    for (const x of (V && V.knowledge ? V.knowledge.answers : [])) {
+      const s = kw(x.question); if (!s.length || !x.answer) continue;
+      const r = s.filter(w => a.includes(w)).length / s.length;
+      if (r >= .5 && r > score) { best = x; score = r; }
+    }
+    if (best) return { text: best.answer, sources: best.sources };
+    const short = text.length > 140 ? text.slice(0, 140) + '…' : text;
+    return { text: `**This is a demo reply.** A real model writes answers here once the Arkhon runtime is running on this computer.\n\nYou asked: “${short}”\n\nWhat works right now:\n\n- Questions your company files answer (try *What is our warranty on new installs?*) are answered from those files, with sources.\n- Your conversations are saved in this browser only. They never leave this computer.\n\nTo get real replies, start the Arkhon runtime and restart the suite with \`ARKHON_RUNTIME_URL\` pointing at it.`, sources: [] };
+  }
+  async function* demoStream(text, signal) {
+    const a = demoAnswer(text);
+    yield { event: 'meta', data: { mode: 'demo', label: 'Demo replies' } };
+    for (const piece of a.text.match(/[^ \n]*[ \n]?/g).filter(Boolean)) {
+      if (signal.aborted) return;
+      yield { event: 'token', data: { t: piece } };
+      await new Promise(r => setTimeout(r, 28));
+    }
+    if (a.sources.length) yield { event: 'sources', data: { sources: a.sources } };
+    yield { event: 'done', data: {} };
+  }
+  async function* serverStream(messages, signal) {
+    const r = await fetch('/api/chat', { method: 'POST', signal, headers: headers({ 'content-type': 'application/json' }), body: JSON.stringify({ messages }) });
+    if (!r.ok) { let m = 'That didn’t work. Try again.'; try { m = (await r.json()).error || m; } catch (_) {} yield { event: 'error', data: { message: m } }; return; }
+    const reader = r.body.getReader(), dec = new TextDecoder(); let buf = '';
+    for (;;) {
+      const { value, done } = await reader.read(); if (done) break;
+      buf += dec.decode(value, { stream: true });
+      let i;
+      while ((i = buf.indexOf('\n\n')) >= 0) {
+        const block = buf.slice(0, i); buf = buf.slice(i + 2);
+        const ev = (block.match(/^event: (.*)$/m) || [])[1], data = (block.match(/^data: (.*)$/m) || [])[1];
+        if (ev && data) { try { yield { event: ev, data: JSON.parse(data) }; } catch (_) {} }
+      }
+    }
+  }
+  async function chatSend(text, file) {
+    let c = curChat() || chatNew();
+    const content = file ? `${text}\n\nAttached file “${file.name}”:\n\`\`\`\n${file.text}\n\`\`\`` : text;
+    c.messages.push({ role: 'user', content, shown: text, file: file ? file.name : null });
+    if (c.title === 'New chat') c.title = (text || (file && file.name) || 'New chat').replace(/\s+/g, ' ').slice(0, 48);
+    return chatReply(c);
+  }
+  async function chatReply(c) {
+    const history = c.messages.filter(m => !m.error || m.content).map(m => ({ role: m.role, content: m.content }));
+    const reply = { role: 'assistant', content: '', sources: [] };
+    c.messages.push(reply); c.updated = Date.now();
+    chats = [c, ...chats.filter(x => x !== c)]; saveChats();
+    const ctl = new AbortController(); setBusy(ctl); renderChat(); scrollThread();
+    const lastUser = [...history].reverse().find(m => m.role === 'user').content;
+    let pending = false;
+    const flush = () => { pending = false; paintLast(); scrollThread(true); };
+    try {
+      const stream = live ? serverStream(history, ctl.signal) : demoStream(lastUser, ctl.signal);
+      for await (const { event, data } of stream) {
+        if (event === 'meta') { chatMode = data; paintChatTop(); }
+        else if (event === 'token') { reply.content += data.t; if (!pending) { pending = true; requestAnimationFrame(flush); } }
+        else if (event === 'sources') reply.sources = data.sources;
+        else if (event === 'error') reply.error = data.message;
+      }
+    } catch (e) {
+      if (e && e.name !== 'AbortError') reply.error = 'Arkhon isn’t responding. Check that it’s running and try again.';
+    }
+    if (ctl.signal.aborted && !reply.content) reply.content = '_Stopped._';
+    setBusy(null); saveChats(); renderChat(); scrollThread(true);
+  }
+  function scrollThread(soft) {
+    const t = $('thread'), last = t.lastElementChild; if (!last) return;
+    const r = last.getBoundingClientRect(), limit = innerHeight - 200;
+    if (r.bottom > limit) scrollBy({ top: r.bottom - limit, behavior: soft || reduceMotion() ? 'auto' : 'smooth' });
+  }
+  const chatIn = $('chat-in');
+  function sizeInput() { chatIn.style.height = 'auto'; chatIn.style.height = Math.min(220, chatIn.scrollHeight) + 'px'; $('chat-go').disabled = !chatIn.value.trim() && !attach; }
+  chatIn.addEventListener('input', sizeInput);
+  chatIn.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) { e.preventDefault(); $('composer').requestSubmit(); } });
+  $('composer').addEventListener('submit', e => {
+    e.preventDefault(); if (chatBusy) return;
+    const text = chatIn.value.trim(); if (!text && !attach) return;
+    const f = attach; attach = null; $('attach-chip').hidden = true; chatIn.value = ''; sizeInput();
+    chatSend(text || 'Please read this file.', f);
+  });
+  $('chat-stop').addEventListener('click', () => { if (chatBusy) chatBusy.abort(); });
+  $('chat-file').addEventListener('change', e => {
+    const f = e.target.files[0]; e.target.value = ''; if (!f) return;
+    if (f.size > 200 * 1024) { $('attach-chip').hidden = false; $('attach-chip').innerHTML = '<span>That file is too big. Attach a text file under 200 KB.</span><button type="button" data-unattach aria-label="Close">×</button>'; return; }
+    const rd = new FileReader();
+    rd.onload = () => { attach = { name: f.name, text: String(rd.result) }; $('attach-chip').hidden = false;
+      $('attach-chip').innerHTML = `<span>${esc(f.name)} · read on this computer</span><button type="button" data-unattach aria-label="Remove ${esc(f.name)}">×</button>`; sizeInput(); };
+    rd.readAsText(f);
+  });
+  $('attach-chip').addEventListener('click', e => { if (e.target.closest('[data-unattach]')) { attach = null; $('attach-chip').hidden = true; sizeInput(); } });
+  $('conv-side').addEventListener('click', e => {
+    if (e.target.closest('#conv-new')) { if (chatBusy) chatBusy.abort(); chatNew(); renderChat(); chatIn.focus(); return; }
+    if (e.target.closest('#conv-toggle')) { const s = $('conv-side'); s.dataset.open = s.dataset.open === 'true' ? 'false' : 'true'; $('conv-toggle').setAttribute('aria-expanded', s.dataset.open); return; }
+    const o = e.target.closest('[data-conv]'); if (o) { if (chatBusy) chatBusy.abort(); chatId = o.dataset.conv; renderChat(); return; }
+    const rn = e.target.closest('[data-rename]');
+    if (rn) { const c = chats.find(x => x.id === rn.dataset.rename); const t = prompt('Name this chat', c.title); if (t && t.trim()) { c.title = t.trim().slice(0, 60); saveChats(); renderChat(); } return; }
+    const d = e.target.closest('[data-del]');
+    if (d) { if (!confirm('Delete this chat? It is removed from this computer.')) return; chats = chats.filter(x => x.id !== d.dataset.del); if (chatId === d.dataset.del) chatId = chats[0] ? chats[0].id : null; saveChats(); renderChat(); }
+  });
+  $('thread').addEventListener('click', async e => {
+    const s = e.target.closest('[data-start]'); if (s) { chatSend(s.dataset.start); return; }
+    const c = curChat(); if (!c) return;
+    const cp = e.target.closest('[data-copy]');
+    if (cp) { const m = c.messages[+cp.dataset.copy]; try { await navigator.clipboard.writeText(m.shown != null ? m.shown : m.content); cp.textContent = 'Copied'; } catch (_) { cp.textContent = 'Couldn’t copy'; } setTimeout(() => { cp.textContent = 'Copy'; }, 1400); return; }
+    const cc = e.target.closest('[data-copycode]');
+    if (cc) { try { await navigator.clipboard.writeText(cc.closest('.codeblk').querySelector('code').textContent); cc.textContent = 'Copied'; } catch (_) { cc.textContent = 'Couldn’t copy'; } setTimeout(() => { cc.textContent = 'Copy'; }, 1400); return; }
+    if (e.target.closest('[data-regen]') && !chatBusy) { if (c.messages[c.messages.length - 1].role === 'assistant') c.messages.pop(); chatReply(c); }
+  });
+
+  load().then(chatStatus);
+  route(); markDock(); enterView();
 })();
 </script>
