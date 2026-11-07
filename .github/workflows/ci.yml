@@ -34,6 +34,27 @@ jobs:
           mkdir -p /tmp/swtpm
           swtpm socket --tpmstate dir=/tmp/swtpm --tpm2 --server type=tcp,port=2321 --ctrl type=tcp,port=2322 --flags not-need-init,startup-clear --daemon
           ARKHON_TEST_TCTI="swtpm:host=127.0.0.1,port=2321" cargo test -p arkhon-tpm --features tpm -- --nocapture
+          ARKHON_TEST_TCTI="swtpm:host=127.0.0.1,port=2321" cargo test -p arkhon-runtime --features tpm -- --nocapture
+  rust-windows-macos:
+    # The runtime ships to Windows and macOS customers: build and test the whole workspace there.
+    # Linux-only code (memload/launch, the Phase 1 binaries, TPM via tss-esapi) is cfg-gated.
+    #
+    # Postgres: the license server's DB tests skip without ARKHON_TEST_DATABASE_URL but assert
+    # when CI is set (GitHub always sets it). Service containers only run on Linux runners, so
+    # instead of installing Postgres on two OSes we build the server here (`cargo build
+    # --workspace`) and leave its DB tests to the Linux `rust` job, which runs them against a
+    # real Postgres. Nothing in the server is OS-specific; the runtime, crates and suite run their
+    # full test suites on both OSes.
+    strategy:
+      fail-fast: false
+      matrix: {os: [windows-latest, macos-latest]}
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@1.99.1
+      - uses: Swatinem/rust-cache@v2
+      - run: cargo build --workspace --all-targets
+      - run: cargo test --workspace --exclude arkhon-license-server
   python:
     runs-on: ubuntu-latest
     steps:
