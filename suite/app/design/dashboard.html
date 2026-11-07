@@ -718,8 +718,137 @@ h2 { font-weight: 600; }
 .to-bottom svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 2; }
 .codeblk .tk-k { color: #c4a7ff; } .codeblk .tk-s { color: #a5d6a7; } .codeblk .tk-n { color: #ffcc80; } .codeblk .tk-c { color: #8b93a1; font-style: italic; } .codeblk .tk-f { color: #8fc7ff; }
 @media (max-width: 760px) { .conv-side[data-open="false"] .conv-q { display: none; } }
+/* ark-v3-css:begin */
+/* =====================================================================================
+   HORIZON v3 — a world you move through (see README "Horizon v3").
+   html.gl is set only when the WebGL world is running; without it every rule below that is
+   scoped to html.gl falls away and the v2 Canvas-2D heroes (then the CSS sky) carry on.
+   ===================================================================================== */
+:root {
+  --glass: color-mix(in srgb, var(--card) 72%, transparent);
+  --glass-strong: color-mix(in srgb, var(--card) 86%, transparent);
+  --veil: color-mix(in srgb, var(--bg) 90%, transparent);
+  --edge-a: rgba(255,255,255,.95); --edge-b: rgba(255,255,255,.28); --edge-c: rgba(17,17,19,.10);
+  --emboss: 0 1px 0 rgba(255,255,255,.85), 0 -1px 0 rgba(17,17,19,.10);
+  --scrim: color-mix(in srgb, var(--bg) 80%, transparent);
+  --dur-fold: 1ms; --dur-fly-cam: 1400ms; --dur-intro: 2500ms; --magnet: 7px;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --edge-a: rgba(255,255,255,.75); --edge-b: rgba(255,255,255,.14); --edge-c: rgba(255,255,255,.06);
+  --emboss: 0 1px 0 rgba(0,0,0,.6), 0 -1px 0 rgba(255,255,255,.12); --scrim: color-mix(in srgb, var(--bg) 76%, transparent); } }
+:root[data-theme="dark"] { --edge-a: rgba(255,255,255,.75); --edge-b: rgba(255,255,255,.14); --edge-c: rgba(255,255,255,.06);
+  --emboss: 0 1px 0 rgba(0,0,0,.6), 0 -1px 0 rgba(255,255,255,.12); --scrim: color-mix(in srgb, var(--bg) 76%, transparent); }
+
+/* Static last-resort sky: shows if neither WebGL nor the 2D canvas paints. */
+.hero { background: linear-gradient(to bottom, var(--sky-top), var(--sky-low) 78%, var(--bg)); }
+
+/* ---------- The world ---------- */
+#world { position: fixed; inset: 0; width: 100vw; height: 100vh; height: 100lvh; z-index: -1; display: none; pointer-events: none; view-transition-name: world; }
+html.gl #world { display: block; }
+html.gl body { background: transparent; }
+html.gl .hero { background: none; }
+html.gl .hero > .hz { display: none; }
+/* Content rises over the land on a veil that feathers in below the hero (the "content band"). */
+html.gl main.view { min-height: 100vh; background: linear-gradient(to bottom, transparent 0, transparent var(--fold, 480px), var(--veil) calc(var(--fold, 480px) + 160px)); }
+html.gl body { padding-bottom: 0; }
+html.gl main.view { padding-bottom: calc(var(--dock-h) + 56px + env(safe-area-inset-bottom, 0px)); }
+::view-transition-old(world) { display: none; }
+::view-transition-new(world) { animation: none; }
+::view-transition-group(world) { animation: none; }
+
+/* A soft scrim behind hero text keeps WCAG AA over any sky (verified numerically). */
+html.gl .hero .hero-in { isolation: isolate; }
+html.gl .hero .hero-in::before { content: ""; position: absolute; z-index: -1; inset: -90px -14% -80px -18%; pointer-events: none;
+  background: radial-gradient(closest-side, var(--scrim) 58%, color-mix(in srgb, var(--bg) 36%, transparent) 82%, transparent 100%); }
+
+/* ---------- Type: display scale ---------- */
+.hero h1 { font-size: clamp(42px, 6.6vw, 80px); line-height: .98; letter-spacing: -.048em; font-weight: 640; text-wrap: balance; font-feature-settings: "ss01", "cv11"; }
+.hero.compact h1 { font-size: clamp(36px, 5vw, 56px); letter-spacing: -.042em; }
+.hero .lede { font-size: clamp(17px, 1.5vw, 19px); line-height: 1.5; text-wrap: pretty; }
+.hero .eyebrow, .hero .example { letter-spacing: .14em; }
+/* Embossed numerals */
+.hero-stat b, .kpi b, .big-n, .stat b { text-shadow: var(--emboss); font-feature-settings: "tnum", "ss01"; }
+
+/* ---------- Materials: glass + a chrome hairline lit by the pointer ---------- */
+html.gl .card, html.gl .ask, html.gl .ideas button, html.gl .qbtn, html.gl .search { background: var(--glass); backdrop-filter: blur(22px) saturate(165%); -webkit-backdrop-filter: blur(22px) saturate(165%); }
+html.gl .card { position: relative; }
+html.gl .card::after, html.gl .ask::after { content: ""; position: absolute; inset: 0; border-radius: inherit; padding: 1px; pointer-events: none;
+  background: radial-gradient(260px circle at var(--mx, 50%) var(--my, -60%), var(--edge-a), var(--edge-b) 42%, transparent 72%), linear-gradient(165deg, var(--edge-b), transparent 38%, var(--edge-c) 70%, var(--edge-b));
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+}
+html.gl .ask { position: relative; }
+/* Focus stays visible over glass: a double ring (focus colour + page colour). */
+html.gl :focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; box-shadow: 0 0 0 6px color-mix(in srgb, var(--bg) 85%, transparent); }
+
+/* ---------- Dock: a glass capsule with depth and the scene reflected in it ---------- */
+html.gl .dock { background: color-mix(in srgb, var(--card) 46%, transparent); backdrop-filter: blur(26px) saturate(190%) brightness(1.04); -webkit-backdrop-filter: blur(26px) saturate(190%) brightness(1.04);
+  border: 1px solid var(--edge-b);
+  box-shadow: 0 1px 0 var(--edge-a) inset, 0 -1px 0 var(--edge-c) inset, 0 2px 4px rgba(0,0,0,.06), 0 24px 60px -18px rgba(0,0,0,.45), 0 60px 90px -60px rgba(0,0,0,.35); }
+html.gl .dock::before { content: ""; position: absolute; inset: 1px 10% auto; height: 46%; border-radius: 999px 999px 40% 40%; pointer-events: none;
+  background: linear-gradient(to bottom, rgba(255,255,255,.16), rgba(255,255,255,0)); }
+html.gl .dock::after { content: ""; position: absolute; left: 12%; right: 12%; top: calc(100% + 4px); height: 14px; border-radius: 50%; pointer-events: none;
+  background: radial-gradient(ellipse at 50% 0, rgba(0,0,0,.28), transparent 70%); filter: blur(4px); }
+
+/* ---------- Palette: a cinematic glass sheet ---------- */
+html.gl .pal { background: color-mix(in srgb, var(--bg) 22%, rgba(0,0,0,.30)); backdrop-filter: blur(6px) saturate(120%); -webkit-backdrop-filter: blur(6px) saturate(120%); perspective: 1200px; }
+html.gl .pal-box { background: var(--glass-strong); backdrop-filter: blur(34px) saturate(180%); -webkit-backdrop-filter: blur(34px) saturate(180%); border: 1px solid var(--edge-b);
+  box-shadow: 0 1px 0 var(--edge-a) inset, 0 50px 120px -30px rgba(0,0,0,.55), 0 0 0 1px var(--edge-c); }
+@media (prefers-reduced-motion: no-preference) {
+  html.gl .pal:not([hidden]) .pal-box { animation: sheet 520ms var(--ease) both; transform-origin: 50% 0; }
+  @keyframes sheet { from { opacity: 0; transform: translateY(-18px) rotateX(14deg) scale(.96); filter: blur(6px); } to { opacity: 1; transform: none; filter: none; } }
+}
+
+/* ---------- Cursor: a glow dot that becomes a ring over things you can press ---------- */
+#cur { position: fixed; left: 0; top: 0; z-index: 60; width: 34px; height: 34px; margin: -17px 0 0 -17px; pointer-events: none; display: none; }
+#cur i { position: absolute; inset: 0; border-radius: 50%; transform: scale(.24); background: color-mix(in srgb, var(--fg) 85%, transparent);
+  box-shadow: 0 0 18px 4px color-mix(in srgb, var(--glow-2) 100%, transparent), 0 0 0 0 transparent; transition: transform 260ms var(--spring-soft, var(--ease)), background 200ms, border-color 200ms, opacity 200ms; border: 1.5px solid transparent; }
+#cur.ring i { transform: scale(1); background: color-mix(in srgb, var(--fg) 6%, transparent); border-color: color-mix(in srgb, var(--fg) 55%, transparent); }
+#cur.down i { transform: scale(.8); }
+#cur.off i { opacity: 0; }
+html.cur #cur { display: block; }
+html.cur, html.cur body, html.cur a, html.cur button, html.cur [role="button"], html.cur summary, html.cur label { cursor: none; }
+html.cur :is(input, textarea, select, [contenteditable]) { cursor: auto; }
+@media (hover: none), (pointer: coarse), (prefers-reduced-motion: reduce) { #cur { display: none !important; } html.cur * { cursor: auto !important; } }
+
+/* Magnetic buttons move with the `translate` property so presses (transform: scale) still work. */
+.mag { transition: translate 420ms var(--spring-soft, var(--ease)); }
+
+/* ---------- Cinematic scroll: the hero title folds away, bands rise with depth ---------- */
+@media (prefers-reduced-motion: no-preference) {
+  @supports (animation-timeline: scroll()) {
+    html.gl .hero .hero-in { animation: fold linear both; animation-timeline: scroll(root); animation-range: 0 75vh; transform-origin: 50% 0; }
+    html.gl main.view > .band { animation: rise-in linear both; animation-timeline: view(); animation-range: entry 0% entry 30vh; }
+  }
+  html.gl.sd-js .hero .hero-in { transform-origin: 50% 0; transform: perspective(1000px) translateY(calc(var(--sp, 0) * -9vh)) rotateX(calc(var(--sp, 0) * 32deg)) scale(calc(1 - var(--sp, 0) * .06)); opacity: calc(1 - var(--sp, 0) * 1.1); }
+  @keyframes fold { to { transform: perspective(1000px) translateY(-9vh) rotateX(32deg) scale(.94); opacity: 0; filter: blur(3px); } }
+  @keyframes rise-in { from { translate: 0 56px; scale: .985; opacity: .25; } to { translate: 0 0; scale: 1; opacity: 1; } }
+}
+
+/* ---------- Intro: a sunrise where the mark assembles from light (Home, first launch) ---------- */
+#intro { position: fixed; inset: 0; z-index: 50; display: none; pointer-events: none; }
+html.intro #intro { display: block; }
+html.intro main .hero .hero-in, html.intro .dock { opacity: 0; }
+main .hero .hero-in, .dock { transition: opacity 700ms var(--ease); }
+#intro .ttl { position: absolute; left: 50%; top: 38%; transform: translate(-50%, -50%); margin: 0; font-size: clamp(13px, 1.2vw, 15px); font-weight: 600; letter-spacing: .6em; text-indent: .6em; text-transform: uppercase; color: var(--fg);
+  opacity: 0; animation: introtitle 2500ms var(--ease) both; }
+@keyframes introtitle { 0% { opacity: 0; letter-spacing: 1.2em; } 35% { opacity: 1; } 80% { opacity: 1; letter-spacing: .6em; } 100% { opacity: 0; letter-spacing: .5em; } }
+#intro .skip { pointer-events: auto; position: absolute; right: max(20px, env(safe-area-inset-right, 0px)); bottom: calc(24px + env(safe-area-inset-bottom, 0px)); height: 40px; padding: 0 18px; border-radius: 999px;
+  border: 1px solid var(--edge-b); background: var(--glass); backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px); color: var(--fg); font: 500 14px var(--font); }
+
+/* ---------- Reduced transparency: solid surfaces, no blur, a solid page under the hero ---------- */
+@media (prefers-reduced-transparency: reduce) {
+  html.gl .card, html.gl .ask, html.gl .ideas button, html.gl .qbtn, html.gl .search, html.gl .pal-box, html.gl .dock, #intro .skip { background: var(--card); backdrop-filter: none; -webkit-backdrop-filter: none; }
+  html.gl main.view { background: linear-gradient(to bottom, transparent 0, transparent var(--fold, 480px), var(--bg) calc(var(--fold, 480px) + 1px)); }
+  html.gl .pal { backdrop-filter: none; -webkit-backdrop-filter: none; }
+  html.gl .hero .hero-in::before { background: radial-gradient(closest-side, var(--bg) 50%, color-mix(in srgb, var(--bg) 60%, transparent) 78%, transparent 100%); }
+}
+/* ark-v3-css:end */
 </style>
 
+<!-- ark-v3-dom:begin -->
+<canvas id="world" aria-hidden="true"></canvas>
+<div id="intro"><p class="ttl" aria-hidden="true">Arkhon</p><button class="skip" type="button">Skip intro</button></div>
+<div id="cur" aria-hidden="true"><i></i></div>
+<!-- ark-v3-dom:end -->
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
   <defs>
     <linearGradient id="chrome" x1="0" y1="0" x2="1" y2="1">
@@ -1648,6 +1777,575 @@ window.ArkHero = (() => {
 })();
 </script>
 
+<script>/* ark-world:begin */
+/* =====================================================================================
+   Horizon v3 world: one hand-written WebGL shader scene (no libraries). WebGL2 first,
+   then WebGL1 (the shader is GLSL ES 1.00 so one source serves both); if neither is
+   available create() returns null and the page keeps its Canvas-2D heroes, whose CSS
+   gradient is the last, static fallback.
+   One full-screen triangle, one fragment pass:
+     sky        time-of-day gradient, sun/moon disc, scattering glow, stars (night), aurora (chat)
+     monument   the Arkhon mark extruded: two SDF polygons with fake depth (swept side faces),
+                bevel normals, sky-reflecting brushed chrome, rim light, slow idle turn
+     terrain    3-5 fbm ridge layers receding to a curved horizon, aerial haze, strata lines
+     data       towers / scan beam / waveform ridge / light trail / dome from the page's numbers
+     post       grain + chromatic vignette
+   Quality tiers (adaptive): 0 = DPR<=1.5, 5 octaves, 5 layers; 1 = 0.75x res, 4/4; 2 = 0.5x
+   res, 3/3, no haze; 3 = tier 2 at 30 fps. A tier drops when the median GPU time (timer query)
+   or the median frame interval says the budget is blown; it never climbs back (no flicker).
+   ===================================================================================== */
+window.ArkWorld = (() => {
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)');
+  const VS = 'attribute vec2 a;void main(){gl_Position=vec4(a,0.,1.);}';
+  const FS = `
+#ifdef GL_FRAGMENT_PRECISION_HIGH
+precision highp float;
+#else
+precision mediump float;
+#endif
+uniform vec2 uRes; uniform float uTime, uHy, uDolly, uDark, uMode, uNT, uNS, uLevel, uIntro, uOct, uLay, uHaze, uGrow, uAsp;
+uniform vec3 uSkyTop, uSkyLow, uGlow, uGround, uLand, uSage, uBar;
+uniform vec4 uSun; uniform vec4 uTw[16]; uniform float uSer[16];
+uniform vec3 uMon; uniform vec4 uEv; uniform vec2 uSpan; uniform float uPan, uDH;
+float h1(float n){return fract(sin(mod(n,4096.))*43758.5453);}
+float h2(vec2 p){return fract(sin(dot(mod(p,4096.),vec2(127.1,311.7)))*43758.5453);}
+float n1(float x){float i=floor(x),f=fract(x);f=f*f*(3.-2.*f);return mix(h1(i),h1(i+1.),f);}
+float n2(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);
+  return mix(mix(h2(i),h2(i+vec2(1,0)),f.x),mix(h2(i+vec2(0,1)),h2(i+vec2(1,1)),f.x),f.y);}
+float fbm(float x){float s=0.,a=.5;for(int i=0;i<5;i++){if(float(i)>=uOct)break;s+=a*n1(x);x=x*2.03+7.1;a*=.5;}return s;}
+float curv(float x){return x*x/(3.*uAsp);}
+// Mark polygons (viewBox 120x104, y down). Left: 4 points; right: 5.
+float sdSeg(vec2 p,vec2 a,vec2 b,inout float s){vec2 e=b-a,w=p-a;vec2 q=w-e*clamp(dot(w,e)/max(dot(e,e),1e-6),0.,1.);
+  bvec3 c=bvec3(p.y>=a.y,p.y<b.y,e.x*w.y>e.y*w.x);if(all(c)||all(not(c)))s=-s;return dot(q,q);}
+float sdL(vec2 p){float s=1.;float d=sdSeg(p,vec2(60,2),vec2(4,98),s);d=min(d,sdSeg(p,vec2(4,98),vec2(22,98),s));
+  d=min(d,sdSeg(p,vec2(22,98),vec2(58,34),s));d=min(d,sdSeg(p,vec2(58,34),vec2(60,2),s));return s*sqrt(d);}
+float sdR(vec2 p){float s=1.;float d=sdSeg(p,vec2(68,20),vec2(116,98),s);d=min(d,sdSeg(p,vec2(116,98),vec2(98,98),s));
+  d=min(d,sdSeg(p,vec2(98,98),vec2(66,44),s));d=min(d,sdSeg(p,vec2(66,44),vec2(66,24),s));d=min(d,sdSeg(p,vec2(66,24),vec2(68,20),s));return s*sqrt(d);}
+float sdMark(vec2 p){return min(sdL(p),sdR(p));}
+vec3 env(vec3 r){ // what the chrome reflects: the same sky, a bright horizon line, dark land
+  float y=r.y; vec3 up=mix(uSkyLow,uSkyTop,clamp(y*1.4,0.,1.));
+  vec3 dn=mix(uBar*.35,uBar*.8,clamp(-y*2.,0.,1.));
+  vec3 c=y>0.?up*1.05:dn; c+=uGlow*exp(-abs(y)*30.)*.9; c+=vec3(1.)*pow(max(0.,dot(r,normalize(vec3(uSun.x-uMon.x,uSun.y-uHy+.2,.6)))),24.)*uSun.z;
+  return c;}
+float ridge(float x,float k){
+  float z=1.+k*1.3, ze=max(.4,z-uDolly*.9), sc=z/ze;
+  float wx=(x/sc)*(2.6-k*.28)+uPan*(1.6/z)+k*17.31;
+  float base=mix(-.085,.03,k/4.), amp=mix(.075,.06,k/4.);
+  float h=(base+amp*(fbm(wx)-.42))*sc;
+  if(uMode>2.5&&uMode<3.5&&k<.5){ // meetings: the nearest ridge becomes the waveform of meeting lengths
+    float wv=0.;for(int i=0;i<16;i++){if(float(i)>=uNS)break;float xi=mix(uSpan.x,uSpan.y,(float(i)+.5)/max(uNS,1.));
+      wv+=uSer[i]*exp(-pow((x-xi)*26.,2.))*(.8+.2*sin(uTime*2.2+float(i)*1.7));}
+    h+=wv*.11*uGrow;}
+  return uHy+h-curv(x)*(1.+k*.1);}
+void main(){
+  vec2 p=(gl_FragCoord.xy-.5*uRes)/uRes.y; float t=uTime, I=uIntro;
+  float night=uSun.w, ty=clamp((p.y-uHy)/max(.5-uHy,.05),0.,1.);
+  // ---- sky
+  vec3 col=mix(uSkyLow,uSkyTop,smoothstep(0.,1.,pow(ty,.8)));
+  vec2 sp=uSun.xy; sp.y+=mix(-.22,0.,smoothstep(.15,.8,I));
+  float ds=length(p-sp);
+  col+=uGlow*(exp(-ds*3.2)*.42+exp(-ds*13.)*.5)*uSun.z;          // mie halo around the sun
+  col+=uGlow*exp(-max(p.y-uHy,0.)*8.)*.38;                          // rayleigh band low on the sky
+  vec3 sunC=mix(vec3(1.,.93,.82),vec3(.93,.95,1.),night);
+  float disc=smoothstep(.034,.03,ds); float limb=1.-.35*pow(clamp(ds/.034,0.,1.),2.);
+  if(night>.5){disc*=1.-smoothstep(.032,.028,length(p-sp-vec2(.014,.008)));}  // a crescent moon
+  col=mix(col,sunC*limb*(1.+uDark*.2),disc*uSun.z*(p.y>uHy?1.:0.));
+  if(night>0.){vec2 g=(p+vec2(uPan*.012,0.))*140.;vec2 c=floor(g);float r=h2(c);
+    if(r>.982){vec2 o=vec2(h2(c+3.1),h2(c+7.7));float d=length(fract(g)-o);
+      float tw=.6+.4*sin(t*(1.+r*3.)+r*40.);col+=vec3(.9,.94,1.)*smoothstep(.12,0.,d)*tw*night*mix(.25,1.,uDark)*smoothstep(.0,.25,ty);}}
+  if(uMode>4.5&&uMode<5.5){ // chat: an aurora that brightens while a reply streams
+    vec3 au=vec3(0.);for(int i=0;i<3;i++){float fi=float(i);
+      float y0=uHy+.15+fi*.07+.07*(fbm(p.x*1.1+t*.05+fi*3.)-.45);float dy=p.y-y0;
+      float shape=dy>0.?exp(-dy*(7.+fi*3.)):exp(dy*70.);
+      float rays=.45+.55*n1(p.x*48.+t*.5+fi*11.)*n1(p.x*13.-t*.2+fi*2.);
+      au+=mix(uSage*2.3+vec3(.02,.12,.06),vec3(.5,.45,.95),clamp(dy*5.,0.,1.))*shape*rays*(1.-fi*.28);}
+    col+=au*mix(.22,.6,uDark)*uLevel*smoothstep(0.,.04,p.y-uHy);}
+  // ---- monument: the mark, extruded; turns slowly on its axis
+  float ang=sin(t*.17)*.42+uMon.z, ca=cos(ang), sa=sin(ang);
+  vec2 q=(p-vec2(uMon.x,uHy-.004))/uMon.y; q.x/=max(ca,.2);
+  vec2 mk=vec2(60.+q.x*104.,98.-q.y*104.);
+  float mon=0.; vec3 monC=vec3(0.);
+  if(mk.x>-30.&&mk.x<150.&&mk.y>-10.&&mk.y<104.){
+    float br=1.+.006*sin(t*.8); mk=(mk-vec2(60,98))/br+vec2(60,98);
+    float d=sdMark(mk);
+    float dep=sa*16.; float side=1e3;
+    for(int i=1;i<=4;i++){side=min(side,sdMark(mk+vec2(dep*float(i)/4.,-abs(dep)*.06*float(i)/4.)));}
+    float dis=1.; // intro: the mark assembles from light
+    if(I<1.){float nn=n2(mk*.09)*.7+n2(mk*.31)*.3; float th=smoothstep(.4,.95,I)*1.15; dis=step(nn,th);
+      monC+=uGlow*3.*smoothstep(.06,0.,abs(nn-th))*step(d,0.)*(1.-step(1.,th));}
+    if(d<0.){
+      float e=.6; vec2 gr=vec2(sdMark(mk+vec2(e,0))-d,sdMark(mk+vec2(0,e))-d)/e;
+      float b=4.; float bev=clamp(1.+d/b,0.,1.); vec3 n=normalize(vec3(gr.x*ca, -gr.y, 1.)*vec3(bev*1.6,bev*1.6,1.)+vec3(sa*.7+(mk.x-60.)/220.,(mk.y-58.)/70.,0.));
+      vec3 r=reflect(vec3(0,0,-1),n); vec3 c=env(r);
+      float brush=.94+.06*h1(floor(mk.y*1.7)+floor(mk.x*.2)*31.);
+      float sheen=exp(-pow((mk.x+mk.y*.45)-mod(t*22.,260.)+40.,2.)/180.);
+      float gt=fract((mk.x*.55+mk.y)/150.+ang*.35);   // the brand's brushed-chrome ramp, swept by the turn
+      vec3 ch=gt<.38?mix(vec3(.957,.961,.969),vec3(.604,.627,.671),gt/.38):gt<.62?mix(vec3(.604,.627,.671),vec3(.227,.239,.267),(gt-.38)/.24):mix(vec3(.227,.239,.267),vec3(.788,.8,.827),(gt-.62)/.38);
+      c=mix(ch*mix(.92,.8,uDark),c,.38)*brush+vec3(1.)*sheen*.3;
+      c+=uGlow*smoothstep(-1.4,0.,d)*.9;                                   // rim light
+      monC+=c; mon=dis*smoothstep(.0,-.8,d);
+    } else if(side<0.){
+      float k=clamp(-side/6.,0.,1.); vec3 c=mix(uBar*.55,uBar*.9,k)*(.75+.25*abs(sa));
+      c+=uGlow*.25*smoothstep(-1.,0.,side);
+      monC+=c; mon=dis*smoothstep(0.,-.8,side);
+    }
+  }
+  // ---- terrain: nearest occluding ridge wins
+  float hit=-1.; float rk=0.;
+  for(int i=0;i<5;i++){float k=float(i);if(k>=uLay)break;float kk=k*4./max(uLay-1.,1.);float r=ridge(p.x,kk);if(p.y<r){hit=kk;rk=r;break;}}
+  // the monument stands behind the two nearest ridges
+  if(mon>0.&&(hit<0.||hit>1.6)){col=mix(col,monC,mon);}
+  if(hit>=0.){
+    float fk=hit/4.; vec3 hz=mix(uSkyLow,uGlow,.35);
+    vec3 lc=mix(uLand,hz,fk*.82*(.6+.4*uHaze));
+    float dd=rk-p.y;
+    lc+=uGlow*exp(-dd*uRes.y*.55)*(.55-.3*fk);                           // sunlit rim along every ridge
+    lc*=1.+.05*sin(dd*(180.+hit*60.)+hit*3.)*(1.-fk);                      // engraved strata
+    lc=mix(lc,uGround,smoothstep(.02,.22,uHy-p.y)*.85);                 // land fades into the page
+    col=(hit>1.6&&mon>0.)?mix(lc,monC,mon):lc;
+  }
+  // volumetric haze drifting along the horizon
+  if(uHaze>0.){float f=exp(-abs(p.y-uHy-.012)*13.)*(.55+.45*n2(vec2(p.x*2.5+t*.025+uPan*.2,p.y*7.)));col+=uGlow*f*.28*uHaze;}
+  // ---- data
+  float base=uHy-curv(p.x)+.002, nar=step(uAsp,1.);
+  vec3 ACC=mix(vec3(.12,.36,.24),vec3(.62,.95,.78),uDark), INK=mix(vec3(.15,.15,.17),vec3(.97),uDark); // data light reads on any sky
+  if(uMode<2.5){
+    float beam=uMode>1.5?mix(uSpan.x-.05,uSpan.y+.05,fract(t/4.2)):-9.;
+    for(int i=0;i<16;i++){if(float(i)>=uNT)break;vec4 w=uTw[i];
+      float g=smoothstep(w.w,w.w+.4,uGrow); float bx=uHy-curv(w.x)+.002; float hh=w.y*g;
+      float lit=w.z; if(uMode>1.5)lit=max(lit,step(w.x,beam)*.85);
+      float dx=abs(p.x-w.x), wd=.0028+lit*.0008;
+      if(dx<wd&&p.y>bx-.01&&p.y<bx+hh&&!(hit>=0.&&hit<.9)){
+        float v=(p.y-bx)/max(hh,.001); vec3 body=mix(uLand*1.4+.08,mix(vec3(.85),vec3(.35),v),lit*.0);
+        vec3 chrome=mix(vec3(.17,.17,.19),vec3(1.),.5+.5*sin((p.x-w.x)/wd*1.6+1.2))*(.75+.25*v)*mix(.55,1.,uDark);
+        vec3 c=mix(uBar*.9,chrome,lit);
+        c+=vec3(1.)*.35*exp(-pow(v*hh*30.-mod(t*.9+float(i)*.37,1.)*hh*30.,2.)*2.)*lit;
+        c*=mix(1.,.9+.1*step(.5,fract((p.y-bx)*90.)),1.-lit);           // window strips on unlit towers
+        col=mix(col,c,smoothstep(wd,wd*.6,dx));}
+      vec2 tip=vec2(w.x,bx+hh+.012*g); float dt=length(p-tip);
+      if(p.y>bx+hh&&p.y<tip.y&&dx<.0009&&!(hit>=0.&&hit<.9))col=mix(col,mix(uBar,vec3(.9),lit),.9);
+      float blink=lit>.5?(.65+.35*sin(t*2.4+float(i))):.45;
+      col=mix(col,lit>.5?ACC:INK,clamp(exp(-dt*(lit>.5?70.:150.))*blink*g*(lit*.9+.25),0.,1.));}
+    if(uMode>1.5&&uMode<2.5){float bd=abs(p.x-beam);
+      col=mix(col,ACC,clamp(exp(-bd*240.)*smoothstep(base-.01,base+.2,p.y)*smoothstep(base+.26-nar*.12,base+.03,p.y)*.75,0.,1.));
+      col=mix(col,INK,clamp(exp(-bd*900.)*exp(-abs(p.y-base)*120.),0.,1.));}
+  }
+  if(uMode>3.5&&uMode<4.5){ // reports: a light trail drawing the series across the land
+    float best=1e3,along=0.,tot=0.,at=0.; vec2 prev=vec2(0);
+    for(int i=0;i<16;i++){if(float(i)>=uNS)break;float xi=mix(uSpan.x,uSpan.y,float(i)/max(uNS-1.,1.));
+      vec2 cur=vec2(xi,uHy-curv(xi)+.03+uSer[i]*uDH);
+      if(i>0){vec2 e=cur-prev,w=p-prev;float hseg=clamp(dot(w,e)/dot(e,e),0.,1.);float d=length(w-e*hseg);
+        if(d<best){best=d;at=tot+hseg*length(e);} tot+=length(e);}
+      prev=cur;}
+    float prog=uLevel*tot; float on=step(at,prog);
+    col=mix(col,ACC,clamp((exp(-best*900.)*1.1+exp(-best*110.)*.3)*on*(.55+.45*smoothstep(prog-.6,prog,at)),0.,1.));
+    // the comet head
+    float hx=0.; vec2 hp=vec2(0); prev=vec2(0); tot=0.;
+    for(int i=0;i<16;i++){if(float(i)>=uNS)break;float xi=mix(uSpan.x,uSpan.y,float(i)/max(uNS-1.,1.));
+      vec2 cur=vec2(xi,uHy-curv(xi)+.03+uSer[i]*uDH); if(i>0){float l=length(cur-prev); if(prog>=tot&&prog<=tot+l+1e-4){hp=mix(prev,cur,(prog-tot)/max(l,1e-4));hx=1.;} tot+=l;} prev=cur;}
+    col=mix(col,INK,clamp(exp(-length(p-hp)*160.)*hx*1.2,0.,1.));
+  }
+  if(uMode>5.5){ // privacy: a translucent dome closes over the land; activity stays inside
+    vec2 c=vec2(mix(uSpan.x,uSpan.y,.5),base); vec2 rr=vec2((uSpan.y-uSpan.x)*mix(.58,.5,nar),uDH*1.25)*uLevel;
+    vec2 dq=(p-vec2(c.x,uHy-curv(c.x)))/max(rr,vec2(1e-3)); float d=length(dq)-1.;
+    if(p.y>uHy-curv(p.x)-.004&&rr.x>.01){
+      float fres=exp(-abs(d)*38.)*1.2+(d<0.?pow(clamp(1.+d,0.,1.),5.)*.35:0.);
+      float lat=d<0.?smoothstep(.02,0.,abs(fract(dq.y*5.)-.5)*.6)*.18+smoothstep(.03,0.,abs(fract(dq.x*4.+.5)-.5)*.5)*.12:0.;
+      col=mix(col,ACC,clamp((fres+lat*(1.+d))*.75,0.,1.)); if(d<0.)col=mix(col,ACC,.05);}
+    for(int i=0;i<16;i++){if(float(i)>=uNT)break;vec4 w=uTw[i];
+      vec2 dp=vec2(c.x+(w.x-.5)*rr.x*1.5,uHy-curv(c.x)+.01+abs(sin(t*(1.1+w.z*.6)+float(i)*1.3))*rr.y*.62*w.y);
+      col=mix(col,ACC,clamp(exp(-length(p-dp)*150.)*uLevel*1.2,0.,1.));}
+  }
+  // ---- the horizon line, drawn from the centre outward during the intro
+  float hl=exp(-abs(p.y-(uHy-curv(p.x)))*uRes.y*.9)*smoothstep(I*1.2*uAsp,I*1.2*uAsp-.1,abs(p.x-uMon.x*.4));
+  col+=uGlow*hl*(.35+.65*(1.-smoothstep(.85,1.,I)));
+  // ---- events: an approved card landing (ring) and the all-clear burst
+  if(uEv.x>=0.&&uEv.x<1.){vec2 e=(p-vec2(uEv.z,base+.004))/vec2(1.,.28);float r=.03+.16*(1.-pow(1.-uEv.x,3.));
+    col=mix(col,INK,clamp(exp(-abs(length(e)-r)*200.)*(1.-uEv.x)*1.2,0.,1.));}
+  if(uEv.y>=0.&&uEv.y<1.){float r=length((p-vec2(uEv.z,base))*vec2(1.,1.4));float R=.05+uAsp*.7*(1.-pow(1.-uEv.y,3.));
+    col+=uGlow*exp(-abs(r-R)*14.)*(1.-uEv.y)*.9+uSage*exp(-abs(r-R*.8)*30.)*(1.-uEv.y)*.5;}
+  // ---- intro exposure (pre-dawn to day)
+  if(I<1.){float ex=smoothstep(.0,.55,I);col=mix(col*.18+uSkyTop*.06*uDark,col,ex);}
+  // ---- post: grain + chromatic vignette
+  vec2 uv=gl_FragCoord.xy/uRes; float v=smoothstep(.45,1.25,length((uv-.5)*vec2(uAsp*.75,1.))*1.35);
+  col*=1.-v*mix(.07,.22,uDark); col.r*=1.-v*.025; col.b*=1.+v*.02;
+  col+=(h2(gl_FragCoord.xy+fract(t*.37)*311.)-.5)*mix(.022,.03,uDark);
+  gl_FragColor=vec4(clamp(col,0.,1.),1.);
+}`;
+
+  function parse(c) { // any CSS colour -> [r,g,b] 0..1 (alpha composited over white/black)
+    const m = /rgba?\(([^)]+)\)/.exec(c);
+    if (m) { const v = m[1].split(/[ ,/]+/).filter(Boolean).map(Number); const a = v[3] == null ? 1 : v[3]; return [v[0], v[1], v[2]].map(x => x / 255 * a); }
+    const h = (c || '').replace('#', ''); if (h.length >= 6) return [0, 2, 4].map(i => parseInt(h.slice(i, i + 2), 16) / 255);
+    return [.5, .5, .5];
+  }
+  const TOD = { // sun position (x rel. monument side, y above horizon), intensity, night
+    dawn: { x: -.35, y: .06, k: 1.05, n: 0, top: [.42, .44, .58], low: [1, .82, .66], glow: [1, .78, .55] },
+    day: { x: .3, y: .36, k: .6, n: 0 },
+    dusk: { x: .55, y: .05, k: 1.1, n: 0, top: [.30, .27, .45], low: [1, .66, .48], glow: [1, .62, .40] },
+    night: { x: -.45, y: .27, k: .7, n: 1, top: [.04, .05, .10], low: [.12, .15, .24], glow: [.55, .62, .85] },
+  };
+
+  function create(canvas, opts) {
+    opts = opts || {};
+    let gl = null, v2 = false;
+    try {
+      const a = { antialias: false, alpha: false, depth: false, stencil: false, preserveDrawingBuffer: false, powerPreference: 'default' };
+      gl = canvas.getContext('webgl2', a); v2 = !!gl;
+      if (!gl) gl = canvas.getContext('webgl', a) || canvas.getContext('experimental-webgl', a);
+    } catch (_) { gl = null; }
+    if (!gl) return null;
+    const sh = (type, src) => { const s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s); if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) { console.warn('ArkWorld shader:', gl.getShaderInfoLog(s)); return null; } return s; };
+    const vs = sh(gl.VERTEX_SHADER, VS), fs = sh(gl.FRAGMENT_SHADER, FS);
+    if (!vs || !fs) return null;
+    const pr = gl.createProgram(); gl.attachShader(pr, vs); gl.attachShader(pr, fs); gl.bindAttribLocation(pr, 0, 'a'); gl.linkProgram(pr);
+    if (!gl.getProgramParameter(pr, gl.LINK_STATUS)) { console.warn('ArkWorld link:', gl.getProgramInfoLog(pr)); return null; }
+    gl.useProgram(pr);
+    const buf = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
+    gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
+    const U = {}; ['uRes', 'uTime', 'uHy', 'uDolly', 'uDark', 'uMode', 'uNT', 'uNS', 'uLevel', 'uIntro', 'uOct', 'uLay', 'uHaze', 'uGrow', 'uAsp', 'uSkyTop', 'uSkyLow', 'uGlow', 'uBar', 'uGround', 'uLand', 'uSage', 'uSun', 'uTw', 'uSer', 'uMon', 'uEv', 'uSpan', 'uPan', 'uDH']
+      .forEach(n => { U[n] = gl.getUniformLocation(pr, n); });
+    const dbg = gl.getExtension('WEBGL_debug_renderer_info');
+    const renderer = String(dbg ? gl.getParameter(dbg.UNMASKED_RENDERER_WEBGL) : gl.getParameter(gl.RENDERER));
+    const soft = /swiftshader|llvmpipe|software|basic render/i.test(renderer);
+    // A software renderer (no usable GPU) can't hold 60 fps with the full world: let the caller use the
+    // Canvas-2D scenes instead, which run smoothly on the CPU. `?gl=force` keeps the world testable headless.
+    if (soft && !/[?&]gl=force\b/.test(location.search)) { const lc = gl.getExtension('WEBGL_lose_context'); if (lc) lc.loseContext(); return null; }
+    const tq = v2 ? gl.getExtension('EXT_disjoint_timer_query_webgl2') : gl.getExtension('EXT_disjoint_timer_query');
+    const TIERS = [{ s: 1, oct: 5, lay: 5, haze: 1, fps: 60 }, { s: .75, oct: 4, lay: 4, haze: 1, fps: 60 }, { s: .5, oct: 3, lay: 3, haze: 0, fps: 60 }, { s: .5, oct: 3, lay: 3, haze: 0, fps: 30 }];
+    const S = {
+      tier: soft ? 2 : 0, W: 0, H: 0, dpr: 1, raf: 0, t0: performance.now(), last: 0, running: false, visible: true, lost: false,
+      mode: 0, tw: new Float32Array(64), nt: 0, ser: new Float32Array(16), ns: 0, level: 1, levelT: 1, grow: 1, growAt: -1e9,
+      pan: 0, panT: 0, hy: .1, hyPx: null, dolly: 0, mon: [.3, .22, 0], intro: 1, introAt: -1, introDur: 2500, onIntroEnd: null,
+      ev: [-1, -1, .3, 0], pulseAt: -1e9, burstAt: -1e9, busy: false, colors: null, tod: 'day', ptr: 0, ptrT: 0,
+      frames: [], gpu: [], pending: [], cpu: [], tierLog: [], frameN: 0, data: { towers: [], series: [] },
+    };
+    const span = () => { const a = S.W / S.H; return a < 1 ? [-.42 * a, .42 * a] : (opts.lite ? [.02 * a, .46 * a] : [-.02 * a, .46 * a]); };
+
+    function readColors() {
+      const cs = getComputedStyle(document.documentElement), v = k => cs.getPropertyValue(k).trim();
+      const dark = parse(v('--bg'))[0] < .3;
+      const T = TOD[S.tod] || TOD.day;
+      let top = parse(v('--sky-top')), low = parse(v('--sky-low')), glow = dark ? [.84, .86, .91] : [1, 1, 1];
+      if (T.top) { const k = dark ? .55 : .32; const mix = (a, b) => a.map((x, i) => x + (b[i] - x) * k); top = mix(top, T.top); low = mix(low, dark ? T.low.map(x => x * .45) : T.low); glow = mix(glow, T.glow); }
+      if (S.tod === 'night' && !dark) { top = [.74, .78, .86]; low = [.90, .91, .95]; }
+      const ground = parse(v('--bg'));
+      const land = dark ? [.055, .062, .08] : [.70, .73, .78];
+      S.colors = { top, low, glow: glow.map(x => x * (dark ? .5 : .42)), ground, land, bar: parse(v('--bar')), sage: [.184, .478, .333], dark: dark ? 1 : 0, T };
+    }
+
+    function resize() {
+      const r = canvas.getBoundingClientRect(); if (!r.width || !r.height) return false;
+      const dpr = Math.min(devicePixelRatio || 1, 1.5) * TIERS[S.tier].s;
+      const W = Math.max(2, Math.round(r.width * dpr)), H = Math.max(2, Math.round(r.height * dpr));
+      if (W !== canvas.width || H !== canvas.height) { canvas.width = W; canvas.height = H; }
+      S.W = W; S.H = H; S.dpr = dpr; S.cssH = r.height; S.cssW = r.width; return true;
+    }
+
+    function layoutTowers() {
+      const [x0, x1] = span(), list = S.data.towers, n = Math.min(16, list.length), max = Math.max(1e-6, ...list.map(b => b.v || 0));
+      const narrow = S.W / S.H < 1, hMax = narrow ? .09 : .2;
+      S.nt = n;
+      for (let i = 0; i < n; i++) {
+        const b = list[i], x = n === 1 ? (x0 + x1) / 2 : x0 + (x1 - x0) * (i + .5) / n;
+        S.tw[i * 4] = x; S.tw[i * 4 + 1] = S.mode === 6 ? .3 + ((i * 37) % 10) / 14 : Math.max(.012, (b.v || 0) / max * hMax);
+        S.tw[i * 4 + 2] = b.lit ? 1 : 0; S.tw[i * 4 + 3] = (i / Math.max(1, n)) * .35;
+        if (S.mode === 6) S.tw[i * 4] = (i + .5) / n;
+      }
+      const ser = S.data.series, m = Math.min(16, ser.length), smax = Math.max(1e-6, ...ser.map(Math.abs));
+      S.ns = m; for (let i = 0; i < m; i++) S.ser[i] = ser[i] / smax;
+    }
+
+    function draw(t, still) {
+      if (S.lost || !S.W) return;
+      if (!S.colors) readColors();
+      const C = S.colors, T = C.T, tier = TIERS[S.tier], a = S.W / S.H;
+      const time = still ? 12 : (t - S.t0) / 1000;
+      // camera: pan eases towards the page's place; the pointer adds a little parallax
+      S.prevGap = S.prevT && !still ? t - S.prevT : 0;
+      const dt = S.prevT ? Math.min(.1, (t - S.prevT) / 1000) : .016; S.prevT = still ? 0 : t;
+      const k = r => 1 - Math.exp(-dt * r); // frame-rate independent easing
+      if (!still) { S.pan += (S.panT - S.pan) * k(3.4); S.ptr += (S.ptrT - S.ptr) * k(3.6); } else { S.pan = S.panT; }
+      const pan = S.pan + (still ? 0 : S.ptr * .35);
+      const fly = S.panT - S.pan; // towers ride with the land while flying
+      let grow = 1; if (!still && S.growAt > 0) grow = Math.min(1, (t - S.growAt) / 1200); if (still) grow = 1;
+      // The intro clock starts on the first frame actually drawn, and a stalled frame (page load,
+      // a busy main thread) doesn't eat into it.
+      if (S.introPending && !still) { S.introPending = false; S.introAt = t; }
+      if (S.introAt > 0 && !still && S.prevGap > 300) S.introAt += S.prevGap - 16;
+      let intro = S.introPending ? 0 : 1; if (S.introAt > 0 && !still) { intro = Math.min(1, (t - S.introAt) / S.introDur); if (intro >= 1) { S.introAt = -1; const f = S.onIntroEnd; S.onIntroEnd = null; if (f) f(); } }
+      if (S.introAt > 0 || S.introPending) grow = Math.min(grow, Math.max(0, (intro - .3) / .5));
+      if (!still) S.level += (S.levelT - S.level) * k(S.mode === 4 ? 1.4 : 2.6); else S.level = S.levelT;
+      const ex = S.mode === 4 && still ? 1 : S.level;
+      gl.viewport(0, 0, S.W, S.H);
+      gl.uniform2f(U.uRes, S.W, S.H); gl.uniform1f(U.uTime, time); gl.uniform1f(U.uAsp, a);
+      const hyPx = S.hyPx == null ? S.cssH * .72 : S.hyPx; // horizon, CSS px from the top of the canvas
+      gl.uniform1f(U.uHy, .5 - hyPx / S.cssH); gl.uniform1f(U.uDolly, still ? 0 : S.dolly);
+      gl.uniform1f(U.uDark, C.dark); gl.uniform1f(U.uMode, S.mode); gl.uniform1f(U.uLevel, ex);
+      gl.uniform1f(U.uIntro, intro); gl.uniform1f(U.uOct, tier.oct); gl.uniform1f(U.uLay, tier.lay); gl.uniform1f(U.uHaze, tier.haze); gl.uniform1f(U.uGrow, grow);
+      gl.uniform3fv(U.uSkyTop, C.top); gl.uniform3fv(U.uSkyLow, C.low); gl.uniform3fv(U.uGlow, C.glow); gl.uniform3fv(U.uGround, C.ground); gl.uniform3fv(U.uLand, C.land); gl.uniform3fv(U.uBar, C.bar); gl.uniform3fv(U.uSage, C.sage);
+      const narrow = a < 1, monX = narrow ? .22 * a : (opts.lite ? .3 * a : .22 * a), monS = narrow ? .14 : (opts.lite ? .2 : .26);
+      gl.uniform4f(U.uSun, monX + T.x * a * .5 - pan * .01, .5 - hyPx / S.cssH + T.y, T.k, T.n);
+      gl.uniform3f(U.uMon, monX - pan * .004, monS, 0);
+      // Data never climbs into the title: its height scales with the room between the top and the horizon.
+      const room = Math.max(.45, Math.min(1, hyPx / S.cssH / .72)), dh = (a < 1 ? .06 : .2) * room; gl.uniform1f(U.uDH, dh);
+      const tw = S.tw.slice(0, Math.max(4, S.nt * 4));
+      if (S.mode !== 6) for (let i = 0; i < S.nt; i++) tw[i * 4 + 1] *= dh / (a < 1 ? .09 : .2);
+      const fx = Math.max(-1.4 * a, Math.min(1.4 * a, fly * .55));
+      if (fx && S.mode !== 6) for (let i = 0; i < S.nt; i++) tw[i * 4] -= fx;
+      gl.uniform4fv(U.uTw, new Float32Array(64).map((_, i) => tw[i] || 0)); gl.uniform1f(U.uNT, S.nt);
+      gl.uniform1fv(U.uSer, S.ser); gl.uniform1f(U.uNS, S.ns);
+      const [x0, x1] = span(); gl.uniform2f(U.uSpan, x0 - (S.mode === 6 ? 0 : fx), x1 - (S.mode === 6 ? 0 : fx)); gl.uniform1f(U.uPan, pan);
+      const kp = still ? -1 : (t - S.pulseAt) / 700, kb = still ? -1 : (t - S.burstAt) / 1500;
+      gl.uniform4f(U.uEv, kp >= 0 && kp < 1 ? kp : -1, kb >= 0 && kb < 1 ? kb : -1, (x0 + x1) / 2, 0);
+      let q = null;
+      if (tq && !still && S.pending.length < 3) { q = v2 ? gl.createQuery() : tq.createQueryEXT(); v2 ? gl.beginQuery(tq.TIME_ELAPSED_EXT, q) : tq.beginQueryEXT(tq.TIME_ELAPSED_EXT, q); }
+      gl.drawArrays(gl.TRIANGLES, 0, 3);
+      if (q) { v2 ? gl.endQuery(tq.TIME_ELAPSED_EXT) : tq.endQueryEXT(tq.TIME_ELAPSED_EXT); S.pending.push(q); }
+      pollQueries();
+    }
+    function pollQueries() {
+      if (!tq) return;
+      while (S.pending.length) {
+        const q = S.pending[0];
+        const ok = v2 ? gl.getQueryParameter(q, gl.QUERY_RESULT_AVAILABLE) : tq.getQueryObjectEXT(q, tq.QUERY_RESULT_AVAILABLE_EXT);
+        const dis = gl.getParameter(tq.GPU_DISJOINT_EXT);
+        if (!ok) break;
+        const ns = v2 ? gl.getQueryParameter(q, gl.QUERY_RESULT) : tq.getQueryObjectEXT(q, tq.QUERY_RESULT_EXT);
+        if (!dis) { S.gpu.push(ns / 1e6); if (S.gpu.length > 240) S.gpu.shift(); }
+        v2 ? gl.deleteQuery(q) : tq.deleteQueryEXT(q); S.pending.shift();
+      }
+    }
+    const med = a => { if (!a.length) return 0; const s = [...a].sort((x, y) => x - y); return s[Math.floor(s.length / 2)]; };
+    const pct = (a, p) => { if (!a.length) return 0; const s = [...a].sort((x, y) => x - y); return s[Math.min(s.length - 1, Math.floor(s.length * p))]; };
+    function adapt() {
+      // Budget: 12 ms of GPU per frame (timer query) or, without one, a 60 fps cadence.
+      if (S.frameN % 45 || S.locked) return;
+      if (S.tier >= 3) {
+        // Lowest tier still under ~22 fps: hand over to the Canvas-2D scenes rather than stutter.
+        const r = S.frames.slice(-30);
+        if (r.length >= 20 && med(r) > 45 && opts.onLost) { S.lost = true; S.tierLog.push({ at: Math.round(performance.now()), handoff: 'canvas2d', interval_ms: +med(r).toFixed(2) }); opts.onLost(); }
+        return;
+      }
+      const recent = S.frames.slice(-40), g = S.gpu.slice(-40);
+      const slow = (g.length >= 20 && med(g) > 12) || (recent.length >= 30 && med(recent) > 19);
+      if (slow) { S.tier++; S.tierLog.push({ at: Math.round(performance.now()), tier: S.tier, gpu_ms: +med(g).toFixed(2), interval_ms: +med(recent).toFixed(2) }); S.frames = []; S.gpu = []; resize(); }
+    }
+    function loop(t) {
+      S.raf = 0;
+      if (!S.running || reduce.matches || document.hidden || !S.visible || S.lost) return;
+      const fps = TIERS[S.tier].fps;
+      if (fps < 60 && S.last && t - S.last < 1000 / fps - 2) { S.raf = requestAnimationFrame(loop); return; }
+      if (S.last) { S.frames.push(t - S.last); if (S.frames.length > 240) S.frames.shift(); }
+      S.last = t; S.frameN++;
+      const a = performance.now(); draw(t, false); S.cpu.push(performance.now() - a); if (S.cpu.length > 240) S.cpu.shift();
+      adapt();
+      S.raf = requestAnimationFrame(loop);
+    }
+    function kick() {
+      if (S.lost) return;
+      if (!S.W) resize();
+      if (reduce.matches || document.hidden || !S.visible || !S.running) { cancelAnimationFrame(S.raf); S.raf = 0; S.last = 0; draw(performance.now(), true); return; }
+      if (!S.raf) { S.last = 0; S.raf = requestAnimationFrame(loop); }
+    }
+    canvas.addEventListener('webglcontextlost', e => { e.preventDefault(); S.lost = true; if (opts.onLost) opts.onLost(); });
+    new ResizeObserver(() => { if (resize()) kick(); }).observe(canvas);
+    document.addEventListener('visibilitychange', kick);
+    reduce.addEventListener('change', kick);
+    resize(); readColors();
+    S.running = true;
+
+    return {
+      gl: v2 ? 'webgl2' : 'webgl', renderer, soft,
+      /** mode: 0 towers, 1 inbox, 2 docs scan, 3 meetings waveform, 4 reports trail, 5 chat aurora, 6 privacy dome */
+      scene(mode, towers, series, opts2) {
+        const key = JSON.stringify([mode, towers, series]);
+        if (key === S.key) return; S.key = key;
+        const changed = mode !== S.mode; S.mode = mode; S.data = { towers: towers || [], series: series || [] };
+        layoutTowers(); S.growAt = reduce.matches ? -1e9 : performance.now();
+        if (mode === 4 || mode === 6) { if (changed && !reduce.matches) S.level = 0; S.levelT = 1; } else if (mode === 5) S.levelT = S.busy ? 1 : .35; else S.levelT = 1;
+        kick();
+      },
+      place(x) { S.panT = x; kick(); },
+      horizon(px) { if (S.hyPx !== px) { S.hyPx = px; if (!S.raf) kick(); } },
+      dolly(d) { if (Math.abs(S.dolly - d) > .002) { S.dolly = d; if (!S.raf) kick(); } },
+      pointer(x) { S.ptrT = reduce.matches ? 0 : x; },
+      tod(name) { S.tod = name; readColors(); kick(); },
+      retheme() { readColors(); kick(); },
+      busy(b) { S.busy = !!b; if (S.mode === 5) S.levelT = b ? 1 : .35; kick(); },
+      pulse() { if (!reduce.matches) { S.pulseAt = performance.now(); kick(); } },
+      burst() { if (!reduce.matches) { S.burstAt = performance.now(); kick(); } },
+      /** Play the sunrise intro; resolves when it ends (or at once under reduced motion). */
+      intro(dur) { return new Promise(res => { if (reduce.matches) return res(); S.introDur = dur || 2500; S.introAt = -1; S.introPending = true; S.onIntroEnd = res; kick();
+        setTimeout(() => { if (S.onIntroEnd === res) this.skipIntro(); }, S.introDur * 4); /* never strand the page behind an intro */ }); },
+      skipIntro() { S.introPending = false; S.introAt = -1; const f = S.onIntroEnd; S.onIntroEnd = null; if (f) f(); kick(); },
+      setVisible(v) { if (S.visible !== v) { S.visible = v; kick(); } },
+      stop() { S.running = false; kick(); }, start() { S.running = true; kick(); },
+      target() { const [x0, x1] = span(); const r = canvas.getBoundingClientRect(); const hy = S.hyPx == null ? S.cssH * .72 : S.hyPx;
+        return { x: r.left + ((x0 + x1) / 2 / (S.W / S.H) + .5) * r.width, y: r.top + hy - 20 }; },
+      stats() {
+        const f = S.frames, g = S.gpu;
+        return { api: v2 ? 'webgl2' : 'webgl', renderer, tier: S.tier, tiers: S.tierLog.slice(), res: [S.W, S.H], frames: f.length,
+          interval_median_ms: +med(f).toFixed(2), interval_p95_ms: +pct(f, .95).toFixed(2),
+          gpu_median_ms: g.length ? +med(g).toFixed(2) : null, gpu_p95_ms: g.length ? +pct(g, .95).toFixed(2) : null,
+          cpu_median_ms: +med(S.cpu).toFixed(3), timer_query: !!tq };
+      },
+      resetStats() { S.frames = []; S.gpu = []; S.cpu = []; },
+      setTier(n) { S.locked = true; S.tier = Math.max(0, Math.min(3, n)); S.tierLog.push({ at: Math.round(performance.now()), tier: S.tier, forced: true }); resize(); kick(); },
+      kick,
+    };
+  }
+  return { create };
+})();
+
+/* Horizon v3 bridge: puts the suite on the WebGL world when it can run, and keeps the v2
+   Canvas-2D heroes otherwise (fallback chain: WebGL2 → WebGL1 → Canvas 2D → CSS sky).
+   - Every ArkHero.set(...) also feeds the world, so each page's real numbers become its scene.
+   - Each page has a place on the horizon; changing page flies the camera there.
+   - Scrolling tilts/dollies the camera; the veil under the hero feathers in (CSS --fold).
+   - Home's first launch plays a 2.5 s sunrise (once; Skip, any key or click ends it).
+   - Materials: pointer-lit chrome edges, a custom cursor and magnetic primary buttons. */
+(() => {
+  const H = window.ArkHero, root = document.documentElement;
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)'), fine = matchMedia('(hover: hover) and (pointer: fine)');
+  const off = /[?&]gl=0\b/.test(location.search);
+  const canvas = document.getElementById('world');
+  const W = !off && canvas && window.ArkWorld ? window.ArkWorld.create(canvas, { onLost: lost }) : null;
+  window.ArkWorldSuite = W; // for tests: stats(), setTier()
+  const PLACES = ['home', 'inbox', 'desk', 'docs', 'knowledge', 'meetings', 'growth', 'insights', 'report', 'privacy', 'welcome', 'help', 'chat', 'settings'];
+  const scenes = {};
+  let active = null;
+  function lost() { root.classList.remove('gl'); if (active) H.replay(active); }
+
+  function toScene(name, bars, labels, data) {
+    data = data || {}; bars = bars || [];
+    switch (name) {
+      case 'inbox': { const n = Math.max(1, data.total || 0); return [1, Array.from({ length: Math.min(16, n) }, (_, i) => ({ v: .45 + ((i * 53) % 7) / 9, lit: i < (data.count || 0) })), []]; }
+      case 'docs': { const n = Math.max(1, data.fields || 5); return [2, Array.from({ length: Math.min(16, n) }, (_, i) => ({ v: .35 + ((i * 29) % 5) / 6 })), []]; }
+      case 'meetings': return [3, [], (data.minutes || []).slice(0, 16)];
+      case 'insights': return [4, [], (data.series || []).slice(0, 16)];
+      case 'chat': return [5, [], []];
+      case 'privacy': return [6, Array.from({ length: Math.min(16, Math.max(1, data.inside || 3)) }, () => ({ v: 1 })), []];
+      case 'knowledge': return [0, (data.sources || []).map(s => ({ v: s.n, lit: false })).map((b, i, a) => ({ v: b.v, lit: b.v === Math.max(...a.map(x => x.v)) })), []];
+      default: return [0, bars.slice(0, 16), []];
+    }
+  }
+  function show(name) {
+    if (!W || !name) return;
+    const s = scenes[name] || toScene(name);
+    W.scene(s[0], s[1], s[2]);
+    const i = PLACES.indexOf(name); W.place((i < 0 ? 0 : i) * 2.4);
+  }
+  function activeHero() { const v = [...document.querySelectorAll('main.view')].find(m => !m.hidden); return v ? v.querySelector('[data-hero]') : null; }
+  function sync() {
+    const hero = activeHero(); if (!hero) return;
+    const name = hero.dataset.hero;
+    if (name !== active) { active = name; show(name); }
+    geometry();
+  }
+  function geometry() {
+    const hero = activeHero(); if (!hero || !W) return;
+    const main = hero.closest('main.view');
+    const hh = hero.offsetHeight, narrow = innerWidth < 720, y = scrollY;
+    const offB = Math.min(narrow ? 74 : 124, hh * .26);
+    main.style.setProperty('--fold', Math.max(0, hero.offsetTop + hh - (narrow ? 30 : 50)) + 'px');
+    // Scroll tilts the camera down (the horizon climbs slower than the page) and dollies it forward.
+    const p = Math.max(0, Math.min(1, y / Math.max(1, hh)));
+    W.horizon(Math.min(hero.offsetTop + hh - offB, innerHeight * (narrow ? .8 : .74)) - y * .55);
+    W.dolly(reduce.matches ? 0 : p);
+    W.setVisible(y < hh + innerHeight * .35);
+    if (root.classList.contains('sd-js')) root.style.setProperty('--sp', reduce.matches ? 0 : Math.min(1, y / (innerHeight * .75)).toFixed(3));
+  }
+
+  if (W) {
+    root.classList.add('gl');
+    const qm = /[?&]q=(\d)\b/.exec(location.search); if (qm) W.setTier(+qm[1]); // pin a quality tier (screenshots, measurements)
+    if (!CSS.supports('animation-timeline: scroll()')) root.classList.add('sd-js');
+    // Feed the world from the same calls that feed the 2D heroes.
+    const set = H.set, setBusy = H.setBusy, replay = H.replay, setTod = H.setTimeOfDay, pulse = H.pulse, burst = H.burst, target = H.target;
+    H.set = (name, bars, labels, data) => { set(name, bars, labels, data); scenes[name] = toScene(name, bars, labels, data); if (name === active) show(name); };
+    H.setBusy = (name, b) => { setBusy(name, b); if (name === 'chat') W.busy(b); };
+    H.replay = name => { replay(name); requestAnimationFrame(sync); };
+    H.setTimeOfDay = t => { setTod(t); W.tod(t); };
+    H.pulse = name => root.classList.contains('gl') ? W.pulse() : pulse(name);
+    H.burst = name => root.classList.contains('gl') ? W.burst() : burst(name);
+    H.target = name => root.classList.contains('gl') ? W.target() : target(name);
+    H.world = W;
+    addEventListener('scroll', geometry, { passive: true });
+    addEventListener('resize', geometry);
+    addEventListener('hashchange', () => setTimeout(sync, 0));
+    new MutationObserver(() => W.retheme()).observe(root, { attributes: true, attributeFilter: ['data-theme'] });
+    matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => W.retheme());
+    addEventListener('pointermove', e => { if (e.pointerType === 'mouse' && fine.matches) W.pointer((e.clientX / innerWidth - .5) * 2); }, { passive: true });
+    new ResizeObserver(geometry).observe(document.body);
+    requestAnimationFrame(sync); setTimeout(sync, 300);
+    intro();
+  }
+
+  /* ---------- Intro: first launch on Home only, never under reduced motion ---------- */
+  function intro() {
+    const force = /[?&]intro=1\b/.test(location.search), skipQ = /[?&]intro=0\b/.test(location.search);
+    let seen = false; try { seen = localStorage.getItem('arkhon-intro') === '1'; } catch (_) {}
+    const home = (location.hash || '#home') === '#home';
+    if (!W || reduce.matches || skipQ || !home || (seen && !force)) return;
+    const el = document.getElementById('intro'); if (!el) return;
+    root.classList.add('intro');
+    const end = () => {
+      root.classList.remove('intro');
+      try { localStorage.setItem('arkhon-intro', '1'); } catch (_) {}
+      removeEventListener('keydown', skip, true); removeEventListener('pointerdown', skip, true);
+    };
+    const skip = e => { if (e && e.type === 'keydown' && (e.key === 'Tab' || e.key === 'Shift')) return; W.skipIntro(); };
+    addEventListener('keydown', skip, true); addEventListener('pointerdown', skip, true);
+    el.querySelector('.skip').addEventListener('click', () => W.skipIntro());
+    W.intro(2500).then(end);
+  }
+
+  /* ---------- Materials: pointer-lit edges, cursor, magnetic buttons (desktop pointers only) ---------- */
+  let edge = null;
+  addEventListener('pointermove', e => {
+    if (e.pointerType !== 'mouse') return;
+    const c = e.target.closest && e.target.closest('.card, .ask');
+    if (c) { const r = c.getBoundingClientRect(); c.style.setProperty('--mx', (e.clientX - r.left) + 'px'); c.style.setProperty('--my', (e.clientY - r.top) + 'px'); }
+    if (edge && edge !== c) { edge.style.removeProperty('--mx'); edge.style.removeProperty('--my'); }
+    edge = c;
+  }, { passive: true });
+
+  const cur = document.getElementById('cur');
+  const PRESS = 'a[href], button:not(:disabled), [role="button"], summary, label, select, .pal-item, [data-open]';
+  const TEXT = 'input:not([type="checkbox"]):not([type="radio"]):not([type="range"]), textarea, [contenteditable]';
+  let cx = -100, cy = -100, tx = -100, ty = -100, craf = 0;
+  const cursorOn = () => cur && fine.matches && !reduce.matches && root.classList.contains('gl');
+  function cstep() { cx += (tx - cx) * .32; cy += (ty - cy) * .32; cur.style.transform = `translate(${cx}px, ${cy}px)`; craf = Math.abs(tx - cx) + Math.abs(ty - cy) > .3 ? requestAnimationFrame(cstep) : 0; }
+  if (cur) {
+    addEventListener('pointermove', e => {
+      if (e.pointerType !== 'mouse' || !cursorOn()) { root.classList.remove('cur'); return; }
+      root.classList.add('cur'); tx = e.clientX; ty = e.clientY;
+      const t = e.target;
+      cur.classList.toggle('off', !!(t.closest && t.closest(TEXT)));
+      cur.classList.toggle('ring', !!(t.closest && t.closest(PRESS)) && !(t.closest && t.closest(TEXT)));
+      if (!craf) craf = requestAnimationFrame(cstep);
+    }, { passive: true });
+    addEventListener('pointerdown', () => cur.classList.add('down'));
+    addEventListener('pointerup', () => cur.classList.remove('down'));
+    document.addEventListener('pointerleave', () => cur.classList.add('off'));
+    document.addEventListener('pointerenter', () => cur.classList.remove('off'));
+    reduce.addEventListener('change', () => { if (reduce.matches) root.classList.remove('cur'); });
+  }
+  // Magnetic primary buttons: drift up to 7 px towards a nearby pointer.
+  const MAG = '.btn.primary, .ask button, .chat-send, .conv-new';
+  let magEl = null;
+  addEventListener('pointermove', e => {
+    if (e.pointerType !== 'mouse' || !fine.matches || reduce.matches) return;
+    const b = e.target.closest && e.target.closest(MAG);
+    if (magEl && magEl !== b) { magEl.style.translate = ''; magEl = null; }
+    if (!b || b.disabled) return;
+    const r = b.getBoundingClientRect(), dx = e.clientX - (r.left + r.width / 2), dy = e.clientY - (r.top + r.height / 2);
+    b.classList.add('mag'); b.style.translate = `${(dx / r.width * 14).toFixed(1)}px ${(dy / r.height * 10).toFixed(1)}px`; magEl = b;
+  }, { passive: true });
+})();
+/* ark-world:end */</script>
 <script>
 (() => {
   /* ---------- Routing (#home, #people, #roles, #teams) ---------- */
