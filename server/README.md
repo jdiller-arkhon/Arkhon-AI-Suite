@@ -29,6 +29,13 @@ licenses before it's fully set up. Production deployment: `deploy/docker-compose
 - **Hardening:** a per-IP rate limit (60/min); SQL errors never reach clients.
 - **Customer portal** (`/portal` page, `/portal/...` API; see below).
 
+## Look and feel
+`/console` and `/portal` use the Arkhon Suite's **Horizon** design system: the same tokens and type,
+an animated hero band drawn from real numbers, a pill nav and page transitions. On the console the
+band shows customers and seats; on the portal it shows computer slots, computers and the team.
+All CSS and JS is inline, so the strict CSP is unchanged (no external fonts, scripts or images).
+Animation stops under reduced motion. See `suite/app/design/README.md` ("Horizon v2").
+
 ## Customer portal
 A single static page at `/portal` (strict CSP, no external resources) on top of the `/portal/...` API.
 People at a customer company sign in to see **their own company only**.

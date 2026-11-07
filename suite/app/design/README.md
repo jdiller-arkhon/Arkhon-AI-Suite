@@ -60,6 +60,78 @@ Heroes pause when off screen or when the tab is hidden. Measured: a steady 60 fp
 
 `/api/chat` (Server-Sent Events) forwards to the Arkhon runtime's local model when `ARKHON_RUNTIME_URL` is set. Otherwise it answers from company data (with sources) or streams clearly labelled **Demo replies**. Chat content never leaves the computer.
 
+## Horizon v2 (2026-11-07): scenes, reactive heroes, delight
+v2 keeps everything above and adds the following. Every new animation follows the same rules: the
+first still frame looks finished, nothing moves under `prefers-reduced-motion`, and the hero
+pauses when it's off screen or the tab is hidden.
+
+**Scenes.** One hero engine draws a different scene on each page, always from that page's own data:
+
+| Page | Scene | Drawn from |
+|---|---|---|
+| Home | Skyline of the week, busiest day in chrome | hours given back per day |
+| Email | Envelopes arcing over the horizon into a ring with the count | replies waiting / threads |
+| Customer replies | Speech glyphs rising; waiting ones in chrome | one glyph per question |
+| Documents | A page outline; a light line scans down and each field lights up | fields Arkhon read on the next document to file |
+| Company answers | A constellation of source files linking up; the most-cited glows | sources behind the saved answers |
+| Meeting notes | A waveform along the horizon with a moving playhead | meeting lengths |
+| Quotes & marketing | Bars climbing a rising arc; the biggest line item in chrome | quote line totals |
+| Reports | A line chart drawing itself, to scale | the count question (jobs per week) |
+| Value report | Skyline of the month by week + count-up totals | weekly hours |
+| Privacy Center | A closed dome over the horizon; dots bounce inside, nothing leaves | connections in the activity list |
+| Chat | A soft orb breathing on the horizon; faster while a reply streams | streaming state |
+| Company pages | A skyline of people: one bar per seat, initials on seats in use | seats and people |
+| Set-up guide, Help | The Arkhon mark's skyline | – |
+
+Measured (headless Chromium, 1280×800, 2 s per page): median frame interval 16.7 ms on every
+scene (p95 ≤ 16.8 ms); drawing a frame averages 0.17–0.41 ms (worst 3.2 ms). Reduced motion: two
+captures 700 ms apart are pixel-identical on all 18 routes.
+
+**Reactive heroes**
+- *Pointer light and parallax:* a soft light follows a desktop mouse; the scene shifts by at most 5 px. Off for touch and reduced motion.
+- *Time of day:* `dawn` 5–8, `day` 8–17, `dusk` 17–20:30, `night` after that. It tints the hero sky (stars at night) and picks the Home greeting (Good morning / afternoon / evening). Text colours never change, so contrast is unaffected. The example company uses a fixed demo time (9:30), and `?t=HH:MM` overrides the clock, so screenshots and tests are stable.
+
+**Delight**
+- Approving a "Needs you" item flies a small copy of the card into the hero horizon (820 ms). It lands with a ring on the horizon, and only then does the count change. This plays only after the engine accepted the command (never in the read-only preview).
+- Numbers count up the first time they're shown, and from their old value when they change (900 ms).
+- Clearing the last "Needs you" item brings the hero into view and plays a brief chrome-light burst (1.5 s).
+- Buttons sink on press and spring back on release. Cards lift 2 px on hover.
+- A skeleton shimmer shows while the first view loads.
+
+**Dock and palette**
+- The dock's active item is one indicator that glides between items. On a desktop, items near the pointer magnify (up to 1.2×). Tooltips name every item.
+- The palette shows *Recent* (the last five things you opened), then *Pages*, *People* and *Actions*. It matches fuzzily (letters in order, e.g. "qts" → Quotes) and highlights the matched letters. A footer shows the keys.
+
+**Chat**
+- "Thinking…" shimmers until the first word arrives, then a blinking caret follows the text.
+- New messages slide in.
+- Code blocks get lightweight syntax colours, from a small inline tokenizer (no libraries).
+- You can search your chats, pin them (pinned chats stay on top), and chats get a short automatic title from the first message.
+- A scroll-to-bottom button appears when the newest message is out of view.
+- *Demo replies* stays labelled whenever no local model is connected.
+
+**Motion tokens (v2)**
+
+| Token | Value | Use |
+|---|---|---|
+| `--ease` | `cubic-bezier(.22,1,.36,1)` | entrances, wipes |
+| `--spring` | `cubic-bezier(.34,1.36,.64,1)` | list entrances, presses |
+| `--spring-soft` | `cubic-bezier(.3,1.25,.5,1)` | dock / nav indicator glide, card hover |
+| `--dur-press` / `--dur-quick` | 140 / 220 ms | press, hover |
+| `--dur-enter` / `--stagger` | 560 / 55 ms | staggered entrances |
+| `--dur-wipe` | 760 ms | horizon wipe between pages |
+| `--dur-glide` | 420 ms | dock and nav indicator |
+| `--dur-count` | 900 ms | count-ups |
+| `--dur-fly` | 820 ms | approval fly-in |
+| `--dur-burst` | 1500 ms | all-clear burst |
+
+**Horizon everywhere.** The Operator Console (`server/console/index.html`) and the customer portal
+(`server/portal/index.html`) use the same tokens, type and motion. Each has:
+- a hero band drawn from real numbers: on the console, customers (licenses each) and seats per license; on the portal, computer slots per license, seats, computers by last check-in, and the team;
+- a pill nav with the gliding indicator, count-ups, staggered entrances and the horizon wipe.
+
+Both stay inline-only under their strict CSP.
+
 ## Open questions
 - An official vector logo. The prototype redraws the mark as SVG from `brand/arkhon-mark-mist.png`. Replace it with the master SVG when one is available.
 - Whether Geist is the licensed brand face or only a fallback (the site lists SF Pro Text first; Geist is OFL).
