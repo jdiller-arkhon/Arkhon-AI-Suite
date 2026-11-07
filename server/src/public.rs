@@ -243,7 +243,7 @@ async fn license_by(pool: &PgPool, clause: &str, value: &[u8]) -> ApiResult<Opti
     .await?)
 }
 
-async fn license_by_id(pool: &PgPool, id: &str) -> ApiResult<LicenseRow> {
+pub(crate) async fn license_by_id(pool: &PgPool, id: &str) -> ApiResult<LicenseRow> {
     sqlx::query_as::<_, LicenseRow>(&format!(
         "SELECT {LICENSE_COLS} FROM licenses WHERE id = $1"
     ))
@@ -454,9 +454,27 @@ pub async fn deactivate(
 /// # Errors
 /// Malformed file, replayed request, or the same checks as check-in.
 pub async fn offline_renew(State(s): State<AppState>, body: Bytes) -> ApiResult<Response> {
-    let req = RenewalRequest::from_bytes(&body)
+    let bytes = offline_exchange(&s, &body, None, "device").await?;
+    Ok(([(header::CONTENT_TYPE, "application/octet-stream")], bytes).into_response())
+}
+
+/// Turn a `RenewalRequest` file into `RenewalResponse` bytes. Each request id works once.
+///
+/// With `customer`, the request's license must belong to that customer (checked before the
+/// request id is spent, so a file uploaded to the wrong account can still be used).
+pub(crate) async fn offline_exchange(
+    s: &AppState,
+    body: &[u8],
+    customer: Option<&str>,
+    actor: &str,
+) -> ApiResult<Vec<u8>> {
+    let req = RenewalRequest::from_bytes(body)
         .map_err(|_| ApiError::bad("That file isn't an Arkhon renewal request."))?;
     let now = s.now();
+    let lic = license_by_id(&s.pool, &req.license_id).await?;
+    if customer.is_some_and(|c| c != lic.customer_id) {
+        return Err(ApiError::not_found("No license with that id."));
+    }
     let fresh = sqlx::query("INSERT INTO seen_renewal_requests (request_id, seen_at) VALUES ($1,$2) ON CONFLICT DO NOTHING")
         .bind(req.request_id.as_slice())
         .bind(to_i64(now))
@@ -467,7 +485,6 @@ pub async fn offline_renew(State(s): State<AppState>, body: Bytes) -> ApiResult<
             "This renewal request was already used. Export a new one from Arkhon.",
         ));
     }
-    let lic = license_by_id(&s.pool, &req.license_id).await?;
     let binding: Option<(String,)> = sqlx::query_as(
         "SELECT binding FROM activations WHERE license_id = $1 AND device_public_key = $2 AND status = 'active'",
     )
@@ -482,17 +499,13 @@ pub async fn offline_renew(State(s): State<AppState>, body: Bytes) -> ApiResult<
         fingerprint: req.fingerprint.clone(),
         binding,
     };
-    let license = renew_for_device(&s, &lic, &device).await?;
+    let license = renew_for_device(s, &lic, &device).await?;
     let resp = RenewalResponse {
         license,
         revocation_list: current_revocations(&s.pool).await?,
     };
-    audit(&s.pool, now, "device", "offline-renew", &lic.id, json!({})).await?;
-    Ok((
-        [(header::CONTENT_TYPE, "application/octet-stream")],
-        resp.to_bytes(),
-    )
-        .into_response())
+    audit(&s.pool, now, actor, "offline-renew", &lic.id, json!({})).await?;
+    Ok(resp.to_bytes())
 }
 
 /// `GET /v1/releases` query.

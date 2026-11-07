@@ -26,7 +26,7 @@ in the audit log. Commands below use `make`; run `make` on its own to see every 
 | "We got a new computer" | Licenses → open the license → **Free this slot** on the old computer, then they activate the new one. (They can also deactivate from inside the app.) |
 | "It says all computers are in use" | Same as above, or raise **Computers** by issuing an updated license. |
 | "It says our hardware changed too much" | More than one major part was replaced. Free the old slot, and they activate again. |
-| "We're on a ship / an air-gapped site" | They export a renewal file from the app. You (or they, through the portal later) send it to `POST /v1/offline/renew` and return the response file. Each file works once. |
+| "We're on a ship / an air-gapped site" | They export a renewal file from the app, then upload it in the portal under **Offline activation** and take the reply file back. (You can also send it to `POST /v1/offline/renew` for them.) Each file works once. |
 | "Can we add people?" | Seats are on the license. Issue the change, then they invite people in Company → People. |
 
 ## 3. Billing events
@@ -53,3 +53,39 @@ in the audit log. Commands below use `make`; run `make` on its own to see every 
 - **Console → Overview** flags licenses ending within 30 days, and computers not seen for 30 days (possibly offline or uninstalled).
 - `GET /healthz` is for uptime monitoring.
 - **Audit log:** filter by license or customer id to see exactly who did what.
+
+## 7. Customer portal
+Customers manage their own account at **`/portal`** on the License Manager. They only ever see their own company.
+
+**Give a customer access (first owner).** After creating the customer and license, call
+`POST /admin/customers/{id}/portal-invite` with `{"email": "...", "role": "owner"}` (admin session).
+The response has an `invite_link` (`/portal#accept=…`). **Email isn't set up yet**: send the full link
+(`https://<license-server>/portal#accept=…`) to the customer yourself. It works once, for 7 days. The
+link is also written to the server log (`portal invite link for …`), so treat those logs as sensitive.
+
+**What customers can do there.**
+| Page | Who | What |
+|---|---|---|
+| Overview | everyone | Plain-language status, people, computers in use, next renewal. |
+| Licenses | everyone | Plan, dates, workspaces, engines. Owners can **Request a new activation key** (old key stops activating new computers; running computers keep working). The key is never shown again after that. |
+| Computers | everyone (owners act) | **Deactivate** frees a slot, for example after replacing a computer. |
+| Offline activation | owners | Upload a renewal file from an offline computer, download the reply. Each file works once. |
+| Downloads | everyone | Engine versions their licenses include, with sizes and SHA-256. |
+| Team | everyone (owners act) | Invite (owner / billing / viewer), remove, issue a password reset link, turn on two-step sign-in. |
+| Billing | owners, billing | Placeholder: "Billing is being set up". No online payments yet. |
+
+**Free trial.** `/portal#trial` lets anyone start a 14-day trial: it creates the customer, a trial license
+(10 people, 2 computers, no TPM needed) and an owner account, and shows the activation key once.
+Limited to 5 sign-ups per hour per IP. Trials appear in the Console like any other customer.
+
+**Support.**
+| Customer says | Do this |
+|---|---|
+| "My invite link doesn't work" | It expired (7 days) or was already used. Send a new one with the same `portal-invite` call (it replaces the old link), or an owner uses **Team → New invite link**. |
+| "I forgot my password" | Another owner uses **Team → Password reset link**. If they're the only owner, call `portal-invite` again for their email (this resets their password and two-step sign-in, and ends their sessions). |
+| "I lost my authenticator" | Call `portal-invite` again for their email. From Arkhon staff this clears their password and two-step sign-in and ends their sessions; they set a new password from the link. |
+| "We lost our activation key" | An owner uses **Licenses → Request a new activation key**. Nothing stops working. |
+| "Someone left the company" | An owner removes them under **Team**; their sessions end at once. |
+
+**Audit.** Portal actions appear in the audit log with actor `portal:<email>` (sign-in, invites, new keys,
+deactivations, offline renewals, team changes, trial sign-ups). Filter by the customer id or license id.
