@@ -33,7 +33,7 @@ a { color: var(--focus); }
 :focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; border-radius: 10px; }
 .wrap { max-width: 980px; margin: 0 auto; padding-left: max(24px, env(safe-area-inset-left)); padding-right: max(24px, env(safe-area-inset-right)); }
 header { position: sticky; top: 0; z-index: 5; background: color-mix(in srgb, var(--bg) 85%, transparent); backdrop-filter: blur(20px); }
-.hdr { display: flex; align-items: center; gap: 24px; min-height: 60px; }
+.hdr { display: flex; align-items: center; gap: 20px; min-height: 60px; }
 .brand { font-weight: 700; letter-spacing: .14em; font-size: 14px; white-space: nowrap; }
 .brand small { font-weight: 500; letter-spacing: 0; color: var(--fg-3); margin-left: 8px; }
 nav { display: flex; gap: 20px; overflow-x: auto; scrollbar-width: none; min-width: 0; }
@@ -42,6 +42,9 @@ nav a { color: var(--fg-2); text-decoration: none; font-size: 15px; white-space:
 nav a[aria-current="page"], nav a:hover { color: var(--fg); }
 .grow { flex: 1; }
 .who { color: var(--fg-3); font-size: 14px; white-space: nowrap; }
+#signout { white-space: nowrap; }
+header .wrap { max-width: 1180px; }
+@media (max-width: 1240px) { .who { display: none; } }
 main { padding-block: 40px 96px; display: grid; gap: 20px; }
 section { display: grid; gap: 20px; min-width: 0; }
 h1 { margin: 0; font-size: clamp(30px, 5vw, 42px); letter-spacing: -.03em; line-height: 1.1; }

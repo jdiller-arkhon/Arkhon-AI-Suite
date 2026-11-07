@@ -702,7 +702,7 @@ async fn computers_for(
             let security = match binding.as_str() {
                 "tpm" => "Security chip (TPM)",
                 "secure-enclave" => "Apple Secure Enclave",
-                _ => "Software key (trial)",
+                _ => "Software key (no security chip)",
             };
             let stale = status == "active" && now.saturating_sub(to_u64(seen)) > 30 * 86_400;
             json!({
