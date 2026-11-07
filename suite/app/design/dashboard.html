@@ -2009,6 +2009,9 @@ void main(){
     const dbg = gl.getExtension('WEBGL_debug_renderer_info');
     const renderer = String(dbg ? gl.getParameter(dbg.UNMASKED_RENDERER_WEBGL) : gl.getParameter(gl.RENDERER));
     const soft = /swiftshader|llvmpipe|software|basic render/i.test(renderer);
+    // A software renderer (no usable GPU) can't hold 60 fps with the full world: let the caller use the
+    // Canvas-2D scenes instead, which run smoothly on the CPU. `?gl=force` keeps the world testable headless.
+    if (soft && !/[?&]gl=force\b/.test(location.search)) { const lc = gl.getExtension('WEBGL_lose_context'); if (lc) lc.loseContext(); return null; }
     const tq = v2 ? gl.getExtension('EXT_disjoint_timer_query_webgl2') : gl.getExtension('EXT_disjoint_timer_query');
     const TIERS = [{ s: 1, oct: 5, lay: 5, haze: 1, fps: 60 }, { s: .75, oct: 4, lay: 4, haze: 1, fps: 60 }, { s: .5, oct: 3, lay: 3, haze: 0, fps: 60 }, { s: .5, oct: 3, lay: 3, haze: 0, fps: 30 }];
     const S = {
@@ -2118,7 +2121,13 @@ void main(){
     const pct = (a, p) => { if (!a.length) return 0; const s = [...a].sort((x, y) => x - y); return s[Math.min(s.length - 1, Math.floor(s.length * p))]; };
     function adapt() {
       // Budget: 12 ms of GPU per frame (timer query) or, without one, a 60 fps cadence.
-      if (S.frameN % 45 || S.tier >= 3 || S.locked) return;
+      if (S.frameN % 45 || S.locked) return;
+      if (S.tier >= 3) {
+        // Lowest tier still under ~22 fps: hand over to the Canvas-2D scenes rather than stutter.
+        const r = S.frames.slice(-30);
+        if (r.length >= 20 && med(r) > 45 && opts.onLost) { S.lost = true; S.tierLog.push({ at: Math.round(performance.now()), handoff: 'canvas2d', interval_ms: +med(r).toFixed(2) }); opts.onLost(); }
+        return;
+      }
       const recent = S.frames.slice(-40), g = S.gpu.slice(-40);
       const slow = (g.length >= 20 && med(g) > 12) || (recent.length >= 30 && med(recent) > 19);
       if (slow) { S.tier++; S.tierLog.push({ at: Math.round(performance.now()), tier: S.tier, gpu_ms: +med(g).toFixed(2), interval_ms: +med(recent).toFixed(2) }); S.frames = []; S.gpu = []; resize(); }

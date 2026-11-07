@@ -1,6 +1,6 @@
 # Arkhon Suite design language
 
-`dashboard.html` is the reference prototype (v3) for the Command (home) screen, and `tokens.css` is
+`dashboard.html` is the reference prototype (v3 of the layout, Horizon v3 visuals) for the Command (home) screen, and `tokens.css` is
 what the Tauri app imports in Phase 5.
 
 ## Source
@@ -131,6 +131,138 @@ captures 700 ms apart are pixel-identical on all 18 routes.
 - a pill nav with the gliding indicator, count-ups, staggered entrances and the horizon wipe.
 
 Both stay inline-only under their strict CSP.
+
+## Horizon v3 (2026-11-07): a world you move through
+v3 keeps v1/v2 and puts every page on one place: a lit landscape with the Arkhon mark standing on
+its horizon. Each page is a *place* on that horizon, its numbers are built into the land, and moving
+between pages flies the camera there. Nothing here changes wording, labels or text colours.
+
+**World model**
+- One fixed, full-bleed canvas (`#world`) behind the page. Hero sections are transparent windows onto
+  it; below the hero the page content sits on a *veil* (the page colour at 90%) that feathers in over
+  160 px, so the land seems to pass under the content.
+- The camera has three inputs: *place* (pan along the horizon, one stop per page, 2.4 world units
+  apart), *scroll* (the horizon climbs at 0.55× the page speed = a downward tilt, and the ridges dolly
+  closer) and, on desktop pointers only, a small parallax from the pointer. Phones get a static camera
+  (no gyroscope).
+- The *monument* (the mark, extruded) stands far off on the horizon, so it barely moves while the
+  camera flies; the data stands on the near land and rides with it.
+
+**Shader pipeline** (hand-written, no libraries; one full-screen triangle, one fragment pass, GLSL ES
+1.00 so the same source runs on WebGL2 and WebGL1)
+1. *Sky*: the theme's sky tokens, tinted by time of day (dawn / day / dusk / night, same hours and
+   `?t=HH:MM` override as v2); sun or crescent moon disc with limb darkening; a Mie-like halo around
+   it and a Rayleigh-like band low on the sky; stars with twinkle and slow parallax at night.
+2. *Monument*: the mark's two polygons as signed-distance fields (viewBox 120×104). Depth is faked by
+   sweeping the shape along the turn (four samples = the side faces); bevel normals come from the SDF
+   gradient. The front is the brand's brushed-chrome ramp (#f4f5f7 → #9aa0ab → #3a3d44 → #c9ccd3)
+   mixed with a reflection of the same sky (bright horizon line, dark land), fine brushing, a slow
+   sheen and a rim light. It turns ±24° every ~37 s and breathes 0.6%.
+3. *Terrain*: 3–5 ridge layers of fbm value noise receding to a curved horizon (curvature
+   x²/(3·aspect)); aerial haze by depth, a sunlit rim on every ridge, engraved strata lines, and the
+   land fades into the page colour.
+4. *Haze*: a drifting volumetric band along the horizon (2D noise).
+5. *Data as architecture* (from each page's real numbers, via the same `ArkHero.set` calls as v2):
+
+   | Page | In the world |
+   |---|---|
+   | Home, Value report, Set-up, Help, Company | Antenna towers, one per bar; the busiest day in chrome with a blinking sage tip |
+   | Email | One tower per thread; replies waiting are lit |
+   | Customer replies, Company answers, Quotes | Towers from tickets / cited sources / quote lines |
+   | Documents | One tower per field read; a scan beam sweeps the land and lights each field as it passes |
+   | Meeting notes | The nearest ridge becomes the waveform of meeting lengths |
+   | Reports | A light trail draws the series across the land, with a comet head |
+   | Chat | An aurora (three curtains with rays) that brightens while a reply streams |
+   | Privacy Center | A translucent dome closes over the land; activity dots bounce inside it |
+
+   Data light is sage on dark themes and dark sage / graphite on light ones, so it reads on any sky.
+   Data height scales with the room between the top of the screen and the horizon, so it never climbs
+   into the title.
+6. *Events*: the approval fly-in lands with a ring on the horizon; clearing "Needs you" sends a burst.
+7. *Post*: film grain and a chromatic vignette (slightly warm-red falloff, cool blue lift).
+
+**Quality tiers** (adaptive; DPR is capped at 1.5 before the tier scale)
+
+| Tier | Resolution | fbm octaves | Ridge layers | Haze | Frame rate |
+|---|---|---|---|---|---|
+| 0 | 1.0 × DPR (≤1.5) | 5 | 5 | on | 60 |
+| 1 | 0.75 × | 4 | 4 | on | 60 |
+| 2 | 0.5 × (upscaled by the browser) | 3 | 3 | off | 60 |
+| 3 | 0.5 × | 3 | 3 | off | 30 |
+
+Software renderers (SwiftShader, llvmpipe) start at tier 2. Every 45 frames the engine checks the
+median GPU time (`EXT_disjoint_timer_query`, where available) against a 12 ms budget, or, without a
+timer, the median frame interval against 19 ms, and drops one tier if it's over. It never climbs back
+during a visit (no flicker). The loop stops when the tab is hidden, when the page is scrolled past the
+hero (the veil covers it; a still frame stays) and under reduced motion. `?q=N` pins a tier (for
+screenshots and measurements); `?gl=0` forces the fallback.
+
+**Fallback chain.** WebGL2 → WebGL1 → the v2 Canvas-2D heroes → a static CSS sky gradient on `.hero`.
+`html.gl` is only set while the world runs; every v3 world/glass rule is scoped to it, so the
+fallbacks look exactly like v2. A lost WebGL context drops back to the 2D heroes.
+
+**Materials**
+- *Glass*: cards, the ask box and idea chips are `--glass` (the card colour at 72%) with a 22 px blur
+  and 165% saturation, so they pick up the scene's colour.
+- *Chrome hairline*: a 1 px masked border (`::after`) with a fixed diagonal sheen plus a radial light
+  that follows the pointer (`--mx/--my`, set per card).
+- *Embossed numerals*: `--emboss` (one light and one dark 1 px shadow) on hero stats and KPIs.
+- *Dock*: a glass capsule (46% card, 26 px blur, 190% saturation) that reflects the world behind it,
+  with an inner top highlight, an inner bottom edge, a layered drop shadow and a soft contact shadow.
+- *Palette*: a cinematic glass sheet (86% card, 34 px blur) that falls in with a 14° tilt over 520 ms.
+- *Cursor*: a soft glow dot that grows into a ring over anything pressable and hides over text fields
+  (the native caret cursor shows there). Desktop mouse only; never on touch or under reduced motion.
+- *Magnetic buttons*: primary buttons, the ask/send buttons and New chat drift up to 7 px toward the
+  pointer (using `translate`, so the press `scale` still works).
+- *Type*: hero display 42–80 px, line height 0.98, tracking −0.048em, weight 640, balanced wrapping;
+  compact heroes 36–56 px.
+
+**Motion tokens (v3, adds to v2)**
+
+| Token | Value | Use |
+|---|---|---|
+| camera fly | exponential ease, rate 3.4/s (~1.4 s to settle) | page-to-page flight |
+| `--dur-intro` | 2500 ms | first-launch sunrise |
+| fold range | scroll 0 → 75vh | hero title folds away |
+| rise range | view() entry 0 → 30vh | content bands rise |
+| `--magnet` | 7 px | magnetic buttons |
+| palette sheet | 520 ms `--ease` | palette entrance |
+
+**Scroll choreography.** The hero title block folds back (perspective 1000 px, up to 32° and −9vh,
+fading out) over the first 75vh of scroll; content bands rise 56 px with a slight scale as they enter.
+Both use CSS scroll-driven animations (`animation-timeline: scroll()` / `view()`); where those aren't
+supported a passive scroll listener sets `--sp` for the fold and the bands simply stay put. Scrolling is
+never captured or delayed; at rest (scroll 0) everything is in its final, readable state, and a band in
+view is fully opaque (verified).
+
+**Intro (Home, first launch).** A 2.5 s sunrise: the scene starts at pre-dawn exposure, the sun crests
+the horizon, the horizon line draws outward from the centre, the towers rise in a stagger and the mark
+assembles from light (a noise dissolve with a glowing edge). Then the title and dock fade in. It plays
+once (`localStorage['arkhon-intro']`, wrapped in try/catch), only on Home, never under reduced motion.
+Skip (a button), any key or any click ends it at once. `?intro=1` replays it, `?intro=0` suppresses it.
+The intro clock starts on the first frame actually drawn, and a stalled frame doesn't eat into it.
+
+**Accessibility**
+- Hero text sits on a scrim (a soft radial wash of the page colour, 80% light / 76% dark at its core).
+  Measured contrast of the hero title and lede against the rendered pixels behind the words (text
+  hidden, every 3rd pixel of the text's ink box, minimum reported), Home at dawn/day/dusk/night and
+  Email, Documents, Reports, Privacy and Chat, at 1280 and 390, light and dark: title ≥ 9.0:1, lede ≥
+  4.8:1.
+- Reduced motion: one still frame of the world, no intro, no cursor, no magnet, no fold or rise; two
+  captures 700 ms apart are pixel-identical on every route.
+- Reduced transparency: cards, ask box, dock, palette and Skip are solid (`--card`, no blur), and the
+  page under the hero is solid.
+- Focus rings stay visible over glass: the focus outline plus a 6 px page-colour halo.
+- "Example company · sample data" and "Demo replies" are unchanged.
+
+**Console and portal (lite).** The same engine (copied inline; no external resources, the strict CSP
+is unchanged) runs behind the title band in `lite` mode: towers from the page's numbers, the monument,
+terrain and sky, a place per page; glass cards with the pointer-lit edge and embossed KPIs. Without
+WebGL the v2 2D band runs as before.
+
+**Sources.** The engine lives in `dashboard.html` between `ark-world:begin` / `ark-world:end`, and the
+identical block is inlined in `server/console/index.html` and `server/portal/index.html`. Change all
+three together.
 
 ## Open questions
 - An official vector logo. The prototype redraws the mark as SVG from `brand/arkhon-mark-mist.png`. Replace it with the master SVG when one is available.
