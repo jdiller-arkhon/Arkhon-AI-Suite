@@ -1,18 +1,31 @@
-//! Arkhon Runtime library.
+//! Arkhon Runtime library: the process on a customer's computer.
 //!
-//! Phase 1 scope: load decrypted model weights **into memory only** and hand them to the
-//! inference engine without plaintext ever touching disk, swap or core dumps.
-//!
-//! Linux strategy (see `docs/decisions/0009-in-memory-model-loading.md`):
-//! 1. [`harden_process`]: mark the process non-dumpable (blocks same-user `ptrace` and
-//!    `/proc/<pid>/mem` reads) and set the core-dump limit to zero.
-//! 2. [`SealedModel::create`]: decrypt straight into an anonymous `memfd` (RAM-backed, no
-//!    filesystem path), then seal it against writes, growth and shrinking.
-//! 3. Pass the fd to `llama-server` as `/proc/self/fd/N` with `--mlock`, so the mapped pages
-//!    are locked in RAM and never written to swap.
+//! * [`client`]: the License Manager's device API (activate, check-in, deactivate, offline renewal,
+//!   releases). Only license metadata is ever sent.
+//! * [`store`]: sealed local storage, encrypted to this computer's device key.
+//! * [`licensing`]: activation and the licensing state machine (offline verification, check-in,
+//!   offline grace, clock-rollback detection, forward-only revocation lists, release gating).
+//! * [`hardware`]: vendor-neutral hardware detection and S/M/L tiering (port of env-check).
+//! * [`router`]: engine choice per task from `models/registry.yaml`, with fallback chains,
+//!   restricted to licensed engines.
+//! * [`api`] + [`backend`]: the local OpenAI-shaped API and the inference backends behind it.
+//! * Linux only: [`memload`] (sealed memfd, ADR-0009) and [`launch`] (decrypt an engine into a
+//!   memfd and start its server from it).
 
+pub mod api;
+pub mod backend;
+pub mod client;
+mod fsutil;
+pub mod hardware;
+#[cfg(target_os = "linux")]
+pub mod launch;
+pub mod licensing;
 #[cfg(target_os = "linux")]
 pub mod memload;
+pub mod router;
+pub mod store;
+#[cfg(test)]
+mod testkit;
 
 /// Crate version, exposed for build/diagnostic reporting.
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
