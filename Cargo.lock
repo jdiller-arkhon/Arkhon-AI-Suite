@@ -204,6 +204,7 @@ version = "0.0.1"
 dependencies = [
  "arkhon-engine",
  "axum",
+ "futures-core",
  "http-body-util",
  "serde",
  "serde_json",

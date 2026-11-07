@@ -10,6 +10,8 @@
 //! | GET | `/api/report?month=YYYY-MM` | — | [`arkhon_engine::MonthlyReport`] (own numbers unless the viewer sees company reports) |
 //! | GET | `/api/ask?q=...` | — | [`arkhon_engine::AskResult`]: an answer from the company's files, or an honest "not found" |
 //! | GET | `/api/people` | — | `[{id, name, role}]` for the dev "View as" switcher |
+//! | GET | `/api/chat` | — | `{mode, label}`: whether chat replies come from the local runtime or demo mode |
+//! | POST | `/api/chat` | `{messages:[{role, content}]}` | a streamed reply (server-sent events, see [`chat`]) |
 //!
 //! **Dev-only identity:** the acting person is chosen with the `x-arkhon-as` header (a member id).
 //! The desktop app replaces this with the signed-in local session (Phase 5). Because of that, this
@@ -35,12 +37,15 @@ use serde_json::json;
 use tokio::sync::Mutex;
 use tower_http::services::ServeDir;
 
+pub mod chat;
+
 /// Shared server state.
 #[derive(Clone)]
 pub struct AppState {
     suite: Arc<Mutex<Suite>>,
     store: Option<Store>,
     default_actor: u64,
+    chat: chat::ChatConfig,
 }
 
 impl AppState {
@@ -51,7 +56,15 @@ impl AppState {
             suite: Arc::new(Mutex::new(suite)),
             store,
             default_actor,
+            chat: chat::ChatConfig::default(),
         }
+    }
+
+    /// Use these chat settings (runtime address, demo pacing).
+    #[must_use]
+    pub fn with_chat(mut self, chat: chat::ChatConfig) -> Self {
+        self.chat = chat;
+        self
     }
 }
 
@@ -64,6 +77,7 @@ pub fn router(state: AppState, static_dir: PathBuf, port: u16) -> Router {
         .route("/api/report", get(report))
         .route("/api/people", get(people))
         .route("/api/ask", get(ask))
+        .route("/api/chat", get(chat::status).post(chat::chat))
         .with_state(state);
     Router::new()
         .merge(api)
