@@ -260,6 +260,124 @@ label.f { display: grid; gap: 6px; font-size: 14px; color: var(--fg-2); }
   .team { grid-template-columns: minmax(0,1fr); }
   .seats, .invite { padding: 24px; }
 }
+
+/* ---------- Header: workspaces menu ---------- */
+.wmenu { position: relative; }
+.navbtn { border: 0; background: none; padding: 0; color: var(--fg-2); font-size: 15px; display: inline-flex; align-items: center; gap: 4px; }
+.navbtn:hover, .navbtn[aria-current="page"] { color: var(--fg); }
+.navbtn svg { width: 12px; height: 12px; stroke: currentColor; fill: none; stroke-width: 2; }
+.pop { position: absolute; top: 40px; left: -16px; min-width: 250px; padding: 8px; display: grid; gap: 2px; z-index: 20; }
+.pop a { display: block; padding: 10px 14px; border-radius: 12px; color: var(--fg); text-decoration: none; font-size: 15px; }
+.pop a:hover, .pop a[aria-current="page"] { background: var(--soft); }
+.pop hr { border: 0; border-top: 1px solid var(--line); margin: 6px 8px; }
+.pop .lbl { font-size: 12px; color: var(--fg-3); padding: 8px 14px 4px; letter-spacing: .02em; }
+
+/* ---------- Workspace pages ---------- */
+.pg-head { padding-block: 56px 0; }
+.pg-head h1 { font-size: clamp(34px, 5vw, 48px); }
+.pg-head .lede { max-width: 48ch; }
+.pg-head .example { margin-bottom: 16px; }
+.wsp .msg[data-msg] { margin-bottom: 14px; }
+.split { display: grid; grid-template-columns: minmax(0, 300px) minmax(0, 1fr); gap: 14px; align-items: start; }
+.list { list-style: none; margin: 0; padding: 8px; display: grid; gap: 2px; }
+.list .row { width: 100%; text-align: left; border: 0; background: none; padding: 14px 16px; border-radius: 14px; display: grid; gap: 4px; justify-items: start; }
+.list .row:hover, .list .row[aria-current="true"] { background: var(--soft); }
+.row .t { font-weight: 600; display: flex; gap: 8px; align-items: baseline; justify-content: space-between; width: 100%; }
+.row .t small { font-weight: 400; color: var(--fg-3); font-size: 13px; white-space: nowrap; }
+.row .s { color: var(--fg-2); font-size: 14px; line-height: 1.4; }
+.row .pill-s, .tags .pill-s { margin-left: 0; }
+.pane { padding: 30px 32px; display: grid; gap: 18px; min-width: 0; align-content: start; }
+.pane h2 { font-size: 24px; }
+.pane h3 { margin: 0; font-size: 17px; font-weight: 600; }
+.meta { color: var(--fg-2); font-size: 15px; margin: 4px 0 0; }
+.bubble { background: var(--soft); border-radius: 16px; padding: 16px 18px; font-size: 16px; white-space: pre-wrap; margin: 0; }
+.wsp textarea, .wsp .gap input, .wsp .f input, .wsp .f select { width: 100%; border-radius: 14px; border: 1px solid var(--line); background: var(--card); padding: 12px 16px; font-size: 16px; color: var(--fg); }
+.wsp .f input, .wsp .f select { height: 48px; padding: 0 16px; }
+.wsp textarea { min-height: 190px; resize: vertical; line-height: 1.5; }
+.wsp textarea[readonly], .wsp .f input[readonly] { background: var(--soft); border-color: transparent; }
+.why { font-size: 14px; color: var(--fg-2); margin: 0; }
+.acts { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+.pane .blocked { font-size: 14px; color: var(--warn); margin: 0; }
+.btn:disabled { opacity: .4; cursor: default; }
+.btn.danger { background: var(--bad); color: #fff; }
+.sent { white-space: pre-wrap; color: var(--fg-2); font-size: 15px; margin: 0; }
+.pill-s.plain { color: var(--fg-2); background: var(--soft); }
+.tags { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.stack { display: grid; gap: 14px; }
+.did { font-size: 15px; margin: 0; }
+.kv { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.check { display: flex; gap: 10px; align-items: center; padding: 14px 18px; border-radius: 14px; font-size: 15px; font-weight: 500; margin: 0; }
+.check.ok { background: var(--ok-bg); color: var(--ok); }
+.check.warn { background: var(--warn-bg); color: var(--warn); }
+.check.missing { background: var(--bad-bg); color: var(--bad); }
+.lines { width: 100%; border-collapse: collapse; font-size: 15px; font-variant-numeric: tabular-nums; }
+.lines th { text-align: left; font-weight: 500; color: var(--fg-3); font-size: 13px; padding: 0 0 8px; }
+.lines td { padding: 10px 0; border-top: 1px solid var(--line); vertical-align: top; }
+.lines .num { text-align: right; white-space: nowrap; padding-left: 12px; }
+.lines tfoot td { font-weight: 600; font-size: 18px; }
+.bars { display: grid; gap: 12px; }
+.bar { display: grid; grid-template-columns: minmax(0, 170px) minmax(0, 1fr) auto; gap: 14px; align-items: center; font-size: 15px; }
+.bar .track { height: 26px; border-radius: 8px; background: var(--soft); overflow: hidden; }
+.bar .fill { display: block; height: 100%; border-radius: 8px; background: var(--fg-3); opacity: .55; }
+.bar.top .fill { background: var(--ink); opacity: 1; }
+.bar .val { font-variant-numeric: tabular-nums; font-weight: 600; min-width: 84px; text-align: right; }
+.bullets { margin: 0; padding-left: 20px; color: var(--fg-2); font-size: 15px; display: grid; gap: 6px; }
+.answer-big { font-size: 21px; line-height: 1.4; margin: 0; letter-spacing: -.015em; text-wrap: pretty; }
+.actions-t td:first-child { font-weight: 500; white-space: nowrap; padding-right: 14px; }
+.actions-t td:last-child { color: var(--fg-2); text-align: right; white-space: nowrap; padding-left: 12px; }
+.qlist { display: grid; gap: 10px; }
+.qbtn { text-align: left; border: 0; background: var(--card); box-shadow: var(--shadow); border-radius: 18px; padding: 18px 22px; font-size: 17px; display: flex; gap: 12px; align-items: center; }
+.qbtn::after { content: "›"; margin-left: auto; color: var(--fg-3); font-size: 22px; }
+.k-out { margin-top: 18px; }
+.bigstat { font-size: clamp(48px, 8vw, 72px); font-weight: 700; letter-spacing: -.045em; line-height: 1; font-variant-numeric: tabular-nums; }
+.bigstat small { font-size: .34em; font-weight: 600; color: var(--fg-2); letter-spacing: -.01em; }
+.facts.four { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.chart svg { width: 100%; height: auto; display: block; }
+.numin { width: 96px !important; height: 40px !important; padding: 0 12px !important; text-align: right; }
+.monthnav { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.monthnav > * { flex: none; }
+.monthnav .grow { flex: 1; }
+.monthnav button[data-rm] { width: 40px; height: 40px; border-radius: 50%; border: 0; background: var(--soft); font-size: 18px; }
+.monthnav b { font-size: 17px; font-weight: 600; min-width: 132px; text-align: center; }
+.where { list-style: none; margin: 0; padding: 8px 0; }
+.where li { display: flex; gap: 14px; align-items: flex-start; padding: 16px 28px; }
+.where li + li { border-top: 1px solid var(--line); }
+.where .shield { width: 36px; height: 36px; border-radius: 10px; background: var(--ok-bg); display: grid; place-items: center; flex: none; }
+.where .shield svg { width: 18px; height: 18px; stroke: var(--ok); fill: none; stroke-width: 1.8; }
+.where p { margin: 6px 0 0; }
+.danger-card { border: 1.5px solid color-mix(in srgb, var(--bad) 35%, transparent); box-shadow: none; }
+.wiz-top { display: flex; align-items: center; gap: 14px; margin-bottom: 18px; color: var(--fg-2); font-size: 15px; }
+.wiz-top .meter { flex: 1; }
+.wiz { padding: 40px 44px; display: grid; gap: 22px; }
+.wiz h2 { font-size: clamp(26px, 3.6vw, 32px); }
+.wiz .lead { margin: 0; color: var(--fg-2); font-size: 18px; max-width: 52ch; }
+.okline { display: flex; gap: 12px; align-items: center; padding: 16px 20px; border-radius: 16px; background: var(--ok-bg); color: var(--ok); font-weight: 500; margin: 0; }
+.ticks { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.ticks li { display: flex; gap: 10px; }
+.ticks li::before { content: "✓"; color: var(--ok); font-weight: 600; }
+.choices.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.help details { padding: 22px 28px; }
+.help details + details { border-top: 1px solid var(--line); }
+.help summary { font-weight: 600; cursor: pointer; list-style: none; display: flex; justify-content: space-between; gap: 12px; }
+.help summary::after { content: "+"; color: var(--fg-3); font-weight: 400; font-size: 20px; line-height: 1; }
+.help details[open] summary::after { content: "–"; }
+.help details p { margin: 10px 0 0; color: var(--fg-2); }
+.week-more { margin-top: 14px; text-align: right; }
+@media (max-width: 720px) {
+  .hide-xs { display: none; }
+  .pop { position: fixed; top: calc(64px + env(safe-area-inset-top, 0px)); left: 16px; right: 16px; min-width: 0; }
+  .split { grid-template-columns: minmax(0, 1fr); }
+  .pane { padding: 24px 22px; }
+  .kv { grid-template-columns: minmax(0, 1fr); }
+  .bar { grid-template-columns: minmax(0, 1fr) auto; gap: 6px 12px; }
+  .bar .track { grid-column: 1 / -1; grid-row: 2; }
+  .facts.four { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .where li { padding: 16px 20px; }
+  .wiz { padding: 28px 22px; }
+  .choices.two { grid-template-columns: minmax(0, 1fr); }
+  .help details { padding: 18px 20px; }
+  .answer-big { font-size: 19px; }
+}
 </style>
 
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
@@ -285,11 +403,23 @@ label.f { display: grid; gap: 6px; font-size: 14px; color: var(--fg-2); }
 
 <header>
   <div class="wrap hdr">
-    <a class="logo" href="#home"><svg role="img" aria-label="Arkhon"><use href="#mark"/></svg>ARKHON</a>
+    <a class="logo" href="#home"><svg role="img" aria-label="Arkhon"><use href="#mark"/></svg><span class="hide-xs">ARKHON</span></a>
     <nav class="links" aria-label="Main">
       <a href="#home" data-nav="home">Home</a>
+      <div class="wmenu">
+        <button class="navbtn" type="button" id="ws-btn" data-nav="work" aria-haspopup="true" aria-expanded="false" aria-controls="ws-pop">Workspaces<svg viewBox="0 0 12 12"><path d="M3 4.5l3 3 3-3"/></svg></button>
+        <div class="card pop" id="ws-pop" hidden>
+          <span class="lbl">Your workspaces</span>
+          <div id="ws-links"></div>
+          <hr>
+          <a href="#report">Value report</a>
+          <a href="#privacy">Privacy Center</a>
+          <a href="#welcome">Set-up guide</a>
+          <a href="#help">Help</a>
+        </div>
+      </div>
       <a href="#people" data-nav="settings">Company</a>
-      <a href="#home" class="hide-sm" data-nav="help">Help</a>
+      <a href="#help" class="hide-sm" data-nav="help">Help</a>
     </nav>
     <span class="grow"></span>
     <button class="me" type="button" aria-label="Dana Ruiz, Owner">DR</button>
@@ -337,9 +467,10 @@ label.f { display: grid; gap: 6px; font-size: 14px; color: var(--fg-2); }
       <div class="card fact"><b id="wk-docs">0</b><span>bills and receipts filed</span></div>
       <div class="card fact"><b id="wk-meetings">0</b><span>meetings written up</span></div>
     </div>
+    <p class="week-more"><a class="link" href="#report" style="text-decoration:none">See the monthly report</a></p>
     <div class="card private">
       <span class="shield"><svg viewBox="0 0 24 24"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z M8.5 12l2.5 2.5 4.5-5"/></svg></span>
-      <p><b>Everything stayed on this computer.</b> No customer information was sent anywhere. <button class="link" type="button" style="font-size:15px">See what connected</button></p>
+      <p><b>Everything stayed on this computer.</b> No customer information was sent anywhere. <a class="link" href="#privacy" style="font-size:15px;text-decoration:none">See what connected</a></p>
     </div>
   </section>
 </main>
@@ -444,19 +575,192 @@ label.f { display: grid; gap: 6px; font-size: 14px; color: var(--fg-2); }
   </section>
 </main>
 
+<!-- ================= EMAIL ================= -->
+<main class="view wsp" id="v-inbox" hidden>
+  <section class="wrap pg-head">
+    <span class="example" data-ex>Example company · sample data</span>
+    <h1>Email</h1>
+    <p class="lede" id="inbox-lede"></p>
+  </section>
+  <section class="wrap band" style="padding-block-start:36px">
+    <p class="msg" data-msg hidden></p>
+    <div class="stack" id="inbox-body">
+    </div>
+  </section>
+</main>
+
+<!-- ================= CUSTOMER REPLIES ================= -->
+<main class="view wsp" id="v-desk" hidden>
+  <section class="wrap pg-head">
+    <span class="example" data-ex>Example company · sample data</span>
+    <h1>Customer replies</h1>
+    <p class="lede" id="desk-lede"></p>
+  </section>
+  <section class="wrap band" style="padding-block-start:36px">
+    <p class="msg" data-msg hidden></p>
+    <div class="stack" id="desk-body">
+    </div>
+  </section>
+</main>
+
+<!-- ================= DOCUMENTS ================= -->
+<main class="view wsp" id="v-docs" hidden>
+  <section class="wrap pg-head">
+    <span class="example" data-ex>Example company · sample data</span>
+    <h1>Documents</h1>
+    <p class="lede" id="docs-lede"></p>
+  </section>
+  <section class="wrap band" style="padding-block-start:36px">
+    <p class="msg" data-msg hidden></p>
+    <div class="stack" id="docs-body">
+    </div>
+  </section>
+</main>
+
+<!-- ================= COMPANY ANSWERS ================= -->
+<main class="view wsp" id="v-knowledge" hidden>
+  <section class="wrap pg-head">
+    <span class="example" data-ex>Example company · sample data</span>
+    <h1>Company answers</h1>
+    <p class="lede" id="knowledge-lede"></p>
+  </section>
+  <section class="wrap band" style="padding-block-start:36px">
+    <p class="msg" data-msg hidden></p>
+    <div class="stack" id="knowledge-body">
+    </div>
+  </section>
+</main>
+
+<!-- ================= MEETING NOTES ================= -->
+<main class="view wsp" id="v-meetings" hidden>
+  <section class="wrap pg-head">
+    <span class="example" data-ex>Example company · sample data</span>
+    <h1>Meeting notes</h1>
+    <p class="lede" id="meetings-lede"></p>
+  </section>
+  <section class="wrap band" style="padding-block-start:36px">
+    <p class="msg" data-msg hidden></p>
+    <div class="stack" id="meetings-body">
+    </div>
+  </section>
+</main>
+
+<!-- ================= QUOTES &AMP; MARKETING ================= -->
+<main class="view wsp" id="v-growth" hidden>
+  <section class="wrap pg-head">
+    <span class="example" data-ex>Example company · sample data</span>
+    <h1>Quotes &amp; marketing</h1>
+    <p class="lede" id="growth-lede"></p>
+  </section>
+  <section class="wrap band" style="padding-block-start:36px">
+    <p class="msg" data-msg hidden></p>
+    <div class="stack" id="growth-body">
+    </div>
+  </section>
+</main>
+
+<!-- ================= REPORTS ================= -->
+<main class="view wsp" id="v-insights" hidden>
+  <section class="wrap pg-head">
+    <span class="example" data-ex>Example company · sample data</span>
+    <h1>Reports</h1>
+    <p class="lede" id="insights-lede"></p>
+  </section>
+  <section class="wrap band" style="padding-block-start:36px">
+    <p class="msg" data-msg hidden></p>
+    <div class="stack" id="insights-body">
+    </div>
+  </section>
+</main>
+
+<!-- ================= VALUE REPORT ================= -->
+<main class="view wsp" id="v-report" hidden>
+  <section class="wrap pg-head">
+    <span class="example" data-ex>Example company · sample data</span>
+    <h1>Value report</h1>
+    <p class="lede" id="report-lede"></p>
+  </section>
+  <section class="wrap band" style="padding-block-start:36px">
+    <p class="msg" data-msg hidden></p>
+    <div class="stack" id="report-body">
+    </div>
+  </section>
+</main>
+
+<!-- ================= PRIVACY CENTER ================= -->
+<main class="view wsp" id="v-privacy" hidden>
+  <section class="wrap pg-head">
+    <span class="example" data-ex>Example company · sample data</span>
+    <h1>Privacy Center</h1>
+    <p class="lede" id="privacy-lede"></p>
+  </section>
+  <section class="wrap band" style="padding-block-start:36px">
+    <p class="msg" data-msg hidden></p>
+    <div class="stack" id="privacy-body">
+    </div>
+  </section>
+</main>
+
+<!-- ================= WELCOME TO ARKHON ================= -->
+<main class="view wsp" id="v-welcome" hidden>
+  <section class="wrap pg-head">
+    <span class="example" data-ex>Example company · sample data</span>
+    <h1>Welcome to Arkhon</h1>
+    <p class="lede" id="welcome-lede"></p>
+  </section>
+  <section class="wrap band" style="padding-block-start:36px">
+    <p class="msg" data-msg hidden></p>
+    <div class="stack" id="welcome-body">
+    </div>
+  </section>
+</main>
+
+<!-- ================= HELP ================= -->
+<main class="view wsp" id="v-help" hidden>
+  <section class="wrap pg-head">
+    <span class="example" data-ex>Example company · sample data</span>
+    <h1>Help</h1>
+    <p class="lede" id="help-lede">Short answers to common questions, and how to reach a person.</p>
+  </section>
+  <section class="wrap band" style="padding-block-start:36px">
+    <p class="msg" data-msg hidden></p>
+    <div class="" id="help-body">
+    <div class="card help">
+      <details open><summary>Does my customers' information leave this computer?</summary><p>No. Arkhon reads your email and files and runs its AI right here, on this computer. It only connects to the apps you connected, to read new items and to send what you approved. The <a href="#privacy">Privacy Center</a> lists every connection it made.</p></details>
+      <details><summary>Will Arkhon send anything on its own?</summary><p>No. Every email, quote and bill waits for a person to press Send or File. You can change the text first, or dismiss it and nothing happens.</p></details>
+      <details><summary>What does "Not sure" or "Not found in your data" mean?</summary><p>Arkhon couldn't find the answer in your files, so it didn't guess. Answer it once and Arkhon remembers it for next time.</p></details>
+      <details><summary>How do I add someone or change what they can use?</summary><p>Go to <a href="#people">Company → People</a> to invite someone and pick their role. Teams add extra tools to a group of people without a new role.</p></details>
+      <details><summary>How is "time saved" counted?</summary><p>Only from work someone approved. Each kind of work counts a set number of minutes, listed in the <a href="#report">Value report</a>. Owners and admins can change those numbers.</p></details>
+      <details><summary>An app says "Sign in again". What do I do?</summary><p>Open <a href="#connections">Company → Connections</a> and press Fix next to it. Arkhon pauses that app until you sign in again; nothing is lost.</p></details>
+      <details><summary>How do I start over or remove Arkhon's data?</summary><p>An owner or admin can delete everything Arkhon read and learned from the <a href="#privacy">Privacy Center</a>. People and roles stay so you can still sign in.</p></details>
+    </div>
+    <div class="sub-h"><h2>Talk to a person</h2><p>Arkhon support can help with setup, connections and anything that seems off.</p></div>
+    <div class="card pane">
+      <p style="margin:0">Write to Arkhon support through the contact page at <b>arkhonindustries.com</b>. Tell us what you were doing and what you expected to see.</p>
+      <p class="why">Support never needs your customers' information, and we'll never ask for passwords. If you want to share a screenshot, cover anything private first.</p>
+      <div class="acts"><a class="btn primary" href="#welcome" style="display:inline-grid;place-items:center;text-decoration:none">Open the set-up guide</a><a class="link" href="#privacy" style="text-decoration:none">Privacy Center</a></div>
+    </div>
+    </div>
+  </section>
+</main>
+
 <script type="application/json" id="snapshot">{"company":"Coastline Mechanical","plan":"Business","seats":10,"seats_used":8,"viewer":{"id":1,"name":"Dana Ruiz","email":"dana@coastline.com","role":"Owner","status":"active"},"can":{"manage_people":true,"assign_roles":true,"manage_billing":true,"manage_connections":true,"view_activity":true},"people":[{"id":1,"name":"Dana Ruiz","email":"dana@coastline.com","role":"Owner","status":"active"},{"id":2,"name":"Ari Patel","email":"ari@coastline.com","role":"Admin","status":"active"},{"id":3,"name":"Max Okafor","email":"max@coastline.com","role":"Manager","status":"active"},{"id":4,"name":"Lena Cho","email":"lena@coastline.com","role":"Dispatcher","status":"active"},{"id":5,"name":"Tia Alvarez","email":"tia@coastline.com","role":"Member","status":"active"},{"id":6,"name":"Sam Brooks","email":"sam@coastline.com","role":"Member","status":"active"},{"id":7,"name":"Rae Kim","email":"rae@coastline.com","role":"Member","status":"invited"},{"id":8,"name":"Jon Weiss","email":"jon@coastline.com","role":"Member","status":"active"},{"id":9,"name":"Pat Doyle","email":"pat@coastline.com","role":"Member","status":"suspended"}],"roles":[{"name":"Owner","description":"Runs the account, including plan and billing.","can":["Manage plan and billing","Change company settings","Invite and remove people","Change people's roles","Create custom roles","Manage teams","Connect company accounts","Turn on company automations","Approve work for their team","See company time-saved reports","See everyone's activity history","Install updates and industry packs"],"workspaces":["Email","Customer replies","Documents","Company answers","Meeting notes","Quotes & marketing","Reports","Coding & IT"],"people":1,"custom":false},{"name":"Admin","description":"Runs Arkhon day to day for the company.","can":["Change company settings","Invite and remove people","Change people's roles","Create custom roles","Manage teams","Connect company accounts","Turn on company automations","Approve work for their team","See company time-saved reports","See everyone's activity history","Install updates and industry packs"],"workspaces":["Email","Customer replies","Documents","Company answers","Meeting notes","Quotes & marketing","Reports","Coding & IT"],"people":1,"custom":false},{"name":"Manager","description":"Leads a team and signs off on their work.","can":["Manage teams","Approve work for their team","See company time-saved reports"],"workspaces":["Email","Customer replies","Documents","Company answers","Meeting notes","Quotes & marketing","Reports","Coding & IT"],"people":1,"custom":false},{"name":"Member","description":"Uses Arkhon for their own work.","can":[],"workspaces":["Email","Documents","Company answers"],"people":5,"custom":false},{"name":"Dispatcher","description":"A role your company created.","can":["Approve work for their team"],"workspaces":["Email","Customer replies","Company answers","Quotes & marketing"],"people":1,"custom":true}],"teams":[{"name":"Field techs","members":["Max Okafor","Tia Alvarez","Sam Brooks","Jon Weiss"],"workspaces":["Documents","Meeting notes"],"is_member":false},{"name":"Front office","members":["Ari Patel","Lena Cho","Rae Kim"],"workspaces":["Customer replies","Quotes & marketing"],"is_member":false}],"connections":[{"id":1,"app":"outlook","app_name":"Outlook","account":"service@coastline.com","mine":false,"personal":false,"shared_with":"Front office","connected_by":"Ari Patel","status":"active","can_disconnect":true},{"id":2,"app":"quick-books","app_name":"QuickBooks Online","account":"coastline mechanical books","mine":false,"personal":false,"shared_with":"Owners and Admins","connected_by":"Dana Ruiz","status":"active","can_disconnect":true},{"id":3,"app":"local-folder","app_name":"Folder or network drive","account":"\\\\office-nas\\jobs","mine":false,"personal":false,"shared_with":"Everyone","connected_by":"Ari Patel","status":"active","can_disconnect":true},{"id":4,"app":"google-drive","app_name":"Google Drive","account":"price books & manuals","mine":false,"personal":false,"shared_with":"Everyone","connected_by":"Ari Patel","status":"needs-sign-in","can_disconnect":true},{"id":5,"app":"outlook","app_name":"Outlook","account":"dana@coastline.com","mine":true,"personal":true,"shared_with":"Only Dana Ruiz","connected_by":"Dana Ruiz","status":"active","can_disconnect":true},{"id":6,"app":"google-calendar","app_name":"Google Calendar","account":"dana@coastline.com","mine":true,"personal":true,"shared_with":"Only Dana Ruiz","connected_by":"Dana Ruiz","status":"active","can_disconnect":true},{"id":7,"app":"gmail","app_name":"Gmail","account":"tia@coastline.com","mine":false,"personal":true,"shared_with":"Only Tia Alvarez","connected_by":"Tia Alvarez","status":"active","can_disconnect":true}],"apps":[{"app":"outlook","name":"Outlook","category":"Email & calendar","policy":"own-accounts","available":true,"connected":2,"can_connect_me":true,"can_connect_team":true,"can_connect_everyone":true},{"app":"one-drive","name":"OneDrive & SharePoint","category":"Files","policy":"own-accounts","available":true,"connected":0,"can_connect_me":true,"can_connect_team":true,"can_connect_everyone":true},{"app":"microsoft-teams","name":"Microsoft Teams","category":"Chat & meetings","policy":"admins-only","available":false,"connected":0,"can_connect_me":true,"can_connect_team":true,"can_connect_everyone":true},{"app":"gmail","name":"Gmail","category":"Email & calendar","policy":"own-accounts","available":true,"connected":1,"can_connect_me":true,"can_connect_team":true,"can_connect_everyone":true},{"app":"google-calendar","name":"Google Calendar","category":"Email & calendar","policy":"own-accounts","available":true,"connected":1,"can_connect_me":true,"can_connect_team":true,"can_connect_everyone":true},{"app":"google-drive","name":"Google Drive","category":"Files","policy":"own-accounts","available":true,"connected":1,"can_connect_me":true,"can_connect_team":true,"can_connect_everyone":true},{"app":"other-email","name":"Other email (IMAP)","category":"Email & calendar","policy":"own-accounts","available":true,"connected":0,"can_connect_me":true,"can_connect_team":true,"can_connect_everyone":true},{"app":"local-folder","name":"Folder or network drive","category":"Files","policy":"admins-only","available":true,"connected":1,"can_connect_me":true,"can_connect_team":true,"can_connect_everyone":true},{"app":"dropbox","name":"Dropbox","category":"Files","policy":"admins-only","available":false,"connected":0,"can_connect_me":true,"can_connect_team":true,"can_connect_everyone":true},{"app":"quick-books","name":"QuickBooks Online","category":"Accounting","policy":"admins-only","available":true,"connected":1,"can_connect_me":true,"can_connect_team":true,"can_connect_everyone":true},{"app":"xero","name":"Xero","category":"Accounting","policy":"admins-only","available":true,"connected":0,"can_connect_me":true,"can_connect_team":true,"can_connect_everyone":true},{"app":"hub-spot","name":"HubSpot","category":"Customers & sales","policy":"admins-only","available":true,"connected":0,"can_connect_me":true,"can_connect_team":true,"can_connect_everyone":true},{"app":"service-titan","name":"ServiceTitan","category":"Jobs & scheduling","policy":"admins-only","available":false,"connected":0,"can_connect_me":true,"can_connect_team":true,"can_connect_everyone":true},{"app":"jobber","name":"Jobber","category":"Jobs & scheduling","policy":"team-accounts","available":false,"connected":0,"can_connect_me":true,"can_connect_team":true,"can_connect_everyone":true},{"app":"housecall-pro","name":"Housecall Pro","category":"Jobs & scheduling","policy":"admins-only","available":false,"connected":0,"can_connect_me":true,"can_connect_team":true,"can_connect_everyone":true},{"app":"stripe","name":"Stripe","category":"Payments","policy":"admins-only","available":false,"connected":0,"can_connect_me":true,"can_connect_team":true,"can_connect_everyone":true},{"app":"square","name":"Square","category":"Payments","policy":"admins-only","available":false,"connected":0,"can_connect_me":true,"can_connect_team":true,"can_connect_everyone":true},{"app":"slack","name":"Slack","category":"Chat & meetings","policy":"admins-only","available":false,"connected":0,"can_connect_me":true,"can_connect_team":true,"can_connect_everyone":true},{"app":"zoom","name":"Zoom","category":"Chat & meetings","policy":"admins-only","available":false,"connected":0,"can_connect_me":true,"can_connect_team":true,"can_connect_everyone":true},{"app":"docu-sign","name":"DocuSign","category":"Signatures","policy":"admins-only","available":false,"connected":0,"can_connect_me":true,"can_connect_team":true,"can_connect_everyone":true}],"workspaces":["Email","Customer replies","Documents","Company answers","Meeting notes","Quotes & marketing","Reports","Coding & IT"],"needs_you":{"total":5,"items":[{"id":1,"kind":"draft-reply","workspace":"Email","title":"Reply to Marisol Vega","summary":"Her AC is blowing warm. Arkhon offered today's 1–3 pm slot and confirmed her unit is under warranty.","draft":"Hi Marisol,\n\nSorry to hear the AC is blowing warm. We can come out today between 1 and 3 pm. Your unit was installed in May 2024, so the visit and any covered parts are under warranty.\n\nDana\nCoastline Mechanical","question":null,"sources":[{"label":"Price list 2026","reference":"file:\\\\office-nas\\jobs\\price-list-2026.pdf#p2"},{"label":"Job #4471, Vega residence","reference":"file:\\\\office-nas\\jobs\\4471\\invoice.pdf"},{"label":"Warranty policy","reference":"file:\\\\office-nas\\jobs\\policies\\warranty.docx"}],"confidence":"high","confidence_label":"Sure","urgency":"urgent","created_at":1793952000,"assignee":"Dana Ruiz","team":null,"connection":"Outlook (dana@coastline.com)","action":"Send","done_word":"Sent","can_approve":true,"blocked":null,"status":"waiting","final_text":null},{"id":2,"kind":"file-bill","workspace":"Documents","title":"File a Ferguson bill for $2,418.36","summary":"It matches purchase order 1187 exactly and belongs to the Harbor Dental job.","draft":null,"question":null,"sources":[{"label":"Ferguson invoice 88213","reference":"mail:service@coastline.com/88213"},{"label":"Purchase order 1187","reference":"file:\\\\office-nas\\jobs\\po\\1187.pdf"}],"confidence":"high","confidence_label":"Sure","urgency":"normal","created_at":1793944800,"assignee":"Dana Ruiz","team":null,"connection":"QuickBooks Online (coastline mechanical books)","action":"File it","done_word":"Filed","can_approve":true,"blocked":null,"status":"waiting","final_text":null},{"id":3,"kind":"knowledge-gap","workspace":"Company answers","title":"A customer asked about Mitsubishi units","summary":"Your files don't say whether you service them, so Arkhon didn't guess. Answer once and it will remember.","draft":null,"question":"Do we service Mitsubishi mini-split units?","sources":[],"confidence":"not-found","confidence_label":"Not sure","urgency":"normal","created_at":1793948400,"assignee":"Dana Ruiz","team":null,"connection":null,"action":"Answer","done_word":"Answered","can_approve":true,"blocked":null,"status":"waiting","final_text":null}]},"this_week":{"scope":"company","hours":16.1,"dollars":935,"hourly_rate":58,"totals":{"drafts":120,"documents":69,"meetings":9,"answers":20,"minutes":967,"hours":16.1,"dollars":935},"previous_hours":12.4,"days":[{"date":"2026-10-24","label":"S","weekday":"Saturday","minutes":36,"hours":0.6},{"date":"2026-10-25","label":"S","weekday":"Sunday","minutes":27,"hours":0.5},{"date":"2026-10-26","label":"M","weekday":"Monday","minutes":113,"hours":1.9},{"date":"2026-10-27","label":"T","weekday":"Tuesday","minutes":143,"hours":2.4},{"date":"2026-10-28","label":"W","weekday":"Wednesday","minutes":172,"hours":2.9},{"date":"2026-10-29","label":"T","weekday":"Thursday","minutes":136,"hours":2.3},{"date":"2026-10-30","label":"F","weekday":"Friday","minutes":114,"hours":1.9},{"date":"2026-10-31","label":"S","weekday":"Saturday","minutes":34,"hours":0.6},{"date":"2026-11-01","label":"S","weekday":"Sunday","minutes":18,"hours":0.3},{"date":"2026-11-02","label":"M","weekday":"Monday","minutes":136,"hours":2.3},{"date":"2026-11-03","label":"T","weekday":"Tuesday","minutes":186,"hours":3.1},{"date":"2026-11-04","label":"W","weekday":"Wednesday","minutes":257,"hours":4.3},{"date":"2026-11-05","label":"T","weekday":"Thursday","minutes":195,"hours":3.3},{"date":"2026-11-06","label":"F","weekday":"Friday","minutes":141,"hours":2.4}],"example":true},"nav":[{"key":"inbox","label":"Email"},{"key":"desk","label":"Customer replies"},{"key":"docs","label":"Documents"},{"key":"knowledge","label":"Company answers"},{"key":"meetings","label":"Meeting notes"},{"key":"growth","label":"Quotes & marketing"},{"key":"insights","label":"Reports"}],"inbox":{"threads":[{"id":1,"customer":"Marisol Vega","subject":"AC blowing warm air","summary":"Her AC is blowing warm and she wants someone out today.","message":"Hi, our AC has been blowing warm air since last night. Can someone come out today? We're home all afternoon. Thanks, Marisol","urgency":"urgent","received":"1 hour ago","account":"Outlook (dana@coastline.com)","item":{"id":1,"kind":"draft-reply","workspace":"Email","title":"Reply to Marisol Vega","summary":"Her AC is blowing warm. Arkhon offered today's 1–3 pm slot and confirmed her unit is under warranty.","draft":"Hi Marisol,\n\nSorry to hear the AC is blowing warm. We can come out today between 1 and 3 pm. Your unit was installed in May 2024, so the visit and any covered parts are under warranty.\n\nDana\nCoastline Mechanical","question":null,"sources":[{"label":"Price list 2026","reference":"file:\\\\office-nas\\jobs\\price-list-2026.pdf#p2"},{"label":"Job #4471, Vega residence","reference":"file:\\\\office-nas\\jobs\\4471\\invoice.pdf"},{"label":"Warranty policy","reference":"file:\\\\office-nas\\jobs\\policies\\warranty.docx"}],"confidence":"high","confidence_label":"Sure","urgency":"urgent","created_at":1793952000,"assignee":"Dana Ruiz","team":null,"connection":"Outlook (dana@coastline.com)","action":"Send","done_word":"Sent","can_approve":true,"blocked":null,"status":"waiting","final_text":null}},{"id":2,"customer":"Greg Lund","subject":"Heat pump or furnace?","summary":"Comparing a heat pump with a furnace before winter.","message":"Dana, thanks for coming by. Before we decide: is a heat pump worth it here, or should we just replace the furnace? -Greg","urgency":"low","received":"5 hours ago","account":"Outlook (dana@coastline.com)","item":{"id":7,"kind":"draft-reply","workspace":"Email","title":"Reply to Greg Lund","summary":"He's comparing a heat pump with a new furnace. Arkhon explained both and said Lena will send a quote.","draft":"Hi Greg,\n\nGood question. A heat pump heats and cools with one system and costs less to run in our climate; a furnace costs less up front. For your 1,800 sq ft home we'd suggest a 3-ton heat pump. Lena will send you a written quote today.\n\nDana\nCoastline Mechanical","question":null,"sources":[{"label":"Price book 2026","reference":"file:\\\\office-nas\\jobs\\price-book-2026.pdf#p8"},{"label":"Lund site visit notes","reference":"file:\\\\office-nas\\jobs\\4519\\visit.docx"}],"confidence":"medium","confidence_label":"Check this","urgency":"low","created_at":1793937600,"assignee":"Dana Ruiz","team":null,"connection":"Outlook (dana@coastline.com)","action":"Send","done_word":"Sent","can_approve":true,"blocked":null,"status":"waiting","final_text":null}}],"waiting":2},"desk":{"tickets":[{"id":1,"customer":"Priya Shah, Harbor Dental","channel":"Email","question":"Can we move Tuesday's maintenance visit to Thursday morning?","received":"2 hours ago","item":{"id":5,"kind":"draft-reply","workspace":"Customer replies","title":"Confirm Harbor Dental's maintenance visit","summary":"They asked to move Tuesday's visit to Thursday morning; Thursday 8 am is open.","draft":"Hi Priya,\n\nThursday at 8 am works. We'll see you then.\n\nCoastline Mechanical","question":null,"sources":[{"label":"Dispatch calendar","reference":"calendar:service@coastline.com"}],"confidence":"high","confidence_label":"Sure","urgency":"normal","created_at":1793948400,"assignee":"Lena Cho","team":"Front office","connection":"Outlook (service@coastline.com)","action":"Send","done_word":"Sent","can_approve":false,"blocked":"This would go out through Outlook (service@coastline.com), which you can't use. Ask someone who can to approve it.","status":"waiting","final_text":null}},{"id":2,"customer":"Tom Becker","channel":"Web form","question":"How often should I change my furnace filter?","received":"50 min ago","item":{"id":13,"kind":"draft-reply","workspace":"Customer replies","title":"Answer Tom Becker about filter changes","summary":"He asked how often to change filters. Arkhon answered from your maintenance guide.","draft":"Hi Tom,\n\nFor the 1-inch filter in your return, change it every 2 to 3 months, or every month if you have pets. Comfort Club members get filters at each tune-up.\n\nCoastline Mechanical","question":null,"sources":[{"label":"Homeowner maintenance guide","reference":"file:\\\\office-nas\\jobs\\policies\\maintenance-guide.pdf#p1"}],"confidence":"high","confidence_label":"Sure","urgency":"normal","created_at":1793952600,"assignee":"Lena Cho","team":"Front office","connection":"Outlook (service@coastline.com)","action":"Send","done_word":"Sent","can_approve":false,"blocked":"This would go out through Outlook (service@coastline.com), which you can't use. Ask someone who can to approve it.","status":"waiting","final_text":null}},{"id":3,"customer":"Caller, (805) 555-0199","channel":"Phone message","question":"Do you charge extra to come out on a Saturday?","received":"1 hour ago","item":{"id":12,"kind":"knowledge-gap","workspace":"Customer replies","title":"A customer asked about weekend rates","summary":"Your price list doesn't mention weekends, so Arkhon didn't guess. Answer once and it will remember.","draft":null,"question":"Do we charge extra for weekend service calls?","sources":[],"confidence":"not-found","confidence_label":"Not sure","urgency":"normal","created_at":1793950200,"assignee":"Lena Cho","team":"Front office","connection":null,"action":"Answer","done_word":"Answered","can_approve":true,"blocked":null,"status":"waiting","final_text":null}},{"id":4,"customer":"Alan Whitford","channel":"Email","question":"Do you service Mitsubishi mini-splits?","received":"2 hours ago","item":{"id":3,"kind":"knowledge-gap","workspace":"Company answers","title":"A customer asked about Mitsubishi units","summary":"Your files don't say whether you service them, so Arkhon didn't guess. Answer once and it will remember.","draft":null,"question":"Do we service Mitsubishi mini-split units?","sources":[],"confidence":"not-found","confidence_label":"Not sure","urgency":"normal","created_at":1793948400,"assignee":"Dana Ruiz","team":null,"connection":null,"action":"Answer","done_word":"Answered","can_approve":true,"blocked":null,"status":"waiting","final_text":null}}],"not_found":2},"docs":{"documents":[{"id":1,"doc_type":"supplier-bill","type_label":"Supplier bill","title":"Ferguson invoice 88213","from":"Ferguson Enterprises","received":"3 hours ago","fields":[{"label":"Supplier","value":"Ferguson Enterprises"},{"label":"Invoice number","value":"88213"},{"label":"Invoice date","value":"Nov 4, 2026"},{"label":"Due","value":"Dec 4, 2026 (net 30)"},{"label":"Amount","value":"$2,418.36"},{"label":"Purchase order","value":"PO-1187"},{"label":"Job","value":"Harbor Dental, #4502"}],"check":"ok","check_text":"Matches PO-1187","note":"Every line and the total match the purchase order.","item":{"id":2,"kind":"file-bill","workspace":"Documents","title":"File a Ferguson bill for $2,418.36","summary":"It matches purchase order 1187 exactly and belongs to the Harbor Dental job.","draft":null,"question":null,"sources":[{"label":"Ferguson invoice 88213","reference":"mail:service@coastline.com/88213"},{"label":"Purchase order 1187","reference":"file:\\\\office-nas\\jobs\\po\\1187.pdf"}],"confidence":"high","confidence_label":"Sure","urgency":"normal","created_at":1793944800,"assignee":"Dana Ruiz","team":null,"connection":"QuickBooks Online (coastline mechanical books)","action":"File it","done_word":"Filed","can_approve":true,"blocked":null,"status":"waiting","final_text":null}},{"id":2,"doc_type":"receipt","type_label":"Receipt","title":"Home Depot receipt","from":"Tia Alvarez (phone photo)","received":"4 hours ago","fields":[{"label":"Store","value":"The Home Depot #6618"},{"label":"Date","value":"Nov 5, 2026"},{"label":"Amount","value":"$186.40"},{"label":"Paid with","value":"Company card ending 4417"},{"label":"Job","value":"Vega residence, #4471"}],"check":"ok","check_text":"Matches card ending 4417","note":"Arkhon matched the receipt to the Vega job from Tia's schedule.","item":{"id":9,"kind":"file-bill","workspace":"Documents","title":"File a Home Depot receipt for $186.40","summary":"Fittings and copper for the Vega job, paid with the company card ending 4417.","draft":null,"question":null,"sources":[{"label":"Receipt photo from Tia","reference":"mail:service@coastline.com/rcpt-1105"}],"confidence":"high","confidence_label":"Sure","urgency":"normal","created_at":1793941200,"assignee":"Ari Patel","team":null,"connection":"QuickBooks Online (coastline mechanical books)","action":"File it","done_word":"Filed","can_approve":true,"blocked":null,"status":"waiting","final_text":null}},{"id":3,"doc_type":"lien-waiver","type_label":"Lien waiver","title":"Conditional lien waiver","from":"Pacific Sheet Metal","received":"7 hours ago","fields":[{"label":"Subcontractor","value":"Pacific Sheet Metal"},{"label":"Job","value":"Harbor Dental, #4502"},{"label":"Through","value":"Oct 31, 2026"},{"label":"Amount","value":"$3,200.00"},{"label":"Signed","value":"No"}],"check":"missing","check_text":"Not signed yet","note":"Saved to the Harbor Dental job folder. Get a signed copy before you pay them.","item":null},{"id":5,"doc_type":"work-order","type_label":"Work order","title":"Work order WO-4471","from":"Jobber","received":"20 hours ago","fields":[{"label":"Customer","value":"Marisol Vega"},{"label":"Job","value":"#4471, AC not cooling"},{"label":"Technician","value":"Tia Alvarez"},{"label":"Scheduled","value":"Nov 6, 2026, 1–3 pm"}],"check":"ok","check_text":"Linked to job #4471","note":"Saved with the job.","item":null},{"id":4,"doc_type":"insurance-certificate","type_label":"Insurance certificate","title":"Certificate of insurance","from":"Pacific Sheet Metal","received":"Yesterday","fields":[{"label":"Insured","value":"Pacific Sheet Metal"},{"label":"General liability","value":"$1,000,000 each occurrence"},{"label":"Workers' comp","value":"Yes"},{"label":"Expires","value":"Nov 30, 2026"}],"check":"warn","check_text":"Expires in 24 days","note":"Arkhon will remind you two weeks before it expires.","item":null},{"id":6,"doc_type":"change-order","type_label":"Change order","title":"Change order CO-12","from":"Bayview Apartments","received":"2 days ago","fields":[{"label":"Job","value":"Bayview Apartments, #4488"},{"label":"Change","value":"Add condensate lines in six units"},{"label":"Amount","value":"+$2,940.00"},{"label":"Customer signature","value":"Missing"}],"check":"missing","check_text":"Customer signature missing","note":"Don't start the extra work until the property manager signs.","item":null},{"id":7,"doc_type":"permit","type_label":"Permit","title":"Mechanical permit M-26-1043","from":"City of Ventura","received":"3 days ago","fields":[{"label":"Address","value":"418 Seaward Ave"},{"label":"Work","value":"Replace furnace and add AC"},{"label":"Status","value":"Approved"},{"label":"Inspection","value":"Nov 12, 2026"}],"check":"ok","check_text":"Approved","note":"The inspection is on the shared calendar.","item":null}],"to_file":2,"types":["Supplier bill","Receipt","Purchase order","Work order","Change order","Quote","Lien waiver","Insurance certificate","Permit"]},"knowledge":{"examples":["What is our warranty on new installs?","How much is a diagnostic visit?","What's in the Comfort Club plan?","Who do we use for sheet metal work?","Where are the job folders?","What do I do if a customer isn't home?","How do I order parts?","How do I log my hours?"],"answers":[{"question":"What is our warranty on new installs?","answer":"10 years on parts and 2 years on labor for systems we install, as long as the customer keeps up yearly maintenance.","sources":[{"label":"Warranty policy","reference":"file:\\\\office-nas\\jobs\\policies\\warranty.docx"}]},{"question":"How much is a diagnostic visit?","answer":"$129. It's waived if the customer goes ahead with the repair on the same visit.","sources":[{"label":"Price list 2026","reference":"file:\\\\office-nas\\jobs\\price-list-2026.pdf#p2"}]},{"question":"What's in the Comfort Club plan?","answer":"Two tune-ups a year, 15% off repairs, priority scheduling and no overtime fees, for $19 a month.","sources":[{"label":"Comfort Club plan","reference":"file:\\\\office-nas\\jobs\\policies\\comfort-club.pdf"}]},{"question":"Who do we use for sheet metal work?","answer":"Pacific Sheet Metal. Their insurance certificate expires on Nov 30, 2026.","sources":[{"label":"Vendor list","reference":"file:\\\\office-nas\\jobs\\vendors.xlsx"},{"label":"Certificate of insurance","reference":"file:\\\\office-nas\\jobs\\coi\\pacific.pdf"}]},{"question":"Where are the job folders?","answer":"On the office drive under Jobs, one folder per job number, like Jobs\\4471 for the Vega job.","sources":[{"label":"Employee handbook","reference":"file:\\\\office-nas\\jobs\\policies\\handbook.pdf"}]},{"question":"What do I do if a customer isn't home?","answer":"Wait 15 minutes, call the customer and the office, then leave a door tag. The office reschedules; there's no trip charge the first time.","sources":[{"label":"Employee handbook","reference":"file:\\\\office-nas\\jobs\\policies\\handbook.pdf"}]},{"question":"How do I order parts?","answer":"Text the part number and job number to the office. Lena orders from Ferguson or Johnstone and tells you when it's ready for pickup.","sources":[{"label":"Employee handbook","reference":"file:\\\\office-nas\\jobs\\policies\\handbook.pdf"}]},{"question":"How do I log my hours?","answer":null,"sources":[]}],"starter_questions":["Where are the job folders?","What do I do if a customer isn't home?","How do I order parts?","How do I log my hours?","What is our warranty on new installs?"],"remembered":0},"meetings":{"meetings":[{"id":1,"title":"Bayview Apartments walk-through","when":"23 hours ago","minutes":42,"attendees":["Tia Alvarez","Max Okafor","Rosa Medina (Bayview)"],"summary":"Walked all twelve units. Six have cracked or clogged condensate lines; the rest are fine. Rosa wants the work done before the holidays.","decisions":["Replace condensate lines in units 2B, 2C, 3A, 3D, 4A and 4C.","Do the work in two visits so tenants are only out of AC for one afternoon."],"actions":[{"who":"Max Okafor","what":"Send Rosa the quote and change order","due":"Monday"},{"who":"Tia Alvarez","what":"Order PVC and fittings for six units","due":"Tuesday"},{"who":"Rosa Medina","what":"Give tenants 48 hours' notice","due":"Before the first visit"}],"item":{"id":6,"kind":"meeting-notes","workspace":"Meeting notes","title":"Share notes from the Bayview Apartments walk-through","summary":"Six units need new condensate lines; Arkhon listed parts and next steps.","draft":"Notes from Thursday's walk-through at Bayview Apartments:\n- Units 2B, 2C, 3A, 3D, 4A and 4C need new condensate lines.\n- Parts list attached.\n- Next: quote to the property manager by Monday.","question":null,"sources":[{"label":"Walk-through recording","reference":"meeting:2026-11-05-bayview"}],"confidence":"medium","confidence_label":"Check this","urgency":"normal","created_at":1793898000,"assignee":"Tia Alvarez","team":"Field techs","connection":"Gmail (tia@coastline.com)","action":"Send","done_word":"Sent","can_approve":false,"blocked":"This would go out through Gmail (tia@coastline.com), which you can't use. Ask someone who can to approve it.","status":"waiting","final_text":null}},{"id":2,"title":"Monday dispatch huddle","when":"4 days ago","minutes":15,"attendees":["Dana Ruiz","Lena Cho","Max Okafor","Tia Alvarez","Sam Brooks"],"summary":"Busy week ahead with the first cold snap. Two installs, 23 service calls booked.","decisions":["Sam takes all no-heat calls on Wednesday and Thursday."],"actions":[{"who":"Lena Cho","what":"Move non-urgent tune-ups to next week","due":"Today"}],"item":null}]},"growth":{"quotes":[{"id":1,"customer":"Greg Lund","title":"3-ton heat pump, installed","lines":[{"description":"Carrier 3-ton heat pump, 17 SEER2","qty":1,"unit_cents":895000,"total_cents":895000},{"description":"Variable-speed air handler","qty":1,"unit_cents":240000,"total_cents":240000},{"description":"Line set, pad and disconnect","qty":1,"unit_cents":64000,"total_cents":64000},{"description":"40-amp electrical circuit","qty":1,"unit_cents":48000,"total_cents":48000},{"description":"Permit and inspection","qty":1,"unit_cents":27500,"total_cents":27500},{"description":"Remove and recycle old furnace","qty":1,"unit_cents":35000,"total_cents":35000}],"total_cents":1309500,"price_book":"Price book 2026","valid_days":30,"item":{"id":10,"kind":"send-quote","workspace":"Quotes & marketing","title":"Send the Lund heat-pump quote","summary":"3-ton heat pump with air handler, installed, from the 2026 price book: $13,095.","draft":"Hi Greg,\n\nAs promised, here's your quote for a 3-ton heat pump with a new air handler, fully installed, for $13,095. It includes the permit, removal of the old furnace and our 10-year parts warranty. The quote is good for 30 days.\n\nLena\nCoastline Mechanical","question":null,"sources":[{"label":"Price book 2026","reference":"file:\\\\office-nas\\jobs\\price-book-2026.pdf#p8"},{"label":"Warranty policy","reference":"file:\\\\office-nas\\jobs\\policies\\warranty.docx"}],"confidence":"medium","confidence_label":"Check this","urgency":"normal","created_at":1793944800,"assignee":"Lena Cho","team":"Front office","connection":"Outlook (service@coastline.com)","action":"Send","done_word":"Sent","can_approve":false,"blocked":"This would go out through Outlook (service@coastline.com), which you can't use. Ask someone who can to approve it.","status":"waiting","final_text":null}},{"id":2,"customer":"Luis Ortiz","title":"Replacement furnace, installed","lines":[{"description":"96% gas furnace, 80,000 BTU","qty":1,"unit_cents":498000,"total_cents":498000},{"description":"Installation labor","qty":1,"unit_cents":105000,"total_cents":105000},{"description":"Venting kit","qty":1,"unit_cents":24500,"total_cents":24500},{"description":"Permit","qty":1,"unit_cents":17500,"total_cents":17500}],"total_cents":645000,"price_book":"Price list 2026","valid_days":30,"item":{"id":4,"kind":"send-quote","workspace":"Quotes & marketing","title":"Send the Ortiz furnace quote","summary":"Replacement furnace, $6,450 installed, using this year's price list.","draft":"Hi Mr. Ortiz,\n\nAttached is the quote we discussed: a new 96% furnace, installed, for $6,450. It's good for 30 days.\n\nDana","question":null,"sources":[{"label":"Price list 2026","reference":"file:\\\\office-nas\\jobs\\price-list-2026.pdf#p5"}],"confidence":"medium","confidence_label":"Check this","urgency":"low","created_at":1793883600,"assignee":"Dana Ruiz","team":null,"connection":"Outlook (dana@coastline.com)","action":"Send","done_word":"Sent","can_approve":true,"blocked":null,"status":"waiting","final_text":null}}],"outreach":[{"id":1,"audience":"Past customers due for a fall tune-up","recipients":38,"item":{"id":11,"kind":"draft-reply","workspace":"Quotes & marketing","title":"Send fall tune-up reminders","summary":"A friendly reminder to 38 past customers whose furnace hasn't been checked this year.","draft":"Hi {first name},\n\nCold mornings are on the way. It's been over a year since we checked your furnace, and a tune-up now helps avoid a no-heat call in January. Reply to this email or call (805) 555-0142 to book. Comfort Club members get it free.\n\nCoastline Mechanical","question":null,"sources":[{"label":"Customer list","reference":"app:quickbooks/customers"},{"label":"Comfort Club plan","reference":"file:\\\\office-nas\\jobs\\policies\\comfort-club.pdf"}],"confidence":"high","confidence_label":"Sure","urgency":"low","created_at":1793934000,"assignee":"Lena Cho","team":"Front office","connection":"Outlook (service@coastline.com)","action":"Send","done_word":"Sent","can_approve":false,"blocked":"This would go out through Outlook (service@coastline.com), which you can't use. Ask someone who can to approve it.","status":"waiting","final_text":null}}]},"insights":{"insights":[{"id":1,"question":"Who hasn't paid yet?","answer":"Three customers owe you $6,912.40. Harbor Dental is the largest at $4,180, now 41 days late.","unit":"money","bars":[{"label":"Harbor Dental","value":418000},{"label":"Bayview Apartments","value":192240},{"label":"Luis Ortiz","value":81000}],"assumptions":["Counts invoices more than 30 days past their due date.","Partial payments are already subtracted."],"sources":[{"label":"QuickBooks invoices","reference":"app:quickbooks/invoices"}]},{"id":2,"question":"What brought in the most money in October?","answer":"October brought in $116,670. New installs were the biggest share, about 53%.","unit":"money","bars":[{"label":"New installs","value":6140000},{"label":"Repairs","value":2835000},{"label":"Commercial service","value":1780000},{"label":"Maintenance plans","value":912000}],"assumptions":["Uses every invoice dated October 1–31, paid or not.","Job type comes from the item on each invoice.","Sales tax is left out."],"sources":[{"label":"QuickBooks invoices","reference":"app:quickbooks/invoices"}]},{"id":3,"question":"How many jobs did we finish each week?","answer":"41 jobs last week, the busiest week in a month.","unit":"count","bars":[{"label":"Oct 12","value":31},{"label":"Oct 19","value":36},{"label":"Oct 26","value":29},{"label":"Nov 2","value":41}],"assumptions":["A job counts when its work order is marked complete in Jobber."],"sources":[{"label":"Jobber work orders","reference":"app:jobber/work-orders"}]}]},"privacy":{"where_data_lives":["Your email, files and answers are read and stored on this computer, in one encrypted folder.","Arkhon's AI runs on this computer too. Your customers' information is never sent to an AI company.","Sign-ins to your apps are kept in an encrypted vault that only this computer can open.","Arkhon only connects to the apps you connected, to read new items and to send what you approved."],"network":[{"service":"Microsoft Outlook","address":"outlook.office365.com","purpose":"Checked service@coastline.com for new email.","when":"5 min ago","sent_customer_data":false},{"service":"QuickBooks","address":"quickbooks.api.intuit.com","purpose":"Read open bills and unpaid invoices.","when":"20 min ago","sent_customer_data":false},{"service":"Gmail","address":"gmail.googleapis.com","purpose":"Checked tia@coastline.com for new email.","when":"35 min ago","sent_customer_data":false},{"service":"Google Calendar","address":"www.googleapis.com","purpose":"Read Dana's calendar for today's open slots.","when":"1 hour ago","sent_customer_data":false},{"service":"Arkhon updates","address":"updates.arkhonindustries.com","purpose":"Checked for an update to the Trades pack. Nothing about your company was sent.","when":"2 hours ago","sent_customer_data":false},{"service":"Arkhon license","address":"license.arkhonindustries.com","purpose":"Confirmed your license is active. Only the license number was sent.","when":"Yesterday","sent_customer_data":false}],"customer_data_sent":0,"retention_days":365,"retention_choices":[30,90,365,0],"can_manage":true,"delete_covers":["Everything Arkhon read and learned from your email and files","Drafts, answers, documents, meeting notes and quotes","Every connection and saved sign-in","Time-saved history and the connection list on this page"]},"setup":{"computer":{"tier":"Standard","words":"This computer can run Arkhon well. Most answers take a few seconds.","checks":["Enough memory for Arkhon's AI","Enough free space for your files","Security chip found, so sign-ins can be locked to this computer"]},"email_connected":true,"files_connected":true,"packs":[{"key":"trades","name":"Trades & field services","description":"HVAC, plumbing, electrical and contractors: supplier bills, work orders, lien waivers, quotes.","available":true},{"key":"professional","name":"Professional services","description":"Accountants, agencies and consultants.","available":false},{"key":"health","name":"Clinics & dental","description":"Front desk, scheduling and insurance paperwork.","available":false},{"key":"general","name":"General business","description":"Email, documents and answers for any small business.","available":true}],"industry_pack":"trades","files_read":12480,"files_total":14200,"can_choose_pack":true},"example":true}</script>
 <script>
 (() => {
   /* ---------- Routing (#home, #people, #roles, #teams) ---------- */
   const tabs = ['people', 'roles', 'teams', 'connections', 'activity'];
+  const PAGES = ['inbox', 'desk', 'docs', 'knowledge', 'meetings', 'growth', 'insights', 'report', 'privacy', 'welcome', 'help'];
+  const WORK = ['inbox', 'desk', 'docs', 'knowledge', 'meetings', 'growth', 'insights', 'report', 'privacy', 'welcome'];
   function route() {
     const h = (location.hash || '#home').slice(1);
-    const settings = tabs.includes(h);
-    document.getElementById('v-home').hidden = settings;
+    const settings = tabs.includes(h), page = PAGES.includes(h) ? h : null;
+    document.getElementById('v-home').hidden = settings || !!page;
     document.getElementById('v-settings').hidden = !settings;
-    document.querySelectorAll('[data-nav]').forEach(a =>
-      a.toggleAttribute('aria-current', (a.dataset.nav === 'settings') === settings && a.dataset.nav !== 'help'));
-    document.querySelectorAll('[data-nav]').forEach(a => { if (a.hasAttribute('aria-current')) a.setAttribute('aria-current', 'page'); });
+    PAGES.forEach(p => { document.getElementById('v-' + p).hidden = p !== page; });
+    const nav = settings ? 'settings' : page === 'help' ? 'help' : WORK.includes(page) ? 'work' : 'home';
+    document.querySelectorAll('[data-nav]').forEach(a => {
+      if (a.dataset.nav === nav) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current');
+    });
     tabs.forEach(t => {
       document.getElementById('t-' + t).hidden = t !== h;
       const a = document.querySelector(`[data-tab="${t}"]`);
@@ -663,6 +967,8 @@ label.f { display: grid; gap: 6px; font-size: 14px; color: var(--fg-2); }
     $('ws-line').textContent = 'You can use: ' + V.workspaces.join(', ') + '.';
     renderViewAs();
     if (!$('t-activity').hidden) loadActivity();
+    renderPages();
+    if (location.hash === '#report') loadReport();
   }
 
   const showHint = () => {
@@ -771,6 +1077,414 @@ label.f { display: grid; gap: 6px; font-size: 14px; color: var(--fg-2); }
       || '<li class="conn" style="grid-template-columns:1fr;color:var(--fg-2)">Nothing yet. Changes to people, roles and connections show up here.</li>';
   }
   addEventListener('hashchange', () => { if (location.hash === '#activity') loadActivity(); });
+
+
+  /* ---------- Workspace pages, reports, privacy, setup, help ----------
+     Every page renders from the engine view (V). Send / File / Answer run the same review-queue
+     commands as Home, so the engine's approval rules decide. Pages for workspaces the viewer
+     can't use are absent from the view and show a plain explanation instead. */
+  const WS = { inbox: 'Email', desk: 'Customer replies', docs: 'Documents', knowledge: 'Company answers', meetings: 'Meeting notes', growth: 'Quotes & marketing', insights: 'Reports' };
+  const sel = { inbox: null, docs: null };
+  const kState = { mode: 'ask', result: null, busy: false, onboard: {} };
+  let ITEMS = {}, wiz = 1, wizPack = null, delStep = 0, repMonth = null, REP = null;
+  const money = c => '$' + (c / 100).toLocaleString('en-US', c % 100 ? { minimumFractionDigits: 2, maximumFractionDigits: 2 } : { maximumFractionDigits: 0 });
+  const words = a => a.length < 2 ? a.join('') : a.slice(0, -1).join(', ') + ' and ' + a[a.length - 1];
+  const empty = t => `<div class="card pane"><p class="meta" style="margin:0">${t}</p></div>`;
+  const plural = (n, one, many) => `${n} ${n === 1 ? one : many}`;
+  const currentPage = () => { const h = (location.hash || '').slice(1); return PAGES.includes(h) ? h : null; };
+  const confCls = c => ({ high: 'ok', medium: 'warn', low: 'bad', 'not-found': 'bad' }[c]);
+  const urgPill = u => u === 'urgent' ? '<span class="pill-s warn">Urgent</span>' : u === 'low' ? '<span class="pill-s plain">No rush</span>' : '';
+  function stateTag(it) {
+    if (!it || it.status === 'waiting') return '';
+    return it.status === 'dismissed' ? '<span class="pill-s plain">Dismissed</span>' : `<span class="pill-s ok">${esc(it.done_word)}</span>`;
+  }
+  function gate(p) {
+    if (!WS[p] || V[p]) return true;
+    $(p + '-lede').textContent = '';
+    $(p + '-body').innerHTML = empty(`${esc(WS[p])} isn't part of your role. An owner or admin can add it for you under Company → Roles or Teams.`);
+    return false;
+  }
+
+  /* One prepared item: the draft, where it came from, and Send / Edit / Dismiss. */
+  function itemBlock(it, o = {}) {
+    if (!it) return '';
+    ITEMS[it.id] = it;
+    if (it.status !== 'waiting') {
+      const what = it.status === 'dismissed' ? 'Dismissed. Nothing was sent.' : it.status === 'edited' ? `${it.done_word} with your changes.` : `${it.done_word}.`;
+      return `<div class="stack"><div class="tags">${stateTag(it)}<span class="why">${esc(what)}</span></div>${it.final_text && it.kind !== 'file-bill' ? `<p class="sent">${esc(it.final_text)}</p>` : ''}</div>`;
+    }
+    const why = it.sources.length ? `<p class="why">Based on ${esc(words(it.sources.map(s => s.label)))}</p>` : '';
+    const blocked = it.blocked ? `<p class="blocked">${esc(it.blocked)}</p>` : '';
+    if (it.kind === 'knowledge-gap') {
+      return `<form class="stack gap" data-answer="${it.id}">
+        <div class="tags"><span class="pill-s bad">Not found in your data</span></div>
+        <p class="did">${esc(it.summary)}</p>
+        <label class="f">${esc(it.question || it.title)}<input type="text" placeholder="Type the answer once" aria-label="Your answer"${it.can_approve ? '' : ' disabled'}></label>
+        ${blocked}
+        <div class="acts">${it.can_approve ? '<button class="btn primary" type="submit">Answer once</button>' : ''}<button class="link" type="button" data-dismiss="${it.id}" style="font-size:15px">Dismiss</button></div></form>`;
+    }
+    const draft = it.draft != null ? `<label class="f">${esc(o.label || 'Arkhon’s draft')}<textarea data-text="${it.id}" readonly>${esc(it.draft)}</textarea></label>` : '';
+    const via = it.connection ? `<p class="why">${it.kind === 'file-bill' ? 'Goes into' : 'Goes out from'} ${esc(it.connection)}</p>` : '';
+    const verb = o.verb || it.action;
+    return `<div class="stack">
+      <div class="tags"><span class="pill-s ${confCls(it.confidence)}">${esc(it.confidence_label)}</span>${it.urgency === 'urgent' ? '<span class="pill-s warn">Urgent</span>' : ''}</div>
+      <p class="did">${esc(it.summary)}</p>
+      ${draft}${why}${via}${blocked}
+      <div class="acts">${it.can_approve ? `<button class="btn primary" type="button" data-approve="${it.id}">${esc(verb)}</button>` : ''}${it.draft != null && it.can_approve ? `<button class="btn" type="button" data-edit="${it.id}">Edit</button>` : ''}<button class="link" type="button" data-dismiss="${it.id}" style="font-size:15px">${esc(o.dismiss || 'Dismiss')}</button></div>
+    </div>`;
+  }
+
+  function renderInbox() {
+    if (!gate('inbox')) return;
+    const ib = V.inbox, th = ib.threads;
+    $('inbox-lede').textContent = ib.waiting
+      ? `${plural(ib.waiting, 'reply is', 'replies are')} written and waiting for you. Nothing is sent until you say so.`
+      : 'No replies waiting. Arkhon writes new ones as email arrives.';
+    if (!th.length) { $('inbox-body').innerHTML = empty('No email needs a reply right now.'); return; }
+    if (!th.some(t => t.id === sel.inbox)) sel.inbox = th[0].id;
+    const t = th.find(x => x.id === sel.inbox);
+    $('inbox-body').innerHTML = `<div class="split">
+      <div class="card"><ul class="list" aria-label="Email needing a reply">${th.map(x => `<li><button class="row" type="button" data-pick="inbox:${x.id}" aria-current="${x.id === t.id}">
+        <span class="t"><span>${esc(x.customer)}</span><small>${esc(x.received)}</small></span><span class="s">${esc(x.summary)}</span>${stateTag(x.item) || urgPill(x.urgency)}</button></li>`).join('')}</ul></div>
+      <article class="card pane"><div><h2>${esc(t.subject)}</h2><p class="meta">${esc(t.customer)} · ${esc(t.received)}${t.account ? ' · to ' + esc(t.account) : ''}</p></div>
+        <p class="bubble">${esc(t.message)}</p>
+        ${t.item ? itemBlock(t.item, { label: 'Reply Arkhon wrote' }) : '<p class="why">No reply needed.</p>'}</article></div>`;
+  }
+
+  function renderDesk() {
+    if (!gate('desk')) return;
+    const d = V.desk;
+    $('desk-lede').textContent = `${plural(d.tickets.length, 'customer question', 'customer questions')}. ` +
+      (d.not_found ? `${d.not_found} ${d.not_found === 1 ? "isn't" : "aren't"} in your files yet, so Arkhon didn't guess.` : 'Each answer comes from your own policies.');
+    $('desk-body').innerHTML = d.tickets.map(t => `<article class="card pane">
+      <div><div class="tags" style="margin-bottom:8px"><span class="pill-s plain">${esc(t.channel)}</span>${stateTag(t.item)}</div><h2 style="font-size:21px">${esc(t.question)}</h2><p class="meta">${esc(t.customer)} · ${esc(t.received)}</p></div>
+      ${itemBlock(t.item, { label: 'Suggested answer' })}</article>`).join('') || empty('No customer questions right now.');
+  }
+
+  function renderDocs() {
+    if (!gate('docs')) return;
+    const d = V.docs, ds = d.documents;
+    $('docs-lede').textContent = (d.to_file ? `${plural(d.to_file, 'document is', 'documents are')} ready to file. ` : 'Nothing to file right now. ') + 'Arkhon reads each one and checks it against your records.';
+    if (!ds.length) { $('docs-body').innerHTML = empty('No documents yet. Bills, receipts and job paperwork show up here as they arrive.'); return; }
+    if (!ds.some(x => x.id === sel.docs)) sel.docs = (ds.find(x => x.item && x.item.status === 'waiting') || ds[0]).id;
+    const x = ds.find(y => y.id === sel.docs);
+    const cls = { ok: 'ok', warn: 'warn', missing: 'bad' };
+    const qb = x.item && x.item.connection && x.item.connection.startsWith('QuickBooks');
+    $('docs-body').innerHTML = `<div class="split">
+      <div class="card"><ul class="list" aria-label="Documents">${ds.map(y => `<li><button class="row" type="button" data-pick="docs:${y.id}" aria-current="${y.id === x.id}">
+        <span class="t"><span>${esc(y.title)}</span><small>${esc(y.received)}</small></span><span class="s">${esc(y.type_label)} · ${esc(y.from)}</span>
+        ${stateTag(y.item) || `<span class="pill-s ${cls[y.check]}">${esc(y.check_text)}</span>`}</button></li>`).join('')}</ul></div>
+      <article class="card pane"><div><span class="pill-s plain" style="margin:0 0 8px">${esc(x.type_label)}</span><h2>${esc(x.title)}</h2><p class="meta">From ${esc(x.from)} · ${esc(x.received)}</p></div>
+        <p class="check ${x.check}">${x.check === 'ok' ? '✓' : '!'} ${esc(x.check_text)}</p>
+        <div class="kv">${x.fields.map(f => `<label class="f">${esc(f.label)}<input type="text" readonly value="${esc(f.value)}"></label>`).join('')}</div>
+        <p class="why">${esc(x.note)}</p>
+        ${x.item ? itemBlock(x.item, { verb: qb ? 'File to QuickBooks' : null, dismiss: 'Not now' }) : ''}</article></div>
+      <div class="sub-h"><h2>What Arkhon reads</h2><p>From the Trades &amp; field services pack.</p></div>
+      <div class="chips" style="margin-top:0">${d.types.map(t => `<span class="chip">${esc(t)}</span>`).join('')}</div>`;
+  }
+
+  function answerCard(r) {
+    if (!r) return '';
+    if (r.found) return `<div class="card reply" style="max-width:none"><p>${esc(r.answer)}</p><span class="src">From ${esc(words(r.sources.map(s => s.label)))}</span></div>`;
+    return `<div class="card reply" style="max-width:none"><div class="tags"><span class="pill-s bad">Not found in your data</span></div><p>${esc(r.answer)}</p></div>`;
+  }
+  async function askCompany(q) {
+    if (live) {
+      const r = await fetch('/api/ask?q=' + encodeURIComponent(q), { headers: headers() });
+      const body = await r.json();
+      return r.ok ? body : { question: q, found: false, answer: body.error, sources: [] };
+    }
+    const norm = s => s.toLowerCase().replace(/[^a-z0-9 ]/g, '').trim();
+    const hit = V.knowledge.answers.find(a => norm(a.question) === norm(q));
+    return hit && hit.answer
+      ? { question: q, found: true, answer: hit.answer, sources: hit.sources }
+      : { question: q, found: false, answer: 'Your files don’t say, so Arkhon didn’t guess. An admin can answer it once and Arkhon will remember.', sources: [] };
+  }
+  function renderKnowledge() {
+    if (!gate('knowledge')) return;
+    const k = V.knowledge;
+    $('knowledge-lede').textContent = 'Ask anything about how your company works. Answers come only from your own files, with where they came from.';
+    const seg = `<nav class="seg" aria-label="Mode" style="margin-bottom:28px"><a href="#knowledge" data-kmode="ask"${kState.mode === 'ask' ? ' aria-current="page"' : ''}>Ask</a><a href="#knowledge" data-kmode="onboard"${kState.mode === 'onboard' ? ' aria-current="page"' : ''}>New-hire onboarding</a></nav>`;
+    if (kState.mode === 'ask') {
+      $('knowledge-body').innerHTML = seg + `<form class="ask" id="k-ask" style="margin:0;max-width:none"><input id="k-q" type="text" autocomplete="off" aria-label="Ask the company" placeholder="Ask the company, like “What’s our warranty?”"><button type="submit" aria-label="Ask"><svg viewBox="0 0 20 20"><path d="M10 16V4M5 9l5-5 5 5"/></svg></button></form>
+        <div class="ideas" style="justify-content:flex-start;max-width:none;margin-top:16px">${k.examples.slice(0, 4).map(q => `<button type="button" data-kq="${esc(q)}">${esc(q)}</button>`).join('')}</div>
+        <div class="k-out">${kState.busy ? '<p class="meta">Looking through your files…</p>' : answerCard(kState.result)}</div>
+        <p class="why" style="margin-top:28px">${k.remembered ? `${plural(k.remembered, 'answer was', 'answers were')} taught by your team. ` : ''}When the files don't say, Arkhon tells you instead of guessing.</p>`;
+    } else {
+      $('knowledge-body').innerHTML = seg + `<p style="margin:0 0 20px;color:var(--fg-2);max-width:56ch">Questions new people usually ask in their first week. Tap one to see the answer from your company's own files.</p>
+        <div class="qlist">${k.starter_questions.map((q, i) => `<div><button class="qbtn" type="button" data-kon="${i}" style="width:100%">${esc(q)}</button>${kState.onboard[i] ? `<div style="margin-top:10px">${answerCard(kState.onboard[i])}</div>` : ''}</div>`).join('')}</div>`;
+    }
+  }
+  $('knowledge-body').addEventListener('click', async e => {
+    const m = e.target.closest('[data-kmode]');
+    if (m) { e.preventDefault(); kState.mode = m.dataset.kmode; renderKnowledge(); return; }
+    const ex = e.target.closest('[data-kq]');
+    if (ex) { $('k-q').value = ex.dataset.kq; $('k-ask').requestSubmit(); return; }
+    const on = e.target.closest('[data-kon]');
+    if (on) { const i = +on.dataset.kon; if (kState.onboard[i]) delete kState.onboard[i]; else kState.onboard[i] = await askCompany(V.knowledge.starter_questions[i]); renderKnowledge(); }
+  });
+  $('knowledge-body').addEventListener('submit', async e => {
+    if (e.target.id !== 'k-ask') return;
+    e.preventDefault();
+    const q = $('k-q').value.trim(); if (!q) return;
+    kState.busy = true; renderKnowledge(); $('k-q').value = q;
+    kState.result = await askCompany(q); kState.busy = false; renderKnowledge(); $('k-q').value = q;
+  });
+
+  function renderMeetings() {
+    if (!gate('meetings')) return;
+    const ms = V.meetings.meetings;
+    $('meetings-lede').textContent = 'Arkhon writes up each meeting: what was said, what was decided and who does what next.';
+    $('meetings-body').innerHTML = ms.map(m => `<article class="card pane">
+      <div><h2>${esc(m.title)}</h2><p class="meta">${esc(m.when)} · ${m.minutes} min · ${esc(words(m.attendees))}</p></div>
+      <p style="margin:0">${esc(m.summary)}</p>
+      <div><h3>Decided</h3><ul class="bullets" style="margin-top:8px">${m.decisions.map(d => `<li>${esc(d)}</li>`).join('')}</ul></div>
+      <div><h3>Next steps</h3><table class="lines actions-t" style="margin-top:8px"><tbody>${m.actions.map(a => `<tr><td>${esc(a.who)}</td><td>${esc(a.what)}</td><td>${esc(a.due)}</td></tr>`).join('')}</tbody></table></div>
+      ${m.item ? `<div><h3 style="margin-bottom:12px">Follow-up email</h3>${itemBlock(m.item, { label: 'Email to everyone who was there' })}</div>` : '<p class="why">No follow-up email needed.</p>'}
+    </article>`).join('') || empty('No meetings yet. Connect a calendar and Arkhon writes up the ones you record.');
+  }
+
+  function renderGrowth() {
+    if (!gate('growth')) return;
+    const g = V.growth;
+    $('growth-lede').textContent = 'Quotes built from your price book and friendly follow-ups to past customers. You check every one before it goes out.';
+    const quote = q => `<article class="card pane">
+      <div><div class="tags" style="margin-bottom:8px"><span class="pill-s plain">Quote</span>${stateTag(q.item)}</div><h2>${esc(q.customer)}: ${esc(q.title)}</h2><p class="meta">From your ${esc(q.price_book)} · good for ${q.valid_days} days</p></div>
+      <table class="lines"><thead><tr><th>Item</th><th class="num">Qty</th><th class="num">Price</th></tr></thead>
+        <tbody>${q.lines.map(l => `<tr><td>${esc(l.description)}</td><td class="num">${l.qty}</td><td class="num">${money(l.total_cents)}</td></tr>`).join('')}</tbody>
+        <tfoot><tr><td>Total</td><td></td><td class="num">${money(q.total_cents)}</td></tr></tfoot></table>
+      ${itemBlock(q.item, { label: 'Note that goes with the quote', verb: 'Send quote' })}</article>`;
+    const out = o => `<article class="card pane">
+      <div><div class="tags" style="margin-bottom:8px"><span class="pill-s plain">Email to ${o.recipients} people</span>${stateTag(o.item)}</div><h2>${esc(o.audience)}</h2></div>
+      ${itemBlock(o.item, { label: 'Message (each person sees their own name)' })}</article>`;
+    $('growth-body').innerHTML = `<div class="stack">${g.quotes.map(quote).join('')}</div>
+      <div class="sub-h"><h2>Follow-ups</h2><p>Emails to groups of customers.</p></div><div class="stack">${g.outreach.map(out).join('') || empty('Nothing planned.')}</div>`;
+  }
+
+  function bars(list, unit) {
+    const max = Math.max(1, ...list.map(b => b.value));
+    const fmt = v => unit === 'money' ? money(v) : v.toLocaleString('en-US');
+    return `<div class="bars" role="img" aria-label="${esc(list.map(b => b.label + ' ' + fmt(b.value)).join(', '))}">${list.map(b => `<div class="bar${b.value === max ? ' top' : ''}"><span>${esc(b.label)}</span><span class="track"><i class="fill" style="width:${(b.value / max * 100).toFixed(1)}%"></i></span><span class="val">${fmt(b.value)}</span></div>`).join('')}</div>`;
+  }
+  function renderInsights() {
+    if (!gate('insights')) return;
+    $('insights-lede').textContent = 'Plain answers about your numbers, with a chart and what each answer assumes.';
+    $('insights-body').innerHTML = V.insights.insights.map(i => `<article class="card pane">
+      <div><h3 style="color:var(--fg-2);font-weight:500">${esc(i.question)}</h3></div>
+      <p class="answer-big">${esc(i.answer)}</p>
+      ${bars(i.bars, i.unit)}
+      <div><h3>This assumes</h3><ul class="bullets" style="margin-top:8px">${i.assumptions.map(a => `<li>${esc(a)}</li>`).join('')}</ul></div>
+      <p class="why">From ${esc(words(i.sources.map(s => s.label)))}. Bars start at zero and are drawn to scale.</p></article>`).join('');
+  }
+
+  /* Value report (/api/report). */
+  const monthName = m => { const [y, mo] = m.split('-').map(Number); return new Date(Date.UTC(y, mo - 1, 1)).toLocaleString('en-US', { month: 'long', year: 'numeric', timeZone: 'UTC' }); };
+  const shiftMonth = (m, d) => { let [y, mo] = m.split('-').map(Number); mo += d; if (mo < 1) { mo = 12; y--; } if (mo > 12) { mo = 1; y++; } return `${y}-${String(mo).padStart(2, '0')}`; };
+  async function loadReport() {
+    $('report-lede').textContent = 'Time Arkhon gave back this month, what it was worth, and how it was counted.';
+    if (!live) { $('report-body').innerHTML = empty('The monthly report appears when Arkhon is running on your computer. This preview shows the example week on Home.'); return; }
+    const r = await fetch('/api/report' + (repMonth ? '?month=' + repMonth : ''), { headers: headers() });
+    const body = await r.json();
+    if (!r.ok) { $('report-body').innerHTML = empty(esc(body.error || 'The report isn’t available.')); return; }
+    REP = body; repMonth = REP.month; renderReport();
+  }
+  function renderReport() {
+    const R = REP, t = R.totals, can = V.privacy.can_manage;
+    const days = R.days, max = Math.max(1, ...days.map(d => d.hours));
+    const W = 600, H = 160, bw = W / days.length;
+    const chart = `<svg viewBox="0 0 ${W} ${H + 22}" role="img" aria-label="Hours saved each day in ${esc(monthName(R.month))}">
+      <line x1="0" x2="${W}" y1="${H}" y2="${H}" style="stroke:var(--line)"/>
+      ${days.map((d, i) => { const h = d.hours / max * (H - 18); return `<rect x="${(i * bw + bw * .18).toFixed(1)}" y="${(H - h).toFixed(1)}" width="${(bw * .64).toFixed(1)}" height="${h.toFixed(1)}" rx="3" style="fill:var(--fg-3);opacity:${d.hours ? .6 : 0}"><title>${d.date}: ${d.hours} h</title></rect>`; }).join('')}
+      <text x="0" y="12" font-size="12" style="fill:var(--fg-3)" font-family="Geist, sans-serif">${max} h</text>
+      ${days.filter((_, i) => i % 7 === 0).map(d => `<text x="${(days.indexOf(d) * bw + bw / 2).toFixed(1)}" y="${H + 18}" font-size="12" text-anchor="middle" style="fill:var(--fg-3)" font-family="Geist, sans-serif">${+d.date.slice(8)}</text>`).join('')}
+    </svg>`;
+    const pmax = Math.max(1, ...R.by_person.map(p => p.totals.minutes));
+    $('report-body').innerHTML = `
+      <div class="monthnav" style="margin-bottom:18px"><button type="button" data-rm="-1" aria-label="Previous month">‹</button><b>${esc(monthName(R.month))}</b><button type="button" data-rm="1" aria-label="Next month">›</button><span class="grow"></span><button class="btn" type="button" id="rep-dl">Download</button></div>
+      <div class="card pane">
+        <div class="bigstat">${t.hours}<small> hours</small></div>
+        <p style="margin:0;color:var(--fg-2);font-size:19px">given back to ${R.scope === 'company' ? 'your team' : esc(R.person || 'you')}. That's about <b style="color:var(--fg)">${money(t.dollars * 100)}</b> of time at $${R.hourly_rate} an hour.</p>
+        <div class="chart">${chart}</div>
+      </div>
+      <div class="facts four">
+        <div class="card fact"><b>${t.drafts}</b><span>emails and quotes</span></div>
+        <div class="card fact"><b>${t.documents}</b><span>documents filed</span></div>
+        <div class="card fact"><b>${t.meetings}</b><span>meetings written up</span></div>
+        <div class="card fact"><b>${t.answers}</b><span>saved answers reused</span></div>
+      </div>
+      ${R.by_person.length ? `<div class="sub-h"><h2>By person</h2><p>Hours from work each person approved.</p></div>
+      <div class="card pane"><div class="bars">${R.by_person.map(p => `<div class="bar"><span>${esc(p.name)}</span><span class="track"><i class="fill" style="width:${(p.totals.minutes / pmax * 100).toFixed(1)}%"></i></span><span class="val">${p.totals.hours} h</span></div>`).join('')}</div></div>` : ''}
+      <div class="sub-h"><h2>How it's counted</h2><p>${esc(R.method)}</p></div>
+      <div class="card pane">
+        <table class="lines"><thead><tr><th>Each approved…</th><th class="num">Counts as</th></tr></thead><tbody>
+        ${R.assumptions.map(a => `<tr><td>${esc(a.label)}</td><td class="num">${can ? `<input class="numin" type="number" min="1" max="240" value="${a.minutes_each}" data-min="${a.kind}" aria-label="Minutes for ${esc(a.label)}"> min` : `${a.minutes_each} min`}</td></tr>`).join('')}
+        <tr><td>Value of an hour</td><td class="num">${can ? `$ <input class="numin" type="number" min="1" max="1000" value="${R.hourly_rate}" id="rep-rate" aria-label="Value of an hour in dollars">` : `$${R.hourly_rate}`}</td></tr>
+        </tbody></table>
+        <p class="why">${can ? 'You can change these to match your business. The report updates right away.' : 'An owner or admin can change these to match your business.'}</p>
+      </div>`;
+  }
+  $('report-body').addEventListener('click', e => {
+    const m = e.target.closest('[data-rm]');
+    if (m) { repMonth = shiftMonth(repMonth, +m.dataset.rm); loadReport(); return; }
+    if (e.target.id === 'rep-dl' && REP) {
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(new Blob([JSON.stringify(REP, null, 2)], { type: 'application/json' }));
+      a.download = `arkhon-value-${REP.month}.json`; a.click(); URL.revokeObjectURL(a.href);
+    }
+  });
+  $('report-body').addEventListener('change', async e => {
+    const msg = $('v-report').querySelector('[data-msg]');
+    const m = e.target.closest('[data-min]');
+    if (m && await run({ command: 'set-minutes-saved', kind: m.dataset.min, minutes: +m.value }, msg)) loadReport();
+    if (e.target.id === 'rep-rate' && await run({ command: 'set-hourly-rate', dollars: +e.target.value }, msg)) loadReport();
+  });
+
+  function renderPrivacy() {
+    const p = V.privacy;
+    $('privacy-lede').textContent = 'Where your information is kept, everything Arkhon connected to, and how to delete it all.';
+    const ret = d => d === 0 ? 'Until you delete it' : d === 365 ? '1 year' : `${d} days`;
+    const shield = '<span class="shield"><svg viewBox="0 0 24 24"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z M8.5 12l2.5 2.5 4.5-5"/></svg></span>';
+    let del;
+    if (!p.can_manage) del = '<p style="margin:0;color:var(--fg-2)">Only an owner or admin can delete Arkhon’s data.</p>';
+    else if (delStep === 0) del = `<p style="margin:0">Erase everything Arkhon read, wrote and learned on this computer. This can’t be undone.</p><div class="acts"><button class="btn danger" type="button" id="del-1">Delete all Arkhon data…</button></div>`;
+    else if (delStep === 1) del = `<p style="margin:0;font-weight:600">This deletes:</p><ul class="bullets">${p.delete_covers.map(c => `<li>${esc(c)}</li>`).join('')}</ul><p class="why">People, roles and teams stay so everyone can still sign in. Your apps keep their own copies of your email and files.</p><div class="acts"><button class="btn danger" type="button" id="del-2">Continue</button><button class="btn" type="button" data-del-cancel>Cancel</button></div>`;
+    else del = `<label class="f">Type <b style="color:var(--fg)">${esc(V.company)}</b> to confirm<input type="text" id="del-name" autocomplete="off"></label><div class="acts"><button class="btn danger" type="button" id="del-go" disabled>Delete everything</button><button class="btn" type="button" data-del-cancel>Cancel</button></div>`;
+    $('privacy-body').innerHTML = `
+      <div class="card"><ul class="where">${p.where_data_lives.map(w => `<li>${shield}<p>${esc(w)}</p></li>`).join('')}</ul></div>
+      <div class="sub-h"><h2>Every connection Arkhon made</h2><p>${p.customer_data_sent ? `${p.customer_data_sent} carried customer information.` : 'None of them sent customer information anywhere.'}</p></div>
+      <div class="card"><ul class="conn-list">${p.network.map(n => `<li class="conn" style="grid-template-columns:minmax(0,1fr) auto">
+        <div style="min-width:0"><div class="n">${esc(n.service)}</div><div class="d" style="white-space:normal">${esc(n.purpose)}</div><div class="d" style="font-size:13px;color:var(--fg-3)">${esc(n.address)}</div></div>
+        <div style="display:grid;justify-items:end;gap:6px"><span class="soon">${esc(n.when)}</span>${n.sent_customer_data ? '<span class="pill-s warn" style="margin:0">Customer data</span>' : '<span class="pill-s ok" style="margin:0">No customer data</span>'}</div></li>`).join('') || '<li class="conn" style="grid-template-columns:1fr;color:var(--fg-2)">Arkhon hasn’t connected to anything yet.</li>'}</ul></div>
+      <div class="sub-h"><h2>How long to keep finished work</h2><p>Sent emails, filed documents and history older than this are erased.</p></div>
+      <div class="card pane">${p.can_manage
+        ? `<label class="f" style="max-width:320px">Keep for<select id="ret">${p.retention_choices.map(d => `<option value="${d}"${d === p.retention_days ? ' selected' : ''}>${ret(d)}</option>`).join('')}</select></label>`
+        : `<p style="margin:0">Arkhon keeps finished work for <b>${ret(p.retention_days).toLowerCase()}</b>. An owner or admin can change this.</p>`}</div>
+      <div class="sub-h"><h2>Delete all Arkhon data</h2></div>
+      <div class="card pane danger-card">${del}</div>`;
+  }
+  $('privacy-body').addEventListener('click', e => {
+    const msg = $('v-privacy').querySelector('[data-msg]');
+    if (e.target.id === 'del-1') { delStep = 1; renderPrivacy(); }
+    else if (e.target.id === 'del-2') { delStep = 2; renderPrivacy(); $('del-name').focus(); }
+    else if (e.target.closest('[data-del-cancel]')) { delStep = 0; renderPrivacy(); }
+    else if (e.target.id === 'del-go') {
+      const confirm = $('del-name').value;
+      run({ command: 'delete-all-data', confirm }, msg).then(ok => { if (ok) { delStep = 0; renderPrivacy(); } });
+    }
+  });
+  $('privacy-body').addEventListener('input', e => {
+    if (e.target.id === 'del-name') $('del-go').disabled = e.target.value.trim().toLowerCase() !== V.company.trim().toLowerCase();
+  });
+  $('privacy-body').addEventListener('change', e => {
+    if (e.target.id === 'ret') run({ command: 'set-retention', days: +e.target.value }, $('v-privacy').querySelector('[data-msg]'));
+  });
+
+  /* First-run set-up guide (#welcome). */
+  const WIZ = ['Check this computer', 'Connect email', 'Connect files', 'Pick your industry', 'Reading your files', 'Your first result'];
+  function renderWelcome() {
+    const s = V.setup, n = WIZ.length;
+    $('welcome-lede').textContent = 'Six short steps. Most people finish in about ten minutes.';
+    let body = '';
+    if (wiz === 1) body = `<h2>Your computer is ready</h2><p class="lead">${esc(s.computer.words)}</p>
+      <p class="okline">✓ ${esc(s.computer.tier)} computer</p><ul class="ticks">${s.computer.checks.map(c => `<li>${esc(c)}</li>`).join('')}</ul>`;
+    if (wiz === 2) body = `<h2>Connect your email</h2><p class="lead">Arkhon reads new email right here and writes replies for you to check. It never sends on its own.</p>` +
+      (s.email_connected ? '<p class="okline">✓ Your email is connected.</p>' : `<div class="choices two" role="radiogroup" aria-label="Email app">
+        <label class="choice"><input type="radio" name="wmail" value="outlook" checked><b>Outlook</b><span>Microsoft 365 or Outlook.com</span></label>
+        <label class="choice"><input type="radio" name="wmail" value="gmail"><b>Gmail</b><span>Google Workspace or Gmail</span></label></div>
+        <label class="f">Your email address<input type="email" id="w-mail" placeholder="you@company.com" autocomplete="off"></label>
+        <div class="acts"><button class="btn primary" type="button" id="w-mail-go">Sign in and connect</button></div>`);
+    if (wiz === 3) body = `<h2>Connect your files</h2><p class="lead">Point Arkhon at the folder where you keep jobs, price lists and policies. It only reads; it never changes your files.</p>` +
+      (s.files_connected ? '<p class="okline">✓ Your files are connected.</p>' : `<label class="f">Folder<input type="text" id="w-folder" placeholder="For example D:\\Jobs or \\\\office-nas\\jobs" autocomplete="off"></label>
+        <div class="acts"><button class="btn primary" type="button" id="w-folder-go">Connect folder</button></div>`);
+    if (wiz === 4) {
+      const pick = wizPack || s.industry_pack || 'trades';
+      body = `<h2>What kind of business is this?</h2><p class="lead">Arkhon learns the documents, words and replies your industry uses.${s.can_choose_pack ? '' : ' Your owner or admin chose this.'}</p>
+        <div class="choices two" role="radiogroup" aria-label="Industry">${s.packs.map(p => `<label class="choice"${p.available && s.can_choose_pack ? '' : ' aria-disabled="true"'}><input type="radio" name="wpack" value="${p.key}"${p.key === pick ? ' checked' : ''}${p.available && s.can_choose_pack ? '' : ' disabled'}><b>${esc(p.name)}</b><span>${p.available ? esc(p.description) : 'Coming soon'}</span></label>`).join('')}</div>`;
+    }
+    if (wiz === 5) {
+      const pct = s.files_total ? Math.round(s.files_read / s.files_total * 100) : 0;
+      body = `<h2>Arkhon is reading your files</h2><p class="lead">This happens in the background, on this computer. You can start using Arkhon now; answers get better as it reads.</p>
+        <div class="bigstat">${pct}<small>%</small></div>
+        <div class="meter" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${pct}" aria-label="Files read"><i style="width:${pct}%"></i></div>
+        <p class="why">${s.files_read.toLocaleString('en-US')} of ${s.files_total.toLocaleString('en-US')} files read${s.files_total ? '' : '. Connect a folder to start'}.</p>`;
+    }
+    if (wiz === 6) {
+      const it = V.needs_you.items[0];
+      body = `<h2>Here's your first useful result</h2><p class="lead">Arkhon already found work it can take off your plate.</p>` +
+        (it ? `<div class="card task" style="grid-template-columns:minmax(0,1fr);box-shadow:none;background:var(--soft)"><div><h3>${esc(it.title)}</h3><p>${esc(it.summary)}</p></div></div>
+          <div class="acts"><a class="btn primary" href="#home" style="display:inline-grid;place-items:center;text-decoration:none">Check it on Home</a></div>`
+          : '<p class="okline">✓ All set. New work shows up on Home as Arkhon finds it.</p><div class="acts"><a class="btn primary" href="#home" style="display:inline-grid;place-items:center;text-decoration:none">Go to Home</a></div>');
+    }
+    $('welcome-body').innerHTML = `<div class="wiz-top"><span>Step ${wiz} of ${n} · ${esc(WIZ[wiz - 1])}</span><div class="meter"><i style="width:${wiz / n * 100}%"></i></div></div>
+      <div class="card wiz">${body}
+        <div class="acts" style="margin-top:6px">${wiz > 1 ? '<button class="btn" type="button" data-wiz="-1">Back</button>' : ''}<span class="grow"></span>${wiz < n ? `<button class="btn primary" type="button" data-wiz="1">${(wiz === 2 && !s.email_connected) || (wiz === 3 && !s.files_connected) ? 'Skip for now' : 'Continue'}</button>` : ''}</div></div>`;
+  }
+  $('welcome-body').addEventListener('change', e => { if (e.target.name === 'wpack') wizPack = e.target.value; });
+  $('welcome-body').addEventListener('click', async e => {
+    const msg = $('v-welcome').querySelector('[data-msg]');
+    const w = e.target.closest('[data-wiz]');
+    if (w) {
+      const d = +w.dataset.wiz;
+      if (d > 0 && wiz === 4 && wizPack && wizPack !== V.setup.industry_pack && V.setup.can_choose_pack) {
+        if (!await run({ command: 'set-industry-pack', pack: wizPack }, msg)) return;
+      }
+      wiz = Math.min(WIZ.length, Math.max(1, wiz + d)); renderWelcome(); return;
+    }
+    if (e.target.id === 'w-mail-go') {
+      const app = document.querySelector('input[name="wmail"]:checked').value;
+      run({ command: 'connect', app, account: $('w-mail').value, for: { type: 'me' } }, msg);
+    }
+    if (e.target.id === 'w-folder-go') {
+      run({ command: 'connect', app: 'local-folder', account: $('w-folder').value, for: V.can.manage_connections ? { type: 'everyone' } : { type: 'me' } }, msg);
+    }
+  });
+
+  /* Shared: Send / Edit / Dismiss / Answer on any workspace page. */
+  document.addEventListener('click', e => {
+    const page = e.target.closest('.wsp'); if (!page) return;
+    const msg = page.querySelector('[data-msg]');
+    const pick = e.target.closest('[data-pick]');
+    if (pick) { const [k, id] = pick.dataset.pick.split(':'); sel[k] = +id; renderPages(); return; }
+    const ed = e.target.closest('[data-edit]');
+    if (ed) {
+      const ta = page.querySelector(`[data-text="${ed.dataset.edit}"]`);
+      ta.readOnly = !ta.readOnly; ed.textContent = ta.readOnly ? 'Edit' : 'Done editing';
+      if (!ta.readOnly) ta.focus();
+      return;
+    }
+    const ap = e.target.closest('[data-approve]');
+    if (ap) {
+      const id = +ap.dataset.approve, it = ITEMS[id], ta = page.querySelector(`[data-text="${id}"]`);
+      const text = ta ? ta.value : null;
+      const edited = it && it.draft != null && text != null && text.trim() !== it.draft.trim();
+      run(edited ? { command: 'edit-and-approve', item: id, text } : { command: 'approve', item: id }, msg);
+      return;
+    }
+    const dis = e.target.closest('[data-dismiss]');
+    if (dis) run({ command: 'dismiss', item: +dis.dataset.dismiss }, msg);
+  });
+  document.addEventListener('submit', e => {
+    const f = e.target.closest('.wsp [data-answer]'); if (!f) return;
+    e.preventDefault();
+    run({ command: 'answer-once', item: +f.dataset.answer, answer: f.querySelector('input').value }, f.closest('.wsp').querySelector('[data-msg]'));
+  });
+
+  function renderPages() {
+    ITEMS = {};
+    $('ws-links').innerHTML = V.nav.map(l => `<a href="#${l.key}">${esc(l.label)}</a>`).join('') || '<span class="lbl">No workspaces yet</span>';
+    document.querySelectorAll('[data-ex]').forEach(el => { el.hidden = !V.example; });
+    renderInbox(); renderDesk(); renderDocs(); renderKnowledge(); renderMeetings(); renderGrowth(); renderInsights(); renderPrivacy(); renderWelcome();
+    const p = currentPage();
+    document.querySelectorAll('#ws-pop a').forEach(a => a.toggleAttribute('aria-current', a.getAttribute('href') === '#' + p));
+  }
+
+  /* Workspaces menu */
+  const wsBtn = $('ws-btn'), wsPop = $('ws-pop');
+  const closeMenu = () => { wsPop.hidden = true; wsBtn.setAttribute('aria-expanded', 'false'); };
+  wsBtn.addEventListener('click', e => { e.stopPropagation(); const open = wsPop.hidden; wsPop.hidden = !open; wsBtn.setAttribute('aria-expanded', String(open)); });
+  document.addEventListener('click', e => { if (!wsPop.hidden && !e.target.closest('#ws-pop')) closeMenu(); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeMenu(); });
+  addEventListener('hashchange', () => { closeMenu(); if (location.hash === '#report') loadReport(); if (V && currentPage()) renderPages(); });
 
   load();
   route();

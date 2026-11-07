@@ -29,7 +29,7 @@ seat-limit rules and their exact error sentences.
 Company settings (People, Roles, Teams, Connections, Activity) is wired to the engine:
 - `cargo run -p arkhon-suite-dev` serves this page and the engine's API. Every button sends a command, and the engine's rules decide.
 - Opened without the server (for example a shared preview link), the page shows a read-only snapshot exported from the engine (`--dump-view`).
-- The Home screen ("Needs you", "This week") is still sample content. It gets wired when the review queue and value metrics are built in Phase 5.
+- Home, and every customer page, render from the engine view: Email (`#inbox`), Customer replies (`#desk`), Documents (`#docs`), Company answers (`#knowledge`, via `/api/ask`), Meeting notes (`#meetings`), Quotes & marketing (`#growth`), Reports (`#insights`), Value report (`#report`, via `/api/report`), Privacy Center (`#privacy`), Set-up guide (`#welcome`) and Help (`#help`). Workspaces the viewer can't use are absent from the view; every Send / File / Answer is a review-queue command. The example company's content is labelled as sample data.
 
 ## Open questions
 - An official vector logo. The prototype redraws the mark as SVG from `brand/arkhon-mark-mist.png`. Replace it with the master SVG when one is available.
