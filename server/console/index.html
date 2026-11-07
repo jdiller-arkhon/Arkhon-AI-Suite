@@ -74,13 +74,99 @@ td.mono, .mono { font-family: var(--mono); font-size: 13px; }
   .wrap { padding-left: max(16px, env(safe-area-inset-left)); padding-right: max(16px, env(safe-area-inset-right)); }
   .card { padding: 20px; }
 }
+/* ---------- Horizon (shared with the Arkhon Suite design system, v2) ----------
+   Same tokens, hero band, motion and type as suite/app/design (see its README "Horizon v2").
+   Everything is inline: this page is served with a strict CSP and loads nothing external. */
+:root {
+  --bg: #eceef2; --card: #ffffff; --soft: #e4e7ec; --line: #d9dde4;
+  --fg: #111113; --fg-2: #4d525b; --fg-3: #636873;
+  --ink: #2b2b2e; --ink-fg: #ffffff; --focus: #1f5fbf;
+  --ok: #24653f; --ok-bg: #dcefe4; --warn: #94430a; --warn-bg: #f8ead9; --bad: #b42318; --bad-bg: #fbe5e2;
+  --sky-top: #cfd5de; --sky-low: #f4f6f9; --glow: rgba(255,255,255,.95); --glow-2: rgba(47,122,85,.10);
+  --bar: #9aa1ad; --bar-lit-a: #fdfdfe; --bar-lit-b: #7b818c; --bar-lit-c: #2b2b2e; --arc: #2b2b2e; --dust: rgba(43,43,46,.32);
+  --nav-bg: rgba(255,255,255,.72); --nav-line: rgba(17,17,19,.08);
+  --shadow: 0 1px 0 rgba(255,255,255,.7) inset, 0 1px 2px rgba(17,17,19,.05), 0 18px 40px -24px rgba(17,17,19,.22);
+  --font: "Geist", -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
+  --ease: cubic-bezier(.22,1,.36,1); --spring: cubic-bezier(.34,1.36,.64,1); --spring-soft: cubic-bezier(.3,1.25,.5,1);
+  --dur-press: 140ms; --dur-quick: 220ms; --dur-enter: 560ms; --dur-wipe: 760ms; --dur-glide: 420ms; --dur-count: 900ms; --stagger: 55ms;
+}
+@media (prefers-color-scheme: dark) { :root {
+  --bg: #0c0e12; --card: #14171c; --soft: #1d2128; --line: #272c35;
+  --fg: #f2f3f6; --fg-2: #b4b9c4; --fg-3: #8e94a0;
+  --ink: #f2f3f6; --ink-fg: #111113; --focus: #6aa8ff;
+  --ok: #5cc994; --ok-bg: rgba(92,201,148,.13); --warn: #f0a640; --warn-bg: rgba(240,166,64,.13); --bad: #ff7b70; --bad-bg: rgba(255,123,112,.13);
+  --sky-top: #07080b; --sky-low: #1a1f27; --glow: rgba(214,220,232,.30); --glow-2: rgba(47,122,85,.20);
+  --bar: #3a404b; --bar-lit-a: #ffffff; --bar-lit-b: #9aa0ab; --bar-lit-c: #4a4e57; --arc: #c9ccd3; --dust: rgba(242,243,246,.42);
+  --nav-bg: rgba(20,23,28,.74); --nav-line: rgba(242,243,246,.10);
+  --shadow: 0 0 0 1px var(--line); color-scheme: dark;
+} }
+html { background: var(--bg); }
+html, body { overflow-x: hidden; }
+body { position: relative; letter-spacing: -.01em; }
+.card { border: 1px solid var(--line); }
+h1 { font-weight: 650; letter-spacing: -.04em; text-wrap: balance; }
+h2 { font-weight: 600; }
+.btn { transition: transform var(--dur-press) var(--spring), background-color var(--dur-quick) var(--ease), opacity var(--dur-quick); }
+.btn:active { transform: scale(.94); transition-duration: 90ms; }
+.btn:hover:not(:disabled) { opacity: .88; }
+.eyebrow { display: block; font-size: 12px; font-weight: 600; letter-spacing: .16em; text-transform: uppercase; color: var(--fg-2); margin-bottom: 10px; }
+
+/* Hero band: one canvas behind the top of the page, ending in the horizon under each page's title. */
+.hz-band { position: absolute; z-index: -1; top: 0; left: 0; right: 0; height: var(--hz-h, 360px); pointer-events: none; }
+.hz-band canvas { display: block; width: 100%; height: 100%; }
+body { isolation: isolate; }
+.stage { padding: 28px 0 92px; position: relative; }
+.stage h1 { font-size: clamp(34px, 5.4vw, 56px); line-height: 1.05; }
+.stage .lede { max-width: 40ch; }
+.hz-stat { margin: 18px 0 0; display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; color: var(--fg-2); font-size: 15px; }
+.hz-stat b { font-size: 32px; font-weight: 650; letter-spacing: -.04em; color: var(--fg); font-variant-numeric: tabular-nums; }
+
+/* Header: brand mark + a pill nav with a gliding indicator. */
+header { background: color-mix(in srgb, var(--bg) 55%, transparent) !important; -webkit-backdrop-filter: saturate(170%) blur(20px); backdrop-filter: saturate(170%) blur(20px); }
+.brand { display: inline-flex; align-items: center; gap: 10px; }
+.brand svg { width: 26px; height: 22px; flex: none; }
+.pillnav { position: relative; isolation: isolate; display: flex; gap: 2px; padding: 4px; border-radius: 999px; background: var(--nav-bg); border: 1px solid var(--nav-line); overflow-x: auto; scrollbar-width: none; }
+.pillnav::-webkit-scrollbar { display: none; }
+.pillnav a { position: relative; z-index: 1; padding: 7px 14px !important; border-radius: 999px; color: var(--fg-2); text-decoration: none; font-size: 14px; font-weight: 500; white-space: nowrap; transition: color var(--dur-quick) var(--ease); }
+.pillnav a:hover { color: var(--fg); }
+.pillnav a[aria-current="page"] { color: var(--ink-fg); }
+.pillnav .nav-ind { position: absolute; z-index: 0; top: 4px; left: 0; height: calc(100% - 8px); width: 0; border-radius: 999px; background: var(--ink); opacity: 0;
+  transition: transform var(--dur-glide) var(--spring-soft), width var(--dur-glide) var(--spring-soft), opacity var(--dur-quick); }
+
+/* Motion: staggered entrances and the "horizon wipe" between pages; all off under reduced motion. */
+@media (prefers-reduced-motion: no-preference) {
+  .enter .stage > * { animation: lift 700ms var(--ease) backwards; }
+  .enter .stage > :nth-child(2) { animation-delay: 60ms; } .enter .stage > :nth-child(n+3) { animation-delay: 120ms; }
+  .enter > .card, .enter .kpis > * , .enter .list > .item { animation: rise var(--dur-enter) var(--spring) backwards; }
+  .enter .kpis > :nth-child(2), .enter .list > .item:nth-child(2) { animation-delay: calc(var(--stagger) * 1); }
+  .enter .kpis > :nth-child(3), .enter .list > .item:nth-child(3) { animation-delay: calc(var(--stagger) * 2); }
+  .enter .kpis > :nth-child(n+4), .enter .list > .item:nth-child(n+4) { animation-delay: calc(var(--stagger) * 3); }
+  @keyframes lift { from { opacity: .001; transform: translateY(10px); } }
+  @keyframes rise { from { opacity: .001; transform: translateY(14px) scale(.985); } }
+  .msg:not([hidden]) { animation: rise 420ms var(--spring) backwards; }
+  ::view-transition-old(root) { animation: var(--dur-wipe) var(--ease) both vt-settle; }
+  ::view-transition-new(root) { animation: var(--dur-wipe) var(--ease) both vt-horizon; }
+  @keyframes vt-horizon { from { clip-path: ellipse(140% 0% at 50% 100%); } to { clip-path: ellipse(140% 160% at 50% 100%); } }
+  @keyframes vt-settle { to { opacity: .35; transform: translateY(-2%) scale(.985); filter: blur(2px); } }
+  header { view-transition-name: top; }
+  ::view-transition-group(top) { animation: none; }
+}
+@media (max-width: 720px) {
+  .stage { padding: 16px 0 64px; }
+  .hz-stat b { font-size: 26px; }
+}
 </style>
 </head>
 <body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+  <linearGradient id="chrome" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#d6d8dd"/><stop offset=".45" stop-color="#5f636c"/><stop offset=".7" stop-color="#1d1f24"/><stop offset="1" stop-color="#d6d8dd"/></linearGradient>
+  <symbol id="mark" viewBox="0 0 120 104"><path d="M60 2 L4 98 L22 98 L58 34 Z" fill="url(#chrome)"/><path d="M68 20 L116 98 L98 98 L66 44 L66 24 Z" fill="url(#chrome)"/>
+    <g fill="url(#chrome)"><rect x="40" y="70" width="5" height="24"/><rect x="48" y="56" width="5" height="38"/><rect x="56" y="40" width="5" height="54"/><rect x="64" y="58" width="5" height="36"/><rect x="72" y="72" width="5" height="22"/></g>
+    <path d="M14 100 Q60 90 106 100" stroke="url(#chrome)" stroke-width="2.4" fill="none" stroke-linecap="round"/></symbol></defs></svg>
 <header hidden id="top">
   <div class="wrap hdr">
-    <span class="brand">ARKHON<small>Operator Console</small></span>
-    <nav id="nav">
+    <span class="brand"><svg viewBox="0 0 120 104" aria-hidden="true"><use href="#mark"/></svg>ARKHON<small>Operator Console</small></span>
+    <nav id="nav" class="pillnav" aria-label="Console">
       <a href="#overview">Overview</a><a href="#customers">Customers</a><a href="#licenses">Licenses</a><a href="#releases">Releases</a><a href="#audit">Audit log</a>
     </nav>
     <span class="grow"></span>
@@ -91,6 +177,7 @@ td.mono, .mono { font-family: var(--mono); font-size: 13px; }
 <main class="wrap">
   <!-- Sign in -->
   <form class="card signin" id="v-signin">
+    <span class="eyebrow">Operator Console</span>
     <h1 style="font-size:30px">Sign in</h1>
     <p class="muted" style="margin:0">Arkhon staff only. You need your password and the 6-digit code from your authenticator app.</p>
     <label>Email<input id="si-email" type="email" autocomplete="username" required></label>
@@ -102,9 +189,10 @@ td.mono, .mono { font-family: var(--mono); font-size: 13px; }
 
   <!-- Overview -->
   <section id="v-overview" hidden>
-    <h1>Overview</h1>
+    <div class="stage"><span class="eyebrow">Operator Console</span><h1>Overview</h1>
     <p class="lede">How Arkhon's customers are doing today.</p>
-    <div class="kpis" style="margin-top:24px">
+    <p class="hz-stat" id="ov-stat" hidden></p></div>
+    <div class="kpis">
       <div class="card kpi"><b id="k-customers">–</b><span>customers</span></div>
       <div class="card kpi"><b id="k-licenses">–</b><span>active licenses</span></div>
       <div class="card kpi"><b id="k-seats">–</b><span>seats sold</span></div>
@@ -116,9 +204,10 @@ td.mono, .mono { font-family: var(--mono); font-size: 13px; }
 
   <!-- Customers -->
   <section id="v-customers" hidden>
-    <h1>Customers</h1>
+    <div class="stage"><span class="eyebrow">Companies</span><h1>Customers</h1>
     <p class="lede">Add a company, then give it a license.</p>
-    <form class="card" id="new-customer" style="margin-top:24px;display:grid;gap:16px">
+    <p class="hz-stat" id="c-stat" hidden></p></div>
+    <form class="card" id="new-customer" style="display:grid;gap:16px">
       <h2>Add a customer</h2>
       <div class="row">
         <label>Company name<input id="c-name" required></label>
@@ -132,9 +221,10 @@ td.mono, .mono { font-family: var(--mono); font-size: 13px; }
 
   <!-- Licenses -->
   <section id="v-licenses" hidden>
-    <h1>Licenses</h1>
+    <div class="stage"><span class="eyebrow">Plans and seats</span><h1>Licenses</h1>
     <p class="lede">Pick a plan. Workspaces, engines and terms fill in for you.</p>
-    <form class="card" id="new-license" style="margin-top:24px;display:grid;gap:16px">
+    <p class="hz-stat" id="l-stat" hidden></p></div>
+    <form class="card" id="new-license" style="display:grid;gap:16px">
       <h2>Issue a license</h2>
       <div class="row">
         <label>Customer<select id="l-customer" required></select></label>
@@ -158,9 +248,9 @@ td.mono, .mono { font-family: var(--mono); font-size: 13px; }
 
   <!-- Releases -->
   <section id="v-releases" hidden>
-    <h1>Releases</h1>
-    <p class="lede">Publish an encrypted engine release. Customers get it only inside their update window.</p>
-    <form class="card" id="new-release" style="margin-top:24px;display:grid;gap:16px">
+    <div class="stage"><span class="eyebrow">Engines</span><h1>Releases</h1>
+    <p class="lede">Publish an encrypted engine release. Customers get it only inside their update window.</p></div>
+    <form class="card" id="new-release" style="display:grid;gap:16px">
       <div class="row">
         <label>Engine<input id="r-engine" placeholder="core" required></label>
         <label>Version<input id="r-version" placeholder="1.0.0" required></label>
@@ -178,13 +268,160 @@ td.mono, .mono { font-family: var(--mono); font-size: 13px; }
 
   <!-- Audit -->
   <section id="v-audit" hidden>
-    <h1>Audit log</h1>
-    <p class="lede">Every change, who made it, and when.</p>
-    <div class="row" style="margin-top:20px"><label>Filter by license or customer id<input id="a-filter" placeholder="lic-… or cust-…"></label><button class="btn" id="a-go" type="button">Show</button></div>
+    <div class="stage"><span class="eyebrow">History</span><h1>Audit log</h1>
+    <p class="lede">Every change, who made it, and when.</p></div>
+    <div class="row"><label>Filter by license or customer id<input id="a-filter" placeholder="lic-… or cust-…"></label><button class="btn" id="a-go" type="button">Show</button></div>
     <div class="card tbl" style="margin-top:16px"><table><thead><tr><th>When</th><th>Who</th><th>What</th><th>About</th></tr></thead><tbody id="a-rows"></tbody></table></div>
   </section>
 </main>
 
+<script>
+/* Horizon hero (lite): the suite's hero engine reduced to one skyline scene, inline for the
+   strict CSP. Sky + light behind the horizon + grain (cached), then per frame: skyline bars
+   from the page's real numbers, the horizon arc, a chrome sheen, dust and a soft pointer
+   light (desktop only). Pauses off screen / hidden; one still frame under reduced motion. */
+window.ArkHz = (() => {
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)'), fine = matchMedia('(hover: hover) and (pointer: fine)');
+  const ease = t => 1 - Math.pow(1 - t, 3), clamp = (v, a = 0, b = 1) => Math.max(a, Math.min(b, v)), TAU = Math.PI * 2;
+  const stats = { frames: 0, ms: 0, worst: 0 };
+  let C = null, band = null, cv = null, ctx = null, stat = null, w = 0, h = 0, dpr = 1, g = null, cols = [], bars = [], key = '';
+  let grow = 1, growAt = -1e9, raf = 0, visible = true, t0 = performance.now(), px = .5, py = .5, tx = .5, ty = .5, hov = 0, hovT = 0, stageEl = null;
+  function rng(seed) { let s = seed >>> 0 || 1; return () => (s = (s * 1664525 + 1013904223) >>> 0) / 4294967296; }
+  const dust = Array.from({ length: 30 }, (_, i) => { const r = rng(i * 97 + 3); return { x: r(), y: r(), s: .6 + r() * 1.3, v: .15 + r() * .5, p: r() * TAU }; });
+  function colors() {
+    const s = getComputedStyle(document.documentElement), v = k => s.getPropertyValue(k).trim();
+    C = { skyTop: v('--sky-top'), skyLow: v('--sky-low'), glow: v('--glow'), glow2: v('--glow-2'), ground: v('--bg'), bar: v('--bar'), litA: v('--bar-lit-a'), litB: v('--bar-lit-b'), litC: v('--bar-lit-c'), arc: v('--arc'), dust: v('--dust') };
+  }
+  function arcY(x) { return g.cy - Math.sqrt(Math.max(0, g.R * g.R - (x - g.cx) * (x - g.cx))); }
+  function roundTop(p, x, y, bw, bh, r) { p.moveTo(x, y + bh); p.lineTo(x, y + r); p.quadraticCurveTo(x, y, x + r, y); p.lineTo(x + bw - r, y); p.quadraticCurveTo(x + bw, y, x + bw, y + r); p.lineTo(x + bw, y + bh); p.closePath(); }
+  function layout() {
+    if (!w) return;
+    const narrow = w < 720, horizon = h - (narrow ? 40 : 54), R = Math.max(w * 1.5, 900);
+    g = { narrow, horizon, R, cx: w / 2, cy: horizon + R };
+    const n = bars.length || 1, max = Math.max(1e-6, ...bars.map(b => b.v));
+    const x0 = narrow ? w * .12 : w * .56, x1 = narrow ? w * .88 : w * .94, step = (x1 - x0) / n, bw = Math.max(3, Math.min(24, step * .52));
+    const hMax = narrow ? Math.min(46, h * .15) : Math.min(h * .34, 140);
+    cols = bars.map((b, i) => { const x = x0 + step * (i + .5); return { x, w: bw, h: Math.max(4, b.v / max * hMax), base: arcY(x), lit: !!b.lit }; });
+    g.glowX = x0 + (x1 - x0) / 2;
+    paintStatic();
+  }
+  function paintStatic() {
+    if (!w || !C) return;
+    stat = stat || document.createElement('canvas'); stat.width = cv.width; stat.height = cv.height;
+    const x = stat.getContext('2d'); x.setTransform(dpr, 0, 0, dpr, 0, 0);
+    const sky = x.createLinearGradient(0, 0, 0, g.horizon); sky.addColorStop(0, C.skyTop); sky.addColorStop(1, C.skyLow); x.fillStyle = sky; x.fillRect(0, 0, w, h);
+    const gl = x.createRadialGradient(g.glowX, g.horizon, 0, g.glowX, g.horizon, Math.max(w * .55, 420)); gl.addColorStop(0, C.glow); gl.addColorStop(.45, C.glow2); gl.addColorStop(1, 'rgba(0,0,0,0)');
+    x.fillStyle = gl; x.fillRect(0, 0, w, h);
+    const r = rng(7); x.fillStyle = C.dust; for (let i = 0; i < 900; i++) { x.globalAlpha = r() * .12; x.fillRect(r() * w, r() * g.horizon, 1, 1); } x.globalAlpha = 1;
+    x.beginPath(); x.arc(g.cx, g.cy, g.R, 0, TAU); x.fillStyle = C.ground; x.fill();
+  }
+  function frame(t, still) {
+    if (!w || !stat) return;
+    const el = still ? 0 : (t - t0) / 1000;
+    ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.drawImage(stat, 0, 0); ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    if (grow < 1) grow = .55 + .45 * ease(clamp((t - growAt) / 1100));
+    const gr = still && (reduce.matches || grow >= 1) ? 1 : grow;
+    if (!still) { px += (tx - px) * .08; py += (ty - py) * .08; hov += (hovT - hov) * .06; }
+    const ox = still ? 0 : (px - .5) * -10 * hov;
+    if (hov > .01 && !still) { const lx = px * w, ly = py * h, pl = ctx.createRadialGradient(lx, ly, 0, lx, ly, 240); pl.addColorStop(0, C.glow); pl.addColorStop(1, 'rgba(0,0,0,0)'); ctx.globalAlpha = .35 * hov; ctx.fillStyle = pl; ctx.fillRect(lx - 240, 0, 480, g.horizon); ctx.globalAlpha = 1; }
+    const lit = ctx.createLinearGradient(0, g.horizon - 180, 0, g.horizon); lit.addColorStop(0, C.litA); lit.addColorStop(.5, C.litB); lit.addColorStop(1, C.litC);
+    const path = new Path2D(); let tall = null;
+    cols.forEach(c => { const bh = c.h * gr, p = new Path2D(); roundTop(p, c.x - c.w / 2 + ox, c.base - bh, c.w, bh + 6, Math.min(3, c.w / 2));
+      ctx.fillStyle = c.lit ? lit : C.bar; ctx.globalAlpha = c.lit ? 1 : .8; ctx.fill(p); path.addPath(p); if (!tall || bh > tall.h) tall = { x: c.x + ox, y: c.base - bh, h: bh }; });
+    ctx.globalAlpha = 1;
+    if (tall) { ctx.strokeStyle = C.arc; ctx.lineWidth = 1.2; ctx.globalAlpha = .55; ctx.beginPath(); ctx.moveTo(tall.x, tall.y - 3); ctx.lineTo(tall.x, tall.y - 16); ctx.stroke(); ctx.globalAlpha = 1; }
+    const arc = new Path2D(); arc.arc(g.cx, g.cy, g.R, Math.PI * 1.05, Math.PI * 1.95);
+    ctx.strokeStyle = C.arc; ctx.lineWidth = 1.6; ctx.globalAlpha = .7; ctx.stroke(arc); ctx.globalAlpha = 1;
+    const ph = still ? .62 : (el % 9) / 9;
+    if (ph < .75) { const sx = -200 + (w + 400) * (ph / .75), b = ctx.createLinearGradient(sx - 120, 0, sx + 120, 0);
+      b.addColorStop(0, 'rgba(255,255,255,0)'); b.addColorStop(.5, 'rgba(255,255,255,.75)'); b.addColorStop(1, 'rgba(255,255,255,0)');
+      ctx.save(); ctx.lineWidth = 3.2; ctx.strokeStyle = b; ctx.stroke(arc); ctx.clip(path); ctx.fillStyle = b; ctx.globalAlpha = .6; ctx.fillRect(sx - 120, 0, 240, h); ctx.restore(); }
+    ctx.fillStyle = C.dust;
+    for (const d of dust) { const y = (d.y - el * d.v * .03) % 1, yy = y < 0 ? y + 1 : y; ctx.globalAlpha = Math.min(1, yy * 1.4) * .7; ctx.fillRect(d.x * w + Math.sin(el * .3 + d.p) * 8, yy * g.horizon, d.s, d.s); }
+    ctx.globalAlpha = 1;
+  }
+  function loop(t) {
+    raf = 0; if (reduce.matches || document.hidden || !visible) return;
+    const a = performance.now(); frame(t, false); const d = performance.now() - a;
+    stats.frames++; stats.ms += d; stats.worst = Math.max(stats.worst, d);
+    raf = requestAnimationFrame(loop);
+  }
+  function kick() {
+    if (!cv) return;
+    if (reduce.matches || document.hidden || !visible) { cancelAnimationFrame(raf); raf = 0; frame(performance.now(), true); return; }
+    if (!raf) raf = requestAnimationFrame(loop);
+  }
+  function size() {
+    if (!band) return;
+    // The band ends where the active page's title block (.stage) ends: that's the horizon.
+    const top = stageEl && stageEl.offsetParent ? stageEl.getBoundingClientRect().bottom + scrollY : 0;
+    band.style.setProperty('--hz-h', Math.max(260, Math.round(top)) + 'px');
+    const r = band.getBoundingClientRect(), nd = Math.min(devicePixelRatio || 1, 2);
+    if (!r.width || !r.height) return;
+    if (r.width === w && r.height === h && nd === dpr && stat) return;
+    w = r.width; h = r.height; dpr = nd; cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr);
+    layout(); frame(performance.now(), true);
+  }
+  function init() {
+    band = document.createElement('div'); band.className = 'hz-band'; band.setAttribute('aria-hidden', 'true');
+    cv = document.createElement('canvas'); band.appendChild(cv); document.body.prepend(band);
+    ctx = cv.getContext('2d', { alpha: false }); colors();
+    new IntersectionObserver(es => { visible = es[0].isIntersecting; kick(); }).observe(band);
+    new ResizeObserver(size).observe(document.body);
+    document.addEventListener('visibilitychange', kick);
+    reduce.addEventListener('change', () => { grow = 1; kick(); });
+    matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => { colors(); paintStatic(); frame(performance.now(), true); kick(); });
+    addEventListener('pointermove', e => { if (e.pointerType !== 'mouse' || !fine.matches || reduce.matches || !h) return; tx = clamp(e.clientX / w); ty = clamp((e.clientY + scrollY) / h); hovT = e.clientY + scrollY < h ? 1 : 0; kick(); }, { passive: true });
+    document.addEventListener('pointerleave', () => { hovT = 0; tx = ty = .5; });
+  }
+  const MARK = [{ v: 24 }, { v: 38 }, { v: 54, lit: true }, { v: 36 }, { v: 22 }];
+  return {
+    MARK,
+    /** Point the band at this page's title block and set its skyline: bars = [{v, lit}]. */
+    show(stage, list) {
+      if (!band) init();
+      stageEl = stage; band.hidden = !stage;
+      const next = list && list.length ? list : MARK, k = JSON.stringify(next);
+      if (k !== key) { key = k; bars = next; if (w) layout(); grow = reduce.matches ? 1 : .55; growAt = performance.now(); }
+      w = 0; size(); kick();
+    },
+    stats: () => ({ frames: stats.frames, avg_ms: stats.frames ? stats.ms / stats.frames : 0, worst_ms: stats.worst }),
+    resetStats() { stats.frames = 0; stats.ms = 0; stats.worst = 0; },
+  };
+})();
+/* Shared Horizon helpers: count-up numbers, the gliding nav indicator and the horizon wipe. */
+window.ArkUi = (() => {
+  const reduce = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
+  function countUp(el, to) {
+    if (!el) return; const n = +to;
+    if (!Number.isFinite(n)) { el.textContent = to; delete el.dataset.n; return; }
+    const from = el.dataset.n != null ? +el.dataset.n : 0; el.dataset.n = n;
+    if (reduce() || from === n) { el.textContent = String(to); return; }
+    const t0 = performance.now();
+    const step = t => { if (+el.dataset.n !== n) return; const k = Math.min(1, Math.max(0, (t - t0) / 900)); el.textContent = k < 1 ? String(Math.round(from + (n - from) * (1 - Math.pow(1 - k, 3)))) : String(to); if (k < 1) requestAnimationFrame(step); };
+    requestAnimationFrame(step);
+  }
+  function glide(nav, instant) {
+    if (!nav) return; let ind = nav.querySelector('.nav-ind');
+    if (!ind) { ind = document.createElement('span'); ind.className = 'nav-ind'; ind.setAttribute('aria-hidden', 'true'); nav.prepend(ind); }
+    const cur = nav.querySelector('a[aria-current="page"]:not([hidden])');
+    if (!cur || !cur.offsetWidth) { ind.style.opacity = 0; return; }
+    if (instant || reduce() || ind.style.opacity !== '1') { ind.style.transition = 'none'; requestAnimationFrame(() => requestAnimationFrame(() => { ind.style.transition = ''; })); }
+    ind.style.opacity = 1; ind.style.width = cur.offsetWidth + 'px'; ind.style.transform = `translateX(${cur.offsetLeft}px)`;
+  }
+  /* Route changes get the horizon wipe (View Transitions) where supported; the new page has up to
+     150 ms to load its data first, so the wipe reveals content, not a blank page. */
+  function wipe(update) {
+    if (!document.startViewTransition || reduce()) return update();
+    let p;
+    try { document.startViewTransition(() => { p = Promise.resolve(update()); return Promise.race([p, new Promise(r => setTimeout(r, 150))]); }); }
+    catch (_) { return update(); }
+    return p;
+  }
+  function enter(section) { if (!section || reduce()) return; section.classList.remove('enter'); void section.offsetWidth; section.classList.add('enter'); }
+  return { countUp, glide, wipe, enter };
+})();
+</script>
 <script>
 (() => {
   const $ = id => document.getElementById(id);
@@ -223,22 +460,35 @@ td.mono, .mono { font-family: var(--mono); font-size: 13px; }
     views.forEach(n => { $('v-' + n).hidden = !signedIn || n !== v; });
     document.querySelectorAll('#nav a').forEach(a => a.toggleAttribute('aria-current', a.getAttribute('href') === '#' + v));
     document.querySelectorAll('#nav a[aria-current]').forEach(a => a.setAttribute('aria-current', 'page'));
+    const sec = signedIn ? $('v-' + v) : $('v-signin');
+    ArkHz.show(signedIn ? sec.querySelector('.stage') : sec, skyline[signedIn ? v : 'signin']);
+    ArkUi.glide($('nav')); ArkUi.enter(sec);
     if (!signedIn) return;
     try { await ({ overview: loadOverview, customers: loadCustomers, licenses: loadLicenses, releases: async () => {}, audit: loadAudit })[v](); } catch (_) {}
+    ArkHz.show(sec.querySelector('.stage'), skyline[v]);
   }
-  addEventListener('hashchange', route);
+  addEventListener('hashchange', () => ArkUi.wipe(route));
+  addEventListener('resize', () => ArkUi.glide($('nav'), true));
+  /* Hero skylines from real numbers: customers (licenses each) on Overview and Customers,
+     seats per license on Licenses (active ones lit). */
+  const skyline = {};
+  function stat(id, html) { const el = $(id); el.hidden = !html; el.innerHTML = html || ''; return el.querySelector('b'); }
 
   async function loadOverview() {
     const o = await api('GET', '/admin/overview');
-    $('k-customers').textContent = o.customers; $('k-licenses').textContent = o.active_licenses;
-    $('k-seats').textContent = o.seats; $('k-devices').textContent = o.active_devices;
-    $('k-expiring').textContent = o.expiring_within_30_days; $('k-stale').textContent = o.devices_not_seen_30_days;
+    ArkUi.countUp($('k-customers'), o.customers); ArkUi.countUp($('k-licenses'), o.active_licenses);
+    ArkUi.countUp($('k-seats'), o.seats); ArkUi.countUp($('k-devices'), o.active_devices);
+    ArkUi.countUp($('k-expiring'), o.expiring_within_30_days); ArkUi.countUp($('k-stale'), o.devices_not_seen_30_days);
+    ArkUi.countUp(stat('ov-stat', `<b>0</b> computers running Arkhon for ${o.customers} ${o.customers === 1 ? 'customer' : 'customers'}`), o.active_devices);
+    try { const cs = await api('GET', '/admin/customers'); customerSky(cs); skyline.overview = skyline.customers; } catch (_) {}
     $('k-exp-card').classList.toggle('warn', o.expiring_within_30_days > 0);
     $('k-stale-card').classList.toggle('warn', o.devices_not_seen_30_days > 0);
   }
 
   async function loadCustomers() {
     customers = await api('GET', '/admin/customers');
+    customerSky(customers);
+    ArkUi.countUp(stat('c-stat', `<b>0</b> ${customers.length === 1 ? 'customer' : 'customers'}`), customers.length);
     $('c-rows').innerHTML = customers.map(c => `<tr><td><b>${esc(c.name)}</b><div class="mono" style="color:var(--fg-3)">${esc(c.id)}</div></td><td>${esc(c.email)}</td><td>${c.licenses}</td>
       <td><button class="link" data-issue="${esc(c.id)}" type="button">Issue license</button></td></tr>`).join('') || '<tr><td colspan="4" class="muted">No customers yet. Add the first one above.</td></tr>';
   }
@@ -249,6 +499,11 @@ td.mono, .mono { font-family: var(--mono); font-size: 13px; }
       show($('c-msg'), `Added ${$('c-name').value}.`, true); $('c-name').value = ''; $('c-email').value = ''; loadCustomers();
     } catch (err) { show($('c-msg'), err.message, false); }
   });
+
+  function customerSky(cs) {
+    const top = Math.max(0, ...cs.map(c => c.licenses));
+    skyline.customers = cs.slice(0, 40).map(c => ({ v: .6 + c.licenses, lit: c.licenses === top && top > 0 }));
+  }
 
   function planSummary() {
     const p = plans.find(x => x.plan === $('l-plan').value); if (!p) return;
@@ -268,6 +523,9 @@ td.mono, .mono { font-family: var(--mono); font-size: 13px; }
     planSummary();
     const names = Object.fromEntries(customers.map(c => [c.id, c.name]));
     const list = await api('GET', '/admin/licenses');
+    skyline.licenses = list.slice(0, 40).map(l => ({ v: l.seats, lit: l.status === 'active' }));
+    const act = list.filter(l => l.status === 'active').length;
+    ArkUi.countUp(stat('l-stat', `<b>0</b> active of ${list.length} ${list.length === 1 ? 'license' : 'licenses'}`), act);
     $('l-rows').innerHTML = list.map(l => `<tr><td><button class="link mono" data-lic="${esc(l.id)}" type="button">${esc(l.id)}</button></td><td>${esc(names[l.customer_id] || l.customer_id)}</td>
       <td>${esc(l.plan)}</td><td>${l.seats}</td><td>${day(l.expires_at)}</td><td><span class="pill ${esc(l.status)}">${esc(l.status)}</span></td></tr>`).join('') || '<tr><td colspan="6" class="muted">No licenses yet.</td></tr>';
   }

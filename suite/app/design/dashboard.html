@@ -654,6 +654,70 @@ h2 { font-weight: 600; }
   .hero-stat b { font-size: 28px; }
 }
 .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* =====================================================================================
+   HORIZON v2 — reactive heroes, delight, dock & palette, chat polish
+   ===================================================================================== */
+/* Time of day (hero sky only; text colours never change, so contrast holds). */
+:root { --tod-a: rgba(0,0,0,0); --tod-b: rgba(0,0,0,0); }
+:root[data-tod="dawn"]  { --tod-a: rgba(255,176,128,.30); --tod-b: rgba(255,214,186,0); }
+:root[data-tod="dusk"]  { --tod-a: rgba(244,138,96,.26);  --tod-b: rgba(120,104,170,.12); }
+:root[data-tod="night"] { --tod-a: rgba(110,132,190,.16); --tod-b: rgba(36,48,90,.12); }
+/* Motion tokens (v2) */
+:root { --dur-count: 900ms; --dur-fly: 820ms; --dur-burst: 1500ms; --dur-glide: 420ms; --spring-soft: cubic-bezier(.3,1.25,.5,1); }
+
+/* Press / release springs: sink fast, release with a small overshoot. */
+.btn:active, .ask button:active, .ideas button:active, .qbtn:active, .chat-send:active, .conv-new:active, .starter:active { transition-duration: 90ms; }
+.task { transition: transform var(--dur-quick) var(--spring-soft), box-shadow var(--dur-quick) var(--ease), opacity .4s var(--ease); }
+@media (hover: hover) and (prefers-reduced-motion: no-preference) { .task:hover { transform: translateY(-2px); } }
+
+/* Approval fly-in: a small copy of the card flies into the hero horizon. */
+.fly { position: fixed; z-index: 50; pointer-events: none; border-radius: var(--r); background: var(--card); border: 1px solid var(--line);
+  box-shadow: 0 24px 60px -20px rgba(0,0,0,.45); padding: 20px 24px; font-weight: 600; font-size: 17px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; transform-origin: center; }
+/* All clear: a brief chrome light runs across the empty "Needs you" band. */
+@media (prefers-reduced-motion: no-preference) {
+  .needs.clear > * { animation: allclear 1.2s var(--ease) both; }
+  @keyframes allclear { 0% { transform: scale(.98); box-shadow: 0 0 0 0 rgba(255,255,255,0); } 35% { box-shadow: 0 0 0 6px color-mix(in srgb, var(--ok) 25%, transparent), 0 0 60px 6px rgba(255,255,255,.6); } 100% { transform: none; } }
+}
+
+/* Skeleton shimmer while the first view loads. */
+.skel { height: 104px; border-radius: var(--r); background: var(--card); border: 1px solid var(--line); position: relative; overflow: hidden; }
+.skel::after { content: ""; position: absolute; inset: 0; background: linear-gradient(100deg, transparent 20%, color-mix(in srgb, var(--fg) 7%, transparent) 50%, transparent 80%); background-size: 220% 100%; background-position: 100% 0; }
+@media (prefers-reduced-motion: no-preference) { .skel::after { animation: shimmer 1.3s linear infinite; } @keyframes shimmer { to { background-position: -120% 0; } } }
+
+/* Dock v2: a gliding active indicator, magnification on hover (desktop), tooltips. */
+.dock { isolation: isolate; }
+.dock .dock-ind { position: absolute; z-index: -1; top: 7px; left: 0; width: 48px; height: 48px; border-radius: 999px; background: var(--ink); pointer-events: none; opacity: 0;
+  transition: transform var(--dur-glide) var(--spring-soft), width var(--dur-glide) var(--spring-soft), opacity var(--dur-quick); }
+.dock .dock-ind::after { content: ""; position: absolute; left: 50%; bottom: -5px; width: 14px; height: 2px; margin-left: -7px; border-radius: 2px; background: linear-gradient(90deg, #9aa0ab, #f4f5f7, #9aa0ab); }
+.dock a[aria-current="page"] { background: none; color: var(--ink-fg); }
+.dock a[aria-current="page"]::after { display: none; }
+.dock a[aria-current="page"]:hover { background: none; color: var(--ink-fg); }
+.dock.mag a, .dock.mag button { transition: transform 120ms var(--ease), background-color var(--dur-quick) var(--ease), color var(--dur-quick) var(--ease); transform-origin: 50% 100%; }
+@media (max-width: 760px) { .dock .dock-ind { width: 46px; height: 46px; } }
+
+/* Palette v2: highlights, recent items, keyboard hints. */
+.pal-item mark { background: none; color: var(--fg); font-weight: 650; text-decoration: underline; text-decoration-color: color-mix(in srgb, var(--fg) 35%, transparent); text-underline-offset: 3px; }
+.pal-item .lbl-p { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pal-foot { display: flex; gap: 18px; flex-wrap: wrap; padding: 10px 18px; border-top: 1px solid var(--line); font-size: 12px; color: var(--fg-2); }
+.pal-foot kbd { font: 500 11px var(--font); border: 1px solid var(--line); border-radius: 5px; padding: 1px 5px; margin-right: 4px; color: var(--fg-2); }
+@media (max-width: 760px) { .pal-foot { display: none; } }
+
+/* Chat v2 */
+.thinking { display: inline-block; font-size: 15px; color: var(--fg-2); background: linear-gradient(90deg, var(--fg-2) 0%, var(--fg-2) 35%, var(--fg) 50%, var(--fg-2) 65%, var(--fg-2) 100%); background-size: 250% 100%; -webkit-background-clip: text; background-clip: text; }
+@media (prefers-reduced-motion: no-preference) {
+  .thinking { -webkit-text-fill-color: transparent; animation: think 1.6s linear infinite; } @keyframes think { from { background-position: 100% 0; } to { background-position: -150% 0; } }
+  .m.in { animation: msg-in 420ms var(--spring) backwards; } .m.user.in { transform-origin: 100% 100%; }
+  @keyframes msg-in { from { opacity: 0; transform: translateY(10px) scale(.98); } }
+}
+.conv-q { height: 40px; border-radius: 12px; border: 1px solid var(--line); background: var(--card); padding: 0 12px; font-size: 14px; width: 100%; min-width: 0; color: var(--fg); }
+.conv .mini.pinned { opacity: 1; color: var(--fg); }
+.conv-group { font-size: 11px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; color: var(--fg-3); padding: 10px 10px 2px; list-style: none; }
+.to-bottom { position: fixed; z-index: 6; left: 50%; transform: translateX(-50%); bottom: calc(var(--dock-h) + 150px + env(safe-area-inset-bottom, 0px)); width: 40px; height: 40px; border-radius: 50%;
+  border: 1px solid var(--line); background: var(--card); color: var(--fg); display: grid; place-items: center; box-shadow: 0 10px 30px -12px rgba(0,0,0,.35); }
+.to-bottom svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 2; }
+.codeblk .tk-k { color: #c4a7ff; } .codeblk .tk-s { color: #a5d6a7; } .codeblk .tk-n { color: #ffcc80; } .codeblk .tk-c { color: #8b93a1; font-style: italic; } .codeblk .tk-f { color: #8fc7ff; }
+@media (max-width: 760px) { .conv-side[data-open="false"] .conv-q { display: none; } }
 </style>
 
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
@@ -699,9 +763,9 @@ h2 { font-weight: 600; }
   </section>
 
   <section class="wrap band" aria-labelledby="needs-h">
-    <div class="head"><div><h2 id="needs-h">Needs you</h2><p>Nothing goes out until you say so.</p></div><span class="grow"></span><span id="left" style="color:var(--fg-2)">3 left</span></div>
+    <div class="head"><div><h2 id="needs-h">Needs you</h2><p>Nothing goes out until you say so.</p></div><span class="grow"></span><span id="left" style="color:var(--fg-2)" aria-live="polite"></span></div>
     <p class="msg" id="home-msg" hidden style="margin-bottom:14px"></p>
-    <div class="needs" id="needs"></div>
+    <div class="needs" id="needs" aria-busy="true"><div class="skel" aria-hidden="true"></div><div class="skel" aria-hidden="true"></div><div class="skel" aria-hidden="true"></div></div>
   </section>
 
   <section class="wrap band" aria-labelledby="week-h">
@@ -1054,6 +1118,7 @@ h2 { font-weight: 600; }
       <aside class="card conv-side" id="conv-side" data-open="false" aria-label="Conversations">
         <button class="conv-new" id="conv-new" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>New chat</button>
         <button class="btn conv-toggle" id="conv-toggle" type="button" aria-expanded="false" aria-controls="conv-list">Your chats</button>
+        <input class="conv-q" id="conv-q" type="search" placeholder="Search your chats" aria-label="Search your chats" autocomplete="off">
         <ul class="conv-list" id="conv-list"></ul>
         <p class="conv-note">Saved in this browser only. Never sent anywhere.</p>
       </aside>
@@ -1075,6 +1140,8 @@ h2 { font-weight: 600; }
   </section>
 </main>
 
+<button class="to-bottom" id="to-bottom" type="button" aria-label="Scroll to the newest message" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M6 13l6 6 6-6"/></svg></button>
+
 <!-- ================= DOCK + PALETTE ================= -->
 <nav class="dock" id="dock" aria-label="Main"></nav>
 <div class="pal" id="pal" hidden>
@@ -1082,36 +1149,46 @@ h2 { font-weight: 600; }
     <div class="pal-in"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></svg>
       <input id="pal-q" type="text" autocomplete="off" role="combobox" aria-expanded="true" aria-controls="pal-list" aria-label="Search pages, people and actions" placeholder="Search pages, people and actions"><kbd>Esc</kbd></div>
     <ul class="pal-list" id="pal-list" role="listbox" aria-label="Results"></ul>
+    <div class="pal-foot" aria-hidden="true"><span><kbd>↑</kbd><kbd>↓</kbd>move</span><span><kbd>Enter</kbd>open</span><span><kbd>Esc</kbd>close</span><span>Typing finds pages, people and actions, even with letters missing</span></div>
   </div>
 </div>
 
 <script type="application/json" id="snapshot">{"company":"Coastline Mechanical","plan":"Business","seats":10,"seats_used":8,"viewer":{"id":1,"name":"Dana Ruiz","email":"dana@coastline.com","role":"Owner","status":"active"},"can":{"manage_people":true,"assign_roles":true,"manage_billing":true,"manage_connections":true,"view_activity":true},"people":[{"id":1,"name":"Dana Ruiz","email":"dana@coastline.com","role":"Owner","status":"active"},{"id":2,"name":"Ari Patel","email":"ari@coastline.com","role":"Admin","status":"active"},{"id":3,"name":"Max Okafor","email":"max@coastline.com","role":"Manager","status":"active"},{"id":4,"name":"Lena Cho","email":"lena@coastline.com","role":"Dispatcher","status":"active"},{"id":5,"name":"Tia Alvarez","email":"tia@coastline.com","role":"Member","status":"active"},{"id":6,"name":"Sam Brooks","email":"sam@coastline.com","role":"Member","status":"active"},{"id":7,"name":"Rae Kim","email":"rae@coastline.com","role":"Member","status":"invited"},{"id":8,"name":"Jon Weiss","email":"jon@coastline.com","role":"Member","status":"active"},{"id":9,"name":"Pat Doyle","email":"pat@coastline.com","role":"Member","status":"suspended"}],"roles":[{"name":"Owner","description":"Runs the account, including plan and billing.","can":["Manage plan and billing","Change company settings","Invite and remove people","Change people's roles","Create custom roles","Manage teams","Connect company accounts","Turn on company automations","Approve work for their team","See company time-saved reports","See everyone's activity history","Install updates and industry packs"],"workspaces":["Email","Customer replies","Documents","Company answers","Meeting notes","Quotes & marketing","Reports","Coding & IT"],"people":1,"custom":false},{"name":"Admin","description":"Runs Arkhon day to day for the company.","can":["Change company settings","Invite and remove people","Change people's roles","Create custom roles","Manage teams","Connect company accounts","Turn on company automations","Approve work for their team","See company time-saved reports","See everyone's activity history","Install updates and industry packs"],"workspaces":["Email","Customer replies","Documents","Company answers","Meeting notes","Quotes & marketing","Reports","Coding & IT"],"people":1,"custom":false},{"name":"Manager","description":"Leads a team and signs off on their work.","can":["Manage teams","Approve work for their team","See company time-saved reports"],"workspaces":["Email","Customer replies","Documents","Company answers","Meeting notes","Quotes & marketing","Reports","Coding & IT"],"people":1,"custom":false},{"name":"Member","description":"Uses Arkhon for their own work.","can":[],"workspaces":["Email","Documents","Company answers"],"people":5,"custom":false},{"name":"Dispatcher","description":"A role your company created.","can":["Approve work for their team"],"workspaces":["Email","Customer replies","Company answers","Quotes & marketing"],"people":1,"custom":true}],"teams":[{"name":"Field techs","members":["Max Okafor","Tia Alvarez","Sam Brooks","Jon Weiss"],"workspaces":["Documents","Meeting notes"],"is_member":false},{"name":"Front office","members":["Ari Patel","Lena Cho","Rae Kim"],"workspaces":["Customer replies","Quotes & marketing"],"is_member":false}],"connections":[{"id":1,"app":"outlook","app_name":"Outlook","account":"service@coastline.com","mine":false,"personal":false,"shared_with":"Front office","connected_by":"Ari Patel","status":"active","can_disconnect":true},{"id":2,"app":"quick-books","app_name":"QuickBooks Online","account":"coastline mechanical books","mine":false,"personal":false,"shared_with":"Owners and Admins","connected_by":"Dana Ruiz","status":"active","can_disconnect":true},{"id":3,"app":"local-folder","app_name":"Folder or network drive","account":"\\\\office-nas\\jobs","mine":false,"personal":false,"shared_with":"Everyone","connected_by":"Ari Patel","status":"active","can_disconnect":true},{"id":4,"app":"google-drive","app_name":"Google Drive","account":"price books & manuals","mine":false,"personal":false,"shared_with":"Everyone","connected_by":"Ari Patel","status":"needs-sign-in","can_disconnect":true},{"id":5,"app":"outlook","app_name":"Outlook","account":"dana@coastline.com","mine":true,"personal":true,"shared_with":"Only Dana Ruiz","connected_by":"Dana Ruiz","status":"active","can_disconnect":true},{"id":6,"app":"google-calendar","app_name":"Google Calendar","account":"dana@coastline.com","mine":true,"personal":true,"shared_with":"Only Dana Ruiz","connected_by":"Dana Ruiz","status":"active","can_disconnect":true},{"id":7,"app":"gmail","app_name":"Gmail","account":"tia@coastline.com","mine":false,"personal":true,"shared_with":"Only Tia Alvarez","connected_by":"Tia Alvarez","status":"active","can_disconnect":true}],"apps":[{"app":"outlook","name":"Outlook","category":"Email & calendar","policy":"own-accounts","available":true,"connected":2,"can_connect_me":true,"can_connect_team":true,"can_connect_everyone":true},{"app":"one-drive","name":"OneDrive & SharePoint","category":"Files","policy":"own-accounts","available":true,"connected":0,"can_connect_me":true,"can_connect_team":true,"can_connect_everyone":true},{"app":"microsoft-teams","name":"Microsoft Teams","category":"Chat & meetings","policy":"admins-only","available":false,"connected":0,"can_connect_me":true,"can_connect_team":true,"can_connect_everyone":true},{"app":"gmail","name":"Gmail","category":"Email & calendar","policy":"own-accounts","available":true,"connected":1,"can_connect_me":true,"can_connect_team":true,"can_connect_everyone":true},{"app":"google-calendar","name":"Google Calendar","category":"Email & calendar","policy":"own-accounts","available":true,"connected":1,"can_connect_me":true,"can_connect_team":true,"can_connect_everyone":true},{"app":"google-drive","name":"Google Drive","category":"Files","policy":"own-accounts","available":true,"connected":1,"can_connect_me":true,"can_connect_team":true,"can_connect_everyone":true},{"app":"other-email","name":"Other email (IMAP)","category":"Email & calendar","policy":"own-accounts","available":true,"connected":0,"can_connect_me":true,"can_connect_team":true,"can_connect_everyone":true},{"app":"local-folder","name":"Folder or network drive","category":"Files","policy":"admins-only","available":true,"connected":1,"can_connect_me":true,"can_connect_team":true,"can_connect_everyone":true},{"app":"dropbox","name":"Dropbox","category":"Files","policy":"admins-only","available":false,"connected":0,"can_connect_me":true,"can_connect_team":true,"can_connect_everyone":true},{"app":"quick-books","name":"QuickBooks Online","category":"Accounting","policy":"admins-only","available":true,"connected":1,"can_connect_me":true,"can_connect_team":true,"can_connect_everyone":true},{"app":"xero","name":"Xero","category":"Accounting","policy":"admins-only","available":true,"connected":0,"can_connect_me":true,"can_connect_team":true,"can_connect_everyone":true},{"app":"hub-spot","name":"HubSpot","category":"Customers & sales","policy":"admins-only","available":true,"connected":0,"can_connect_me":true,"can_connect_team":true,"can_connect_everyone":true},{"app":"service-titan","name":"ServiceTitan","category":"Jobs & scheduling","policy":"admins-only","available":false,"connected":0,"can_connect_me":true,"can_connect_team":true,"can_connect_everyone":true},{"app":"jobber","name":"Jobber","category":"Jobs & scheduling","policy":"team-accounts","available":false,"connected":0,"can_connect_me":true,"can_connect_team":true,"can_connect_everyone":true},{"app":"housecall-pro","name":"Housecall Pro","category":"Jobs & scheduling","policy":"admins-only","available":false,"connected":0,"can_connect_me":true,"can_connect_team":true,"can_connect_everyone":true},{"app":"stripe","name":"Stripe","category":"Payments","policy":"admins-only","available":false,"connected":0,"can_connect_me":true,"can_connect_team":true,"can_connect_everyone":true},{"app":"square","name":"Square","category":"Payments","policy":"admins-only","available":false,"connected":0,"can_connect_me":true,"can_connect_team":true,"can_connect_everyone":true},{"app":"slack","name":"Slack","category":"Chat & meetings","policy":"admins-only","available":false,"connected":0,"can_connect_me":true,"can_connect_team":true,"can_connect_everyone":true},{"app":"zoom","name":"Zoom","category":"Chat & meetings","policy":"admins-only","available":false,"connected":0,"can_connect_me":true,"can_connect_team":true,"can_connect_everyone":true},{"app":"docu-sign","name":"DocuSign","category":"Signatures","policy":"admins-only","available":false,"connected":0,"can_connect_me":true,"can_connect_team":true,"can_connect_everyone":true}],"workspaces":["Email","Customer replies","Documents","Company answers","Meeting notes","Quotes & marketing","Reports","Coding & IT"],"needs_you":{"total":5,"items":[{"id":1,"kind":"draft-reply","workspace":"Email","title":"Reply to Marisol Vega","summary":"Her AC is blowing warm. Arkhon offered today's 1–3 pm slot and confirmed her unit is under warranty.","draft":"Hi Marisol,\n\nSorry to hear the AC is blowing warm. We can come out today between 1 and 3 pm. Your unit was installed in May 2024, so the visit and any covered parts are under warranty.\n\nDana\nCoastline Mechanical","question":null,"sources":[{"label":"Price list 2026","reference":"file:\\\\office-nas\\jobs\\price-list-2026.pdf#p2"},{"label":"Job #4471, Vega residence","reference":"file:\\\\office-nas\\jobs\\4471\\invoice.pdf"},{"label":"Warranty policy","reference":"file:\\\\office-nas\\jobs\\policies\\warranty.docx"}],"confidence":"high","confidence_label":"Sure","urgency":"urgent","created_at":1793952000,"assignee":"Dana Ruiz","team":null,"connection":"Outlook (dana@coastline.com)","action":"Send","done_word":"Sent","can_approve":true,"blocked":null,"status":"waiting","final_text":null},{"id":2,"kind":"file-bill","workspace":"Documents","title":"File a Ferguson bill for $2,418.36","summary":"It matches purchase order 1187 exactly and belongs to the Harbor Dental job.","draft":null,"question":null,"sources":[{"label":"Ferguson invoice 88213","reference":"mail:service@coastline.com/88213"},{"label":"Purchase order 1187","reference":"file:\\\\office-nas\\jobs\\po\\1187.pdf"}],"confidence":"high","confidence_label":"Sure","urgency":"normal","created_at":1793944800,"assignee":"Dana Ruiz","team":null,"connection":"QuickBooks Online (coastline mechanical books)","action":"File it","done_word":"Filed","can_approve":true,"blocked":null,"status":"waiting","final_text":null},{"id":3,"kind":"knowledge-gap","workspace":"Company answers","title":"A customer asked about Mitsubishi units","summary":"Your files don't say whether you service them, so Arkhon didn't guess. Answer once and it will remember.","draft":null,"question":"Do we service Mitsubishi mini-split units?","sources":[],"confidence":"not-found","confidence_label":"Not sure","urgency":"normal","created_at":1793948400,"assignee":"Dana Ruiz","team":null,"connection":null,"action":"Answer","done_word":"Answered","can_approve":true,"blocked":null,"status":"waiting","final_text":null}]},"this_week":{"scope":"company","hours":16.1,"dollars":935,"hourly_rate":58,"totals":{"drafts":120,"documents":69,"meetings":9,"answers":20,"minutes":967,"hours":16.1,"dollars":935},"previous_hours":12.4,"days":[{"date":"2026-10-24","label":"S","weekday":"Saturday","minutes":36,"hours":0.6},{"date":"2026-10-25","label":"S","weekday":"Sunday","minutes":27,"hours":0.5},{"date":"2026-10-26","label":"M","weekday":"Monday","minutes":113,"hours":1.9},{"date":"2026-10-27","label":"T","weekday":"Tuesday","minutes":143,"hours":2.4},{"date":"2026-10-28","label":"W","weekday":"Wednesday","minutes":172,"hours":2.9},{"date":"2026-10-29","label":"T","weekday":"Thursday","minutes":136,"hours":2.3},{"date":"2026-10-30","label":"F","weekday":"Friday","minutes":114,"hours":1.9},{"date":"2026-10-31","label":"S","weekday":"Saturday","minutes":34,"hours":0.6},{"date":"2026-11-01","label":"S","weekday":"Sunday","minutes":18,"hours":0.3},{"date":"2026-11-02","label":"M","weekday":"Monday","minutes":136,"hours":2.3},{"date":"2026-11-03","label":"T","weekday":"Tuesday","minutes":186,"hours":3.1},{"date":"2026-11-04","label":"W","weekday":"Wednesday","minutes":257,"hours":4.3},{"date":"2026-11-05","label":"T","weekday":"Thursday","minutes":195,"hours":3.3},{"date":"2026-11-06","label":"F","weekday":"Friday","minutes":141,"hours":2.4}],"example":true},"nav":[{"key":"inbox","label":"Email"},{"key":"desk","label":"Customer replies"},{"key":"docs","label":"Documents"},{"key":"knowledge","label":"Company answers"},{"key":"meetings","label":"Meeting notes"},{"key":"growth","label":"Quotes & marketing"},{"key":"insights","label":"Reports"}],"inbox":{"threads":[{"id":1,"customer":"Marisol Vega","subject":"AC blowing warm air","summary":"Her AC is blowing warm and she wants someone out today.","message":"Hi, our AC has been blowing warm air since last night. Can someone come out today? We're home all afternoon. Thanks, Marisol","urgency":"urgent","received":"1 hour ago","account":"Outlook (dana@coastline.com)","item":{"id":1,"kind":"draft-reply","workspace":"Email","title":"Reply to Marisol Vega","summary":"Her AC is blowing warm. Arkhon offered today's 1–3 pm slot and confirmed her unit is under warranty.","draft":"Hi Marisol,\n\nSorry to hear the AC is blowing warm. We can come out today between 1 and 3 pm. Your unit was installed in May 2024, so the visit and any covered parts are under warranty.\n\nDana\nCoastline Mechanical","question":null,"sources":[{"label":"Price list 2026","reference":"file:\\\\office-nas\\jobs\\price-list-2026.pdf#p2"},{"label":"Job #4471, Vega residence","reference":"file:\\\\office-nas\\jobs\\4471\\invoice.pdf"},{"label":"Warranty policy","reference":"file:\\\\office-nas\\jobs\\policies\\warranty.docx"}],"confidence":"high","confidence_label":"Sure","urgency":"urgent","created_at":1793952000,"assignee":"Dana Ruiz","team":null,"connection":"Outlook (dana@coastline.com)","action":"Send","done_word":"Sent","can_approve":true,"blocked":null,"status":"waiting","final_text":null}},{"id":2,"customer":"Greg Lund","subject":"Heat pump or furnace?","summary":"Comparing a heat pump with a furnace before winter.","message":"Dana, thanks for coming by. Before we decide: is a heat pump worth it here, or should we just replace the furnace? -Greg","urgency":"low","received":"5 hours ago","account":"Outlook (dana@coastline.com)","item":{"id":7,"kind":"draft-reply","workspace":"Email","title":"Reply to Greg Lund","summary":"He's comparing a heat pump with a new furnace. Arkhon explained both and said Lena will send a quote.","draft":"Hi Greg,\n\nGood question. A heat pump heats and cools with one system and costs less to run in our climate; a furnace costs less up front. For your 1,800 sq ft home we'd suggest a 3-ton heat pump. Lena will send you a written quote today.\n\nDana\nCoastline Mechanical","question":null,"sources":[{"label":"Price book 2026","reference":"file:\\\\office-nas\\jobs\\price-book-2026.pdf#p8"},{"label":"Lund site visit notes","reference":"file:\\\\office-nas\\jobs\\4519\\visit.docx"}],"confidence":"medium","confidence_label":"Check this","urgency":"low","created_at":1793937600,"assignee":"Dana Ruiz","team":null,"connection":"Outlook (dana@coastline.com)","action":"Send","done_word":"Sent","can_approve":true,"blocked":null,"status":"waiting","final_text":null}}],"waiting":2},"desk":{"tickets":[{"id":1,"customer":"Priya Shah, Harbor Dental","channel":"Email","question":"Can we move Tuesday's maintenance visit to Thursday morning?","received":"2 hours ago","item":{"id":5,"kind":"draft-reply","workspace":"Customer replies","title":"Confirm Harbor Dental's maintenance visit","summary":"They asked to move Tuesday's visit to Thursday morning; Thursday 8 am is open.","draft":"Hi Priya,\n\nThursday at 8 am works. We'll see you then.\n\nCoastline Mechanical","question":null,"sources":[{"label":"Dispatch calendar","reference":"calendar:service@coastline.com"}],"confidence":"high","confidence_label":"Sure","urgency":"normal","created_at":1793948400,"assignee":"Lena Cho","team":"Front office","connection":"Outlook (service@coastline.com)","action":"Send","done_word":"Sent","can_approve":false,"blocked":"This would go out through Outlook (service@coastline.com), which you can't use. Ask someone who can to approve it.","status":"waiting","final_text":null}},{"id":2,"customer":"Tom Becker","channel":"Web form","question":"How often should I change my furnace filter?","received":"50 min ago","item":{"id":13,"kind":"draft-reply","workspace":"Customer replies","title":"Answer Tom Becker about filter changes","summary":"He asked how often to change filters. Arkhon answered from your maintenance guide.","draft":"Hi Tom,\n\nFor the 1-inch filter in your return, change it every 2 to 3 months, or every month if you have pets. Comfort Club members get filters at each tune-up.\n\nCoastline Mechanical","question":null,"sources":[{"label":"Homeowner maintenance guide","reference":"file:\\\\office-nas\\jobs\\policies\\maintenance-guide.pdf#p1"}],"confidence":"high","confidence_label":"Sure","urgency":"normal","created_at":1793952600,"assignee":"Lena Cho","team":"Front office","connection":"Outlook (service@coastline.com)","action":"Send","done_word":"Sent","can_approve":false,"blocked":"This would go out through Outlook (service@coastline.com), which you can't use. Ask someone who can to approve it.","status":"waiting","final_text":null}},{"id":3,"customer":"Caller, (805) 555-0199","channel":"Phone message","question":"Do you charge extra to come out on a Saturday?","received":"1 hour ago","item":{"id":12,"kind":"knowledge-gap","workspace":"Customer replies","title":"A customer asked about weekend rates","summary":"Your price list doesn't mention weekends, so Arkhon didn't guess. Answer once and it will remember.","draft":null,"question":"Do we charge extra for weekend service calls?","sources":[],"confidence":"not-found","confidence_label":"Not sure","urgency":"normal","created_at":1793950200,"assignee":"Lena Cho","team":"Front office","connection":null,"action":"Answer","done_word":"Answered","can_approve":true,"blocked":null,"status":"waiting","final_text":null}},{"id":4,"customer":"Alan Whitford","channel":"Email","question":"Do you service Mitsubishi mini-splits?","received":"2 hours ago","item":{"id":3,"kind":"knowledge-gap","workspace":"Company answers","title":"A customer asked about Mitsubishi units","summary":"Your files don't say whether you service them, so Arkhon didn't guess. Answer once and it will remember.","draft":null,"question":"Do we service Mitsubishi mini-split units?","sources":[],"confidence":"not-found","confidence_label":"Not sure","urgency":"normal","created_at":1793948400,"assignee":"Dana Ruiz","team":null,"connection":null,"action":"Answer","done_word":"Answered","can_approve":true,"blocked":null,"status":"waiting","final_text":null}}],"not_found":2},"docs":{"documents":[{"id":1,"doc_type":"supplier-bill","type_label":"Supplier bill","title":"Ferguson invoice 88213","from":"Ferguson Enterprises","received":"3 hours ago","fields":[{"label":"Supplier","value":"Ferguson Enterprises"},{"label":"Invoice number","value":"88213"},{"label":"Invoice date","value":"Nov 4, 2026"},{"label":"Due","value":"Dec 4, 2026 (net 30)"},{"label":"Amount","value":"$2,418.36"},{"label":"Purchase order","value":"PO-1187"},{"label":"Job","value":"Harbor Dental, #4502"}],"check":"ok","check_text":"Matches PO-1187","note":"Every line and the total match the purchase order.","item":{"id":2,"kind":"file-bill","workspace":"Documents","title":"File a Ferguson bill for $2,418.36","summary":"It matches purchase order 1187 exactly and belongs to the Harbor Dental job.","draft":null,"question":null,"sources":[{"label":"Ferguson invoice 88213","reference":"mail:service@coastline.com/88213"},{"label":"Purchase order 1187","reference":"file:\\\\office-nas\\jobs\\po\\1187.pdf"}],"confidence":"high","confidence_label":"Sure","urgency":"normal","created_at":1793944800,"assignee":"Dana Ruiz","team":null,"connection":"QuickBooks Online (coastline mechanical books)","action":"File it","done_word":"Filed","can_approve":true,"blocked":null,"status":"waiting","final_text":null}},{"id":2,"doc_type":"receipt","type_label":"Receipt","title":"Home Depot receipt","from":"Tia Alvarez (phone photo)","received":"4 hours ago","fields":[{"label":"Store","value":"The Home Depot #6618"},{"label":"Date","value":"Nov 5, 2026"},{"label":"Amount","value":"$186.40"},{"label":"Paid with","value":"Company card ending 4417"},{"label":"Job","value":"Vega residence, #4471"}],"check":"ok","check_text":"Matches card ending 4417","note":"Arkhon matched the receipt to the Vega job from Tia's schedule.","item":{"id":9,"kind":"file-bill","workspace":"Documents","title":"File a Home Depot receipt for $186.40","summary":"Fittings and copper for the Vega job, paid with the company card ending 4417.","draft":null,"question":null,"sources":[{"label":"Receipt photo from Tia","reference":"mail:service@coastline.com/rcpt-1105"}],"confidence":"high","confidence_label":"Sure","urgency":"normal","created_at":1793941200,"assignee":"Ari Patel","team":null,"connection":"QuickBooks Online (coastline mechanical books)","action":"File it","done_word":"Filed","can_approve":true,"blocked":null,"status":"waiting","final_text":null}},{"id":3,"doc_type":"lien-waiver","type_label":"Lien waiver","title":"Conditional lien waiver","from":"Pacific Sheet Metal","received":"7 hours ago","fields":[{"label":"Subcontractor","value":"Pacific Sheet Metal"},{"label":"Job","value":"Harbor Dental, #4502"},{"label":"Through","value":"Oct 31, 2026"},{"label":"Amount","value":"$3,200.00"},{"label":"Signed","value":"No"}],"check":"missing","check_text":"Not signed yet","note":"Saved to the Harbor Dental job folder. Get a signed copy before you pay them.","item":null},{"id":5,"doc_type":"work-order","type_label":"Work order","title":"Work order WO-4471","from":"Jobber","received":"20 hours ago","fields":[{"label":"Customer","value":"Marisol Vega"},{"label":"Job","value":"#4471, AC not cooling"},{"label":"Technician","value":"Tia Alvarez"},{"label":"Scheduled","value":"Nov 6, 2026, 1–3 pm"}],"check":"ok","check_text":"Linked to job #4471","note":"Saved with the job.","item":null},{"id":4,"doc_type":"insurance-certificate","type_label":"Insurance certificate","title":"Certificate of insurance","from":"Pacific Sheet Metal","received":"Yesterday","fields":[{"label":"Insured","value":"Pacific Sheet Metal"},{"label":"General liability","value":"$1,000,000 each occurrence"},{"label":"Workers' comp","value":"Yes"},{"label":"Expires","value":"Nov 30, 2026"}],"check":"warn","check_text":"Expires in 24 days","note":"Arkhon will remind you two weeks before it expires.","item":null},{"id":6,"doc_type":"change-order","type_label":"Change order","title":"Change order CO-12","from":"Bayview Apartments","received":"2 days ago","fields":[{"label":"Job","value":"Bayview Apartments, #4488"},{"label":"Change","value":"Add condensate lines in six units"},{"label":"Amount","value":"+$2,940.00"},{"label":"Customer signature","value":"Missing"}],"check":"missing","check_text":"Customer signature missing","note":"Don't start the extra work until the property manager signs.","item":null},{"id":7,"doc_type":"permit","type_label":"Permit","title":"Mechanical permit M-26-1043","from":"City of Ventura","received":"3 days ago","fields":[{"label":"Address","value":"418 Seaward Ave"},{"label":"Work","value":"Replace furnace and add AC"},{"label":"Status","value":"Approved"},{"label":"Inspection","value":"Nov 12, 2026"}],"check":"ok","check_text":"Approved","note":"The inspection is on the shared calendar.","item":null}],"to_file":2,"types":["Supplier bill","Receipt","Purchase order","Work order","Change order","Quote","Lien waiver","Insurance certificate","Permit"]},"knowledge":{"examples":["What is our warranty on new installs?","How much is a diagnostic visit?","What's in the Comfort Club plan?","Who do we use for sheet metal work?","Where are the job folders?","What do I do if a customer isn't home?","How do I order parts?","How do I log my hours?"],"answers":[{"question":"What is our warranty on new installs?","answer":"10 years on parts and 2 years on labor for systems we install, as long as the customer keeps up yearly maintenance.","sources":[{"label":"Warranty policy","reference":"file:\\\\office-nas\\jobs\\policies\\warranty.docx"}]},{"question":"How much is a diagnostic visit?","answer":"$129. It's waived if the customer goes ahead with the repair on the same visit.","sources":[{"label":"Price list 2026","reference":"file:\\\\office-nas\\jobs\\price-list-2026.pdf#p2"}]},{"question":"What's in the Comfort Club plan?","answer":"Two tune-ups a year, 15% off repairs, priority scheduling and no overtime fees, for $19 a month.","sources":[{"label":"Comfort Club plan","reference":"file:\\\\office-nas\\jobs\\policies\\comfort-club.pdf"}]},{"question":"Who do we use for sheet metal work?","answer":"Pacific Sheet Metal. Their insurance certificate expires on Nov 30, 2026.","sources":[{"label":"Vendor list","reference":"file:\\\\office-nas\\jobs\\vendors.xlsx"},{"label":"Certificate of insurance","reference":"file:\\\\office-nas\\jobs\\coi\\pacific.pdf"}]},{"question":"Where are the job folders?","answer":"On the office drive under Jobs, one folder per job number, like Jobs\\4471 for the Vega job.","sources":[{"label":"Employee handbook","reference":"file:\\\\office-nas\\jobs\\policies\\handbook.pdf"}]},{"question":"What do I do if a customer isn't home?","answer":"Wait 15 minutes, call the customer and the office, then leave a door tag. The office reschedules; there's no trip charge the first time.","sources":[{"label":"Employee handbook","reference":"file:\\\\office-nas\\jobs\\policies\\handbook.pdf"}]},{"question":"How do I order parts?","answer":"Text the part number and job number to the office. Lena orders from Ferguson or Johnstone and tells you when it's ready for pickup.","sources":[{"label":"Employee handbook","reference":"file:\\\\office-nas\\jobs\\policies\\handbook.pdf"}]},{"question":"How do I log my hours?","answer":null,"sources":[]}],"starter_questions":["Where are the job folders?","What do I do if a customer isn't home?","How do I order parts?","How do I log my hours?","What is our warranty on new installs?"],"remembered":0},"meetings":{"meetings":[{"id":1,"title":"Bayview Apartments walk-through","when":"23 hours ago","minutes":42,"attendees":["Tia Alvarez","Max Okafor","Rosa Medina (Bayview)"],"summary":"Walked all twelve units. Six have cracked or clogged condensate lines; the rest are fine. Rosa wants the work done before the holidays.","decisions":["Replace condensate lines in units 2B, 2C, 3A, 3D, 4A and 4C.","Do the work in two visits so tenants are only out of AC for one afternoon."],"actions":[{"who":"Max Okafor","what":"Send Rosa the quote and change order","due":"Monday"},{"who":"Tia Alvarez","what":"Order PVC and fittings for six units","due":"Tuesday"},{"who":"Rosa Medina","what":"Give tenants 48 hours' notice","due":"Before the first visit"}],"item":{"id":6,"kind":"meeting-notes","workspace":"Meeting notes","title":"Share notes from the Bayview Apartments walk-through","summary":"Six units need new condensate lines; Arkhon listed parts and next steps.","draft":"Notes from Thursday's walk-through at Bayview Apartments:\n- Units 2B, 2C, 3A, 3D, 4A and 4C need new condensate lines.\n- Parts list attached.\n- Next: quote to the property manager by Monday.","question":null,"sources":[{"label":"Walk-through recording","reference":"meeting:2026-11-05-bayview"}],"confidence":"medium","confidence_label":"Check this","urgency":"normal","created_at":1793898000,"assignee":"Tia Alvarez","team":"Field techs","connection":"Gmail (tia@coastline.com)","action":"Send","done_word":"Sent","can_approve":false,"blocked":"This would go out through Gmail (tia@coastline.com), which you can't use. Ask someone who can to approve it.","status":"waiting","final_text":null}},{"id":2,"title":"Monday dispatch huddle","when":"4 days ago","minutes":15,"attendees":["Dana Ruiz","Lena Cho","Max Okafor","Tia Alvarez","Sam Brooks"],"summary":"Busy week ahead with the first cold snap. Two installs, 23 service calls booked.","decisions":["Sam takes all no-heat calls on Wednesday and Thursday."],"actions":[{"who":"Lena Cho","what":"Move non-urgent tune-ups to next week","due":"Today"}],"item":null}]},"growth":{"quotes":[{"id":1,"customer":"Greg Lund","title":"3-ton heat pump, installed","lines":[{"description":"Carrier 3-ton heat pump, 17 SEER2","qty":1,"unit_cents":895000,"total_cents":895000},{"description":"Variable-speed air handler","qty":1,"unit_cents":240000,"total_cents":240000},{"description":"Line set, pad and disconnect","qty":1,"unit_cents":64000,"total_cents":64000},{"description":"40-amp electrical circuit","qty":1,"unit_cents":48000,"total_cents":48000},{"description":"Permit and inspection","qty":1,"unit_cents":27500,"total_cents":27500},{"description":"Remove and recycle old furnace","qty":1,"unit_cents":35000,"total_cents":35000}],"total_cents":1309500,"price_book":"Price book 2026","valid_days":30,"item":{"id":10,"kind":"send-quote","workspace":"Quotes & marketing","title":"Send the Lund heat-pump quote","summary":"3-ton heat pump with air handler, installed, from the 2026 price book: $13,095.","draft":"Hi Greg,\n\nAs promised, here's your quote for a 3-ton heat pump with a new air handler, fully installed, for $13,095. It includes the permit, removal of the old furnace and our 10-year parts warranty. The quote is good for 30 days.\n\nLena\nCoastline Mechanical","question":null,"sources":[{"label":"Price book 2026","reference":"file:\\\\office-nas\\jobs\\price-book-2026.pdf#p8"},{"label":"Warranty policy","reference":"file:\\\\office-nas\\jobs\\policies\\warranty.docx"}],"confidence":"medium","confidence_label":"Check this","urgency":"normal","created_at":1793944800,"assignee":"Lena Cho","team":"Front office","connection":"Outlook (service@coastline.com)","action":"Send","done_word":"Sent","can_approve":false,"blocked":"This would go out through Outlook (service@coastline.com), which you can't use. Ask someone who can to approve it.","status":"waiting","final_text":null}},{"id":2,"customer":"Luis Ortiz","title":"Replacement furnace, installed","lines":[{"description":"96% gas furnace, 80,000 BTU","qty":1,"unit_cents":498000,"total_cents":498000},{"description":"Installation labor","qty":1,"unit_cents":105000,"total_cents":105000},{"description":"Venting kit","qty":1,"unit_cents":24500,"total_cents":24500},{"description":"Permit","qty":1,"unit_cents":17500,"total_cents":17500}],"total_cents":645000,"price_book":"Price list 2026","valid_days":30,"item":{"id":4,"kind":"send-quote","workspace":"Quotes & marketing","title":"Send the Ortiz furnace quote","summary":"Replacement furnace, $6,450 installed, using this year's price list.","draft":"Hi Mr. Ortiz,\n\nAttached is the quote we discussed: a new 96% furnace, installed, for $6,450. It's good for 30 days.\n\nDana","question":null,"sources":[{"label":"Price list 2026","reference":"file:\\\\office-nas\\jobs\\price-list-2026.pdf#p5"}],"confidence":"medium","confidence_label":"Check this","urgency":"low","created_at":1793883600,"assignee":"Dana Ruiz","team":null,"connection":"Outlook (dana@coastline.com)","action":"Send","done_word":"Sent","can_approve":true,"blocked":null,"status":"waiting","final_text":null}}],"outreach":[{"id":1,"audience":"Past customers due for a fall tune-up","recipients":38,"item":{"id":11,"kind":"draft-reply","workspace":"Quotes & marketing","title":"Send fall tune-up reminders","summary":"A friendly reminder to 38 past customers whose furnace hasn't been checked this year.","draft":"Hi {first name},\n\nCold mornings are on the way. It's been over a year since we checked your furnace, and a tune-up now helps avoid a no-heat call in January. Reply to this email or call (805) 555-0142 to book. Comfort Club members get it free.\n\nCoastline Mechanical","question":null,"sources":[{"label":"Customer list","reference":"app:quickbooks/customers"},{"label":"Comfort Club plan","reference":"file:\\\\office-nas\\jobs\\policies\\comfort-club.pdf"}],"confidence":"high","confidence_label":"Sure","urgency":"low","created_at":1793934000,"assignee":"Lena Cho","team":"Front office","connection":"Outlook (service@coastline.com)","action":"Send","done_word":"Sent","can_approve":false,"blocked":"This would go out through Outlook (service@coastline.com), which you can't use. Ask someone who can to approve it.","status":"waiting","final_text":null}}]},"insights":{"insights":[{"id":1,"question":"Who hasn't paid yet?","answer":"Three customers owe you $6,912.40. Harbor Dental is the largest at $4,180, now 41 days late.","unit":"money","bars":[{"label":"Harbor Dental","value":418000},{"label":"Bayview Apartments","value":192240},{"label":"Luis Ortiz","value":81000}],"assumptions":["Counts invoices more than 30 days past their due date.","Partial payments are already subtracted."],"sources":[{"label":"QuickBooks invoices","reference":"app:quickbooks/invoices"}]},{"id":2,"question":"What brought in the most money in October?","answer":"October brought in $116,670. New installs were the biggest share, about 53%.","unit":"money","bars":[{"label":"New installs","value":6140000},{"label":"Repairs","value":2835000},{"label":"Commercial service","value":1780000},{"label":"Maintenance plans","value":912000}],"assumptions":["Uses every invoice dated October 1–31, paid or not.","Job type comes from the item on each invoice.","Sales tax is left out."],"sources":[{"label":"QuickBooks invoices","reference":"app:quickbooks/invoices"}]},{"id":3,"question":"How many jobs did we finish each week?","answer":"41 jobs last week, the busiest week in a month.","unit":"count","bars":[{"label":"Oct 12","value":31},{"label":"Oct 19","value":36},{"label":"Oct 26","value":29},{"label":"Nov 2","value":41}],"assumptions":["A job counts when its work order is marked complete in Jobber."],"sources":[{"label":"Jobber work orders","reference":"app:jobber/work-orders"}]}]},"privacy":{"where_data_lives":["Your email, files and answers are read and stored on this computer, in one encrypted folder.","Arkhon's AI runs on this computer too. Your customers' information is never sent to an AI company.","Sign-ins to your apps are kept in an encrypted vault that only this computer can open.","Arkhon only connects to the apps you connected, to read new items and to send what you approved."],"network":[{"service":"Microsoft Outlook","address":"outlook.office365.com","purpose":"Checked service@coastline.com for new email.","when":"5 min ago","sent_customer_data":false},{"service":"QuickBooks","address":"quickbooks.api.intuit.com","purpose":"Read open bills and unpaid invoices.","when":"20 min ago","sent_customer_data":false},{"service":"Gmail","address":"gmail.googleapis.com","purpose":"Checked tia@coastline.com for new email.","when":"35 min ago","sent_customer_data":false},{"service":"Google Calendar","address":"www.googleapis.com","purpose":"Read Dana's calendar for today's open slots.","when":"1 hour ago","sent_customer_data":false},{"service":"Arkhon updates","address":"updates.arkhonindustries.com","purpose":"Checked for an update to the Trades pack. Nothing about your company was sent.","when":"2 hours ago","sent_customer_data":false},{"service":"Arkhon license","address":"license.arkhonindustries.com","purpose":"Confirmed your license is active. Only the license number was sent.","when":"Yesterday","sent_customer_data":false}],"customer_data_sent":0,"retention_days":365,"retention_choices":[30,90,365,0],"can_manage":true,"delete_covers":["Everything Arkhon read and learned from your email and files","Drafts, answers, documents, meeting notes and quotes","Every connection and saved sign-in","Time-saved history and the connection list on this page"]},"setup":{"computer":{"tier":"Standard","words":"This computer can run Arkhon well. Most answers take a few seconds.","checks":["Enough memory for Arkhon's AI","Enough free space for your files","Security chip found, so sign-ins can be locked to this computer"]},"email_connected":true,"files_connected":true,"packs":[{"key":"trades","name":"Trades & field services","description":"HVAC, plumbing, electrical and contractors: supplier bills, work orders, lien waivers, quotes.","available":true},{"key":"professional","name":"Professional services","description":"Accountants, agencies and consultants.","available":false},{"key":"health","name":"Clinics & dental","description":"Front desk, scheduling and insurance paperwork.","available":false},{"key":"general","name":"General business","description":"Email, documents and answers for any small business.","available":true}],"industry_pack":"trades","files_read":12480,"files_total":14200,"can_choose_pack":true},"example":true}</script>
 <script>
 /* =====================================================================================
-   Horizon heroes: Canvas 2D, no libraries.
-   Layers per hero:
-     static (cached per size/theme): sky gradient, light rising behind the horizon, grain,
-                                     the ground below the arc (= page background)
-     per frame: breathing glow, skyline bars (grow to the page's real numbers),
-                chrome sheen sweeping across arc + bars, drifting dust.
+   Horizon v2 heroes: one Canvas 2D engine, a distinct scene per page. No libraries.
+   Every hero shares:
+     static layer (cached per size/theme/time of day): sky, light rising behind the horizon,
+                  time-of-day tint, grain, the ground below the arc (= page background)
+     per frame:   the page's scene (drawn from its real numbers), the horizon arc, a chrome
+                  sheen, drifting dust, a soft pointer light (desktop only) and one-off
+                  events (arrival pulse, all-clear burst).
+   Scenes: home/report (skyline), inbox (envelopes arcing into a count), desk (speech glyphs
+   rising), docs (page outline + scanning light), knowledge (constellation of sources),
+   meetings (waveform), growth (rising arc of bars), insights (line chart drawing itself),
+   privacy (closed dome), chat (breathing orb), settings (skyline of people).
    Runs only while visible (IntersectionObserver + visibilitychange). Under
    prefers-reduced-motion one finished still frame is drawn and nothing animates.
    ===================================================================================== */
 window.ArkHero = (() => {
   const reduce = matchMedia('(prefers-reduced-motion: reduce)');
+  const fine = matchMedia('(hover: hover) and (pointer: fine)');
   const heroes = new Map();
-  const stats = { frames: 0, ms: 0, worst: 0 };
+  const stats = { frames: 0, ms: 0, worst: 0, by: {} };
   const ease = t => 1 - Math.pow(1 - t, 3); // ease-out cubic
-  let colors = null;
+  const clamp = (v, a = 0, b = 1) => Math.max(a, Math.min(b, v));
+  const TAU = Math.PI * 2;
+  let colors = null, tod = 'day';
 
   function readColors() {
     const s = getComputedStyle(document.documentElement);
     const g = k => s.getPropertyValue(k).trim();
-    colors = { skyTop: g('--sky-top'), skyLow: g('--sky-low'), glow: g('--glow'), glow2: g('--glow-2'), ground: g('--bg'),
-      bar: g('--bar'), litA: g('--bar-lit-a'), litB: g('--bar-lit-b'), litC: g('--bar-lit-c'), arc: g('--arc'), dust: g('--dust'), fg3: g('--fg-3') };
+    colors = { skyTop: g('--sky-top'), skyLow: g('--sky-low'), glow: g('--glow'), glow2: g('--glow-2'), ground: g('--bg'), card: g('--card'),
+      bar: g('--bar'), litA: g('--bar-lit-a'), litB: g('--bar-lit-b'), litC: g('--bar-lit-c'), arc: g('--arc'), dust: g('--dust'), fg: g('--fg'), fg3: g('--fg-3'),
+      ok: g('--ok'), todA: g('--tod-a'), todB: g('--tod-b'), dark: s.colorScheme === 'dark' || g('color-scheme') === 'dark' };
   }
 
-  // Seeded noise so the grain and dust look the same on every load (a finished first frame).
+  // Seeded noise so the grain, dust and scenes look the same on every load (a finished first frame).
   function rng(seed) { let s = seed >>> 0 || 1; return () => (s = (s * 1664525 + 1013904223) >>> 0) / 4294967296; }
 
   let grain = null;
@@ -1122,55 +1199,318 @@ window.ArkHero = (() => {
     for (let i = 0; i < img.data.length; i += 4) { const v = r() * 255; img.data[i] = img.data[i + 1] = img.data[i + 2] = v; img.data[i + 3] = 14; }
     g.putImageData(img, 0, 0); return grain;
   }
+  function roundTop(p, x, y, w, h, r) { p.moveTo(x, y + h); p.lineTo(x, y + r); p.quadraticCurveTo(x, y, x + r, y); p.lineTo(x + w - r, y); p.quadraticCurveTo(x + w, y, x + w, y + r); p.lineTo(x + w, y + h); p.closePath(); }
+  function rrect(p, x, y, w, h, r) { p.moveTo(x + r, y); p.arcTo(x + w, y, x + w, y + h, r); p.arcTo(x + w, y + h, x, y + h, r); p.arcTo(x, y + h, x, y, r); p.arcTo(x, y, x + w, y, r); p.closePath(); }
+  function litGrad(ctx, y0, y1) { const g = ctx.createLinearGradient(0, y0, 0, y1); g.addColorStop(0, colors.litA); g.addColorStop(.5, colors.litB); g.addColorStop(1, colors.litC); return g; }
+
+  /* ---------------- Scenes. Each draws the foreground and may return a Path2D the sheen lights. */
+  function sceneBars(ctx, h, s) {
+    const lit = litGrad(ctx, h.g.horizon - 200, h.g.horizon), path = new Path2D();
+    let tallest = null;
+    h.cols.forEach((c, i) => {
+      const k = s.still ? s.grow : clamp((s.grow - .55) / .45 * 1.15 - i * .03 / Math.max(1, h.cols.length / 8));
+      const gh = c.h * (s.still ? s.grow : .55 + .45 * ease(clamp(k))), x = c.x - c.w / 2, y = c.base - gh;
+      const p = new Path2D(); roundTop(p, x, y, c.w, gh + 6, Math.min(3, c.w / 2));
+      ctx.fillStyle = c.lit ? lit : colors.bar; ctx.globalAlpha = c.lit ? 1 : .8; ctx.fill(p);
+      path.addPath(p);
+      if (!tallest || gh > tallest.h) tallest = { x: c.x, y, h: gh };
+    });
+    ctx.globalAlpha = 1;
+    if (tallest) { ctx.strokeStyle = colors.arc; ctx.lineWidth = 1.2; ctx.globalAlpha = .55; ctx.beginPath(); ctx.moveTo(tallest.x, tallest.y - 3); ctx.lineTo(tallest.x, tallest.y - 18); ctx.stroke();
+      ctx.beginPath(); ctx.arc(tallest.x, tallest.y - 20, 1.8, 0, TAU); ctx.fillStyle = colors.arc; ctx.globalAlpha = .4 + .5 * s.breath; ctx.fill(); ctx.globalAlpha = 1; }
+    return path;
+  }
+
+  // Email: envelopes arc over the horizon and land in a ring holding the count.
+  function sceneInbox(ctx, h, s) {
+    const g = h.g, d = h.data, n = clamp(Math.round(d.total || 3), 3, 8);
+    const E = { x: g.w * (g.narrow ? .82 : .84), y: g.horizon - (g.narrow ? 46 : 78) };
+    const ring = g.narrow ? 20 : 26, path = new Path2D();
+    ctx.lineWidth = 1.1; ctx.strokeStyle = colors.arc;
+    for (let i = 0; i < n; i++) {
+      const sx = g.w * (g.narrow ? .08 : .44) + i * (g.narrow ? 10 : 18), sy = h.arcY(sx);
+      const cx = (sx + E.x) / 2, cy = Math.min(sy, E.y) - g.h * (g.narrow ? .28 : .34);
+      if (i === 0) { ctx.save(); ctx.setLineDash([2, 6]); ctx.globalAlpha = .35; ctx.beginPath(); ctx.moveTo(sx, sy); ctx.quadraticCurveTo(cx, cy, E.x, E.y); ctx.stroke(); ctx.restore(); }
+      const p = s.still ? (i + .5) / n * .9 : ((s.el * .16 + i / n) % 1);
+      const u = 1 - p, x = u * u * sx + 2 * u * p * cx + p * p * E.x, y = u * u * sy + 2 * u * p * cy + p * p * E.y;
+      const tx = 2 * u * (cx - sx) + 2 * p * (E.x - cx), ty = 2 * u * (cy - sy) + 2 * p * (E.y - cy);
+      const sc = (g.narrow ? .8 : 1) * (1 - .45 * p * p);
+      ctx.save(); ctx.translate(x, y); ctx.rotate(Math.atan2(ty, tx) * .35); ctx.scale(sc, sc);
+      ctx.globalAlpha = clamp(Math.min(p * 6, (1 - p) * 5)) * .95;
+      const e = new Path2D(); rrect(e, -10, -7, 20, 14, 2.5);
+      ctx.fillStyle = i < (d.count || 0) ? litGrad(ctx, -7, 7) : colors.card; ctx.fill(e); ctx.stroke(e);
+      ctx.beginPath(); ctx.moveTo(-9, -6); ctx.lineTo(0, 1); ctx.lineTo(9, -6); ctx.stroke();
+      ctx.restore();
+      if (!s.still && p > .985) h.arrive = s.t;
+    }
+    ctx.globalAlpha = 1;
+    const k = clamp((s.t - (h.arrive || -1e9)) / 600), pulse = s.still ? 0 : (1 - k);
+    const halo = ctx.createRadialGradient(E.x, E.y, 0, E.x, E.y, ring * 2.4);
+    halo.addColorStop(0, colors.glow); halo.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = halo; ctx.globalAlpha = .5 + .5 * pulse; ctx.fillRect(E.x - ring * 2.4, E.y - ring * 2.4, ring * 4.8, ring * 4.8);
+    ctx.globalAlpha = 1; path.arc(E.x, E.y, ring + pulse * 4, 0, TAU);
+    ctx.fillStyle = colors.card; ctx.fill(path); ctx.lineWidth = 1.6; ctx.strokeStyle = colors.arc; ctx.stroke(path);
+    ctx.fillStyle = colors.fg; ctx.font = `650 ${g.narrow ? 15 : 19}px Geist, -apple-system, sans-serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(String(d.count ?? 0), E.x, E.y + 1); ctx.textBaseline = 'alphabetic';
+    return path;
+  }
+
+  // Customer replies: speech glyphs rise out of the horizon; waiting ones are chrome.
+  function sceneDesk(ctx, h, s) {
+    const g = h.g, items = h.bars.length ? h.bars : [{ lit: true }, {}, {}], n = clamp(items.length, 3, 9), path = new Path2D();
+    const x0 = g.narrow ? g.w * .1 : g.w * .5, x1 = g.narrow ? g.w * .9 : g.w * .94;
+    ctx.lineWidth = 1.2; ctx.strokeStyle = colors.arc;
+    for (let i = 0; i < n; i++) {
+      const it = items[i % items.length], r = rng(i * 31 + 5);
+      const x = x0 + (x1 - x0) * (i + .5) / n + (r() - .5) * 18;
+      const p = s.still ? .25 + .6 * ((i * .37) % 1) : (s.el * (.07 + r() * .05) + r()) % 1;
+      const y = h.arcY(x) - 14 - p * (g.horizon * (g.narrow ? .55 : .62)), sc = (g.narrow ? .8 : 1) * (.8 + r() * .5);
+      ctx.save(); ctx.translate(x + Math.sin(s.el * .8 + i) * (s.still ? 0 : 4), y); ctx.scale(sc, sc);
+      ctx.globalAlpha = Math.sin(Math.PI * clamp(p)) * .95;
+      const b = new Path2D(); rrect(b, -15, -11, 30, 20, 8); b.moveTo(-6, 9); b.lineTo(-10, 16); b.lineTo(0, 9);
+      ctx.fillStyle = it.lit ? litGrad(ctx, -11, 16) : colors.card; ctx.fill(b); ctx.stroke(b);
+      ctx.fillStyle = it.lit ? colors.litC : colors.arc;
+      for (let j = -1; j <= 1; j++) { ctx.beginPath(); ctx.arc(j * 6, -1, 1.6, 0, TAU); ctx.fill(); }
+      ctx.restore();
+    }
+    ctx.globalAlpha = 1;
+    return path;
+  }
+
+  // Documents: a page outline; a light line scans down and each extracted field lights up.
+  function sceneDocs(ctx, h, s) {
+    const g = h.g, fields = clamp(h.data.fields || 5, 3, 9);
+    const pw = g.narrow ? 96 : 150, ph = g.narrow ? Math.min(118, g.horizon - 18) : Math.min(196, g.horizon - 30);
+    const px = g.narrow ? g.w * .72 - pw / 2 : g.w * .74 - pw / 2, py = Math.min(h.arcY(px), h.arcY(px + pw)) - ph - 4;
+    const page = new Path2D(); page.moveTo(px, py); page.lineTo(px + pw - 22, py); page.lineTo(px + pw, py + 22); page.lineTo(px + pw, py + ph); page.lineTo(px, py + ph); page.closePath();
+    ctx.fillStyle = colors.card; ctx.globalAlpha = .92; ctx.fill(page); ctx.globalAlpha = 1;
+    ctx.lineWidth = 1.4; ctx.strokeStyle = colors.arc; ctx.stroke(page);
+    ctx.beginPath(); ctx.moveTo(px + pw - 22, py); ctx.lineTo(px + pw - 22, py + 22); ctx.lineTo(px + pw, py + 22); ctx.stroke();
+    const cyc = 3.6, ph1 = s.still ? 1 : ((s.el % cyc) / cyc) * 1.25;
+    const top = py + 34, step = (ph - 50) / fields, lit = litGrad(ctx, top, py + ph), path = new Path2D();
+    for (let i = 0; i < fields; i++) {
+      const y = top + i * step, on = clamp((ph1 - (i + 1) / (fields + 1)) * 6);
+      ctx.fillStyle = colors.bar; ctx.globalAlpha = .55; ctx.fillRect(px + 14, y, pw * .26, 3);
+      const vw = pw * (.32 + ((i * 37) % 23) / 60), r = new Path2D(); rrect(r, px + 14 + pw * .32, y - 2, vw * (.4 + .6 * on), 7, 3.5);
+      ctx.globalAlpha = .35 + .65 * on; ctx.fillStyle = on > .5 ? lit : colors.bar; ctx.fill(r); path.addPath(r);
+    }
+    ctx.globalAlpha = 1;
+    if (!s.still && ph1 < 1.02) {
+      const sy = top - 8 + (ph - 40) * clamp(ph1);
+      const beam = ctx.createLinearGradient(0, sy - 10, 0, sy + 10);
+      beam.addColorStop(0, 'rgba(255,255,255,0)'); beam.addColorStop(.5, colors.glow); beam.addColorStop(1, 'rgba(255,255,255,0)');
+      ctx.fillStyle = beam; ctx.fillRect(px - 10, sy - 10, pw + 20, 20);
+      ctx.fillStyle = colors.ok; ctx.globalAlpha = .9; ctx.fillRect(px - 6, sy - .75, pw + 12, 1.5); ctx.globalAlpha = 1;
+    }
+    return path;
+  }
+
+  // Company answers: a constellation of the files answers come from, linking up.
+  function sceneKnowledge(ctx, h, s) {
+    const g = h.g, src = (h.data.sources && h.data.sources.length ? h.data.sources : [{ n: 3 }, { n: 1 }, { n: 2 }, { n: 1 }, { n: 1 }]).slice(0, 14);
+    if (!h.stars || h.stars.key !== g.w + 'x' + g.h + ':' + src.length) {
+      const r = rng(src.length * 13 + 1), x0 = g.narrow ? g.w * .08 : g.w * .58, x1 = g.w * .95;
+      const pts = src.map((d, i) => ({ x: x0 + (x1 - x0) * (i + .5) / src.length + (r() - .5) * 30, y: g.horizon * (g.narrow ? .3 + r() * .55 : .4 + r() * .48), n: d.n || 1, p: r() * TAU }));
+      const links = []; pts.forEach((a, i) => { pts.map((b, j) => ({ j, d: Math.hypot(a.x - b.x, a.y - b.y) })).filter(o => o.j > i).sort((u, v) => u.d - v.d).slice(0, 2).forEach(o => links.push([i, o.j])); });
+      h.stars = { key: g.w + 'x' + g.h + ':' + src.length, pts, links };
+    }
+    const { pts, links } = h.stars, prog = s.still ? 1 : clamp((s.t - h.growAt) / 1800), path = new Path2D(), maxN = Math.max(...pts.map(p => p.n));
+    ctx.strokeStyle = colors.arc; ctx.lineWidth = 1;
+    links.forEach(([a, b], i) => {
+      const k = clamp(prog * links.length * .7 - i * .5), A = pts[a], B = pts[b]; if (k <= 0) return;
+      ctx.globalAlpha = .32; ctx.beginPath(); ctx.moveTo(A.x, A.y); ctx.lineTo(A.x + (B.x - A.x) * k, A.y + (B.y - A.y) * k); ctx.stroke();
+      if (!s.still && k >= 1) { const q = (s.el * .35 + i * .21) % 1; ctx.globalAlpha = .8 * Math.sin(Math.PI * q); ctx.fillStyle = colors.arc; ctx.fillRect(A.x + (B.x - A.x) * q - 1, A.y + (B.y - A.y) * q - 1, 2, 2); }
+    });
+    const lit = litGrad(ctx, 0, g.horizon);
+    pts.forEach((p, i) => {
+      const big = p.n === maxN, r = (g.narrow ? 2.4 : 3) + p.n * 1.1 + (s.still ? 0 : Math.sin(s.el * 1.3 + p.p) * .6);
+      ctx.globalAlpha = clamp(prog * pts.length - i * .6); const c = new Path2D(); c.arc(p.x, p.y, r, 0, TAU);
+      if (big) { const halo = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, r * 5); halo.addColorStop(0, colors.glow); halo.addColorStop(1, 'rgba(0,0,0,0)'); ctx.fillStyle = halo; ctx.fillRect(p.x - r * 5, p.y - r * 5, r * 10, r * 10); }
+      ctx.fillStyle = big ? lit : colors.arc; ctx.fill(c); path.addPath(c);
+    });
+    ctx.globalAlpha = 1;
+    return path;
+  }
+
+  // Meetings: a live-looking waveform along the horizon; a playhead moves through it.
+  function sceneMeetings(ctx, h, s) {
+    const g = h.g, n = g.narrow ? 40 : 84, x0 = g.narrow ? g.w * .06 : g.w * .42, x1 = g.w * .96, step = (x1 - x0) / n;
+    const mins = h.data.minutes && h.data.minutes.length ? h.data.minutes : [30, 15];
+    const r = rng(mins.reduce((a, b) => a * 31 + b, 7)), env = Array.from({ length: n }, (_, i) => .35 + .65 * Math.abs(Math.sin(i / n * Math.PI * mins.length)) * (.5 + r() * .5));
+    const hMax = g.narrow ? Math.min(44, g.h * .16) : Math.min(g.h * .3, 120), head = s.still ? .62 : (s.el / 7) % 1;
+    const lit = litGrad(ctx, g.horizon - hMax, g.horizon), path = new Path2D();
+    for (let i = 0; i < n; i++) {
+      const x = x0 + step * (i + .5), base = h.arcY(x);
+      const wv = s.still ? .7 + .3 * Math.sin(i * .9) : .55 + .45 * Math.sin(s.el * 5.2 + i * .7) * Math.sin(s.el * 2.1 + i * .23);
+      const bh = Math.max(3, env[i] * Math.abs(wv) * hMax * s.grow), near = Math.abs(i / n - head) < .06;
+      const p = new Path2D(); rrect(p, x - 1.4, base - bh, 2.8, bh, 1.4);
+      ctx.globalAlpha = i / n < head ? .95 : .45; ctx.fillStyle = near ? lit : (i / n < head ? colors.arc : colors.bar); ctx.fill(p); path.addPath(p);
+    }
+    ctx.globalAlpha = .6; ctx.fillStyle = colors.arc; const hx = x0 + (x1 - x0) * head; ctx.fillRect(hx - .5, h.arcY(hx) - hMax - 10, 1, hMax + 10);
+    ctx.beginPath(); ctx.arc(hx, h.arcY(hx) - hMax - 12, 2.4, 0, TAU); ctx.fill(); ctx.globalAlpha = 1;
+    return path;
+  }
+
+  // Quotes & marketing: bars climbing a rising arc, the biggest in chrome.
+  function sceneGrowth(ctx, h, s) {
+    const g = h.g, vals = h.bars.map(b => b.v).sort((a, b) => a - b), n = vals.length, max = Math.max(1e-6, ...vals);
+    const x0 = g.narrow ? g.w * .1 : g.w * .5, x1 = g.narrow ? g.w * .9 : g.w * .94, step = (x1 - x0) / n, bw = Math.max(4, Math.min(22, step * .5));
+    const hMax = g.narrow ? Math.min(60, g.h * .2) : Math.min(g.h * .42, 170), lit = litGrad(ctx, g.horizon - hMax - 60, g.horizon), path = new Path2D();
+    const tops = [];
+    vals.forEach((v, i) => {
+      const x = x0 + step * (i + .5), base = h.arcY(x), rise = (i / Math.max(1, n - 1)) * hMax * .35;
+      const k = s.still ? 1 : ease(clamp((s.t - h.growAt) / 900 - i * .08));
+      const bh = Math.max(4, (v / max * hMax * .65 + rise) * k), p = new Path2D(); roundTop(p, x - bw / 2, base - bh, bw, bh + 6, 3);
+      ctx.fillStyle = i === n - 1 ? lit : colors.bar; ctx.globalAlpha = i === n - 1 ? 1 : .55 + .35 * i / n; ctx.fill(p); path.addPath(p); tops.push([x, base - bh]);
+    });
+    ctx.globalAlpha = .5; ctx.strokeStyle = colors.arc; ctx.lineWidth = 1.3; ctx.setLineDash([3, 5]); ctx.beginPath();
+    tops.forEach(([x, y], i) => i ? ctx.lineTo(x, y - 10) : ctx.moveTo(x, y - 10)); ctx.stroke(); ctx.setLineDash([]);
+    const last = tops[tops.length - 1];
+    if (last) { ctx.globalAlpha = .5 + .5 * s.breath; ctx.beginPath(); ctx.arc(last[0], last[1] - 10, 3, 0, TAU); ctx.fillStyle = colors.arc; ctx.fill(); }
+    ctx.globalAlpha = 1;
+    return path;
+  }
+
+  // Reports: a line chart that draws itself, to scale, with a soft area under it.
+  function sceneInsights(ctx, h, s) {
+    const g = h.g, vals = h.data.series && h.data.series.length > 1 ? h.data.series : [3, 5, 4, 7, 6, 9], n = vals.length;
+    const max = Math.max(...vals), min = 0, x0 = g.narrow ? g.w * .1 : g.w * .58, x1 = g.narrow ? g.w * .9 : g.w * .93;
+    const hMax = g.narrow ? Math.min(54, g.h * .2) : Math.min(g.h * .3, 130), prog = s.still ? 1 : ease(clamp((s.t - h.growAt) / 1600));
+    const pts = vals.map((v, i) => { const x = x0 + (x1 - x0) * i / (n - 1); return [x, h.arcY(x) - 16 - (v - min) / (max - min || 1) * hMax]; });
+    const upto = prog * (n - 1), k = Math.floor(upto), f = upto - k;
+    const line = new Path2D(); line.moveTo(pts[0][0], pts[0][1]);
+    for (let i = 1; i <= k && i < n; i++) line.lineTo(pts[i][0], pts[i][1]);
+    let end = pts[Math.min(k, n - 1)];
+    if (k < n - 1) { end = [pts[k][0] + (pts[k + 1][0] - pts[k][0]) * f, pts[k][1] + (pts[k + 1][1] - pts[k][1]) * f]; line.lineTo(end[0], end[1]); }
+    const area = new Path2D(line); area.lineTo(end[0], h.arcY(end[0])); area.lineTo(pts[0][0], h.arcY(pts[0][0])); area.closePath();
+    const fill = ctx.createLinearGradient(0, g.horizon - hMax - 20, 0, g.horizon); fill.addColorStop(0, colors.glow2); fill.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = fill; ctx.fill(area);
+    ctx.strokeStyle = colors.arc; ctx.lineWidth = 2; ctx.lineJoin = 'round'; ctx.stroke(line);
+    ctx.fillStyle = colors.arc; ctx.globalAlpha = .5;
+    for (let i = 0; i <= Math.min(k, n - 1); i++) { ctx.beginPath(); ctx.arc(pts[i][0], pts[i][1], 2.2, 0, TAU); ctx.fill(); }
+    ctx.globalAlpha = 1; const dot = new Path2D(); dot.arc(end[0], end[1], 4.5 + (s.still ? 0 : s.breath), 0, TAU);
+    ctx.fillStyle = litGrad(ctx, end[1] - 5, end[1] + 5); ctx.fill(dot); ctx.stroke(dot);
+    return dot;
+  }
+
+  // Privacy: a closed horizon dome; what's inside bounces off the glass. Nothing leaves.
+  function scenePrivacy(ctx, h, s) {
+    const g = h.g, cx = g.narrow ? g.w * .74 : g.w * .74, R = g.narrow ? Math.min(70, g.horizon * .62) : Math.min(170, g.horizon * .72), base = h.arcY(cx) + 2;
+    const dome = new Path2D(); dome.arc(cx, base, R, Math.PI, TAU); dome.closePath();
+    const fill = ctx.createRadialGradient(cx, base, R * .2, cx, base, R); fill.addColorStop(0, colors.glow2); fill.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = fill; ctx.fill(dome);
+    ctx.strokeStyle = litGrad(ctx, base - R, base); ctx.lineWidth = 2.4; ctx.stroke(dome);
+    ctx.strokeStyle = colors.arc; ctx.globalAlpha = .25; ctx.lineWidth = 1;
+    for (const f of [.5, .78]) { ctx.beginPath(); ctx.ellipse(cx, base, R, R * f * .35, 0, Math.PI, TAU); ctx.stroke(); }
+    ctx.globalAlpha = 1;
+    const n = clamp(h.data.inside || 6, 3, 12);
+    for (let i = 0; i < n; i++) {
+      const r = rng(i * 17 + 9), a = Math.PI + Math.PI * (s.still ? (i + .5) / n : (.5 + .5 * Math.sin(s.el * (.25 + r() * .3) + r() * TAU)));
+      const rr = R * (.25 + .6 * (s.still ? r() : .5 + .5 * Math.sin(s.el * (.4 + r() * .3) + i)));
+      ctx.fillStyle = i === 0 ? colors.ok : colors.arc; ctx.globalAlpha = .75; ctx.beginPath(); ctx.arc(cx + Math.cos(a) * rr, base + Math.sin(a) * rr * .92 - 4, 2.6, 0, TAU); ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+    return dome;
+  }
+
+  // Chat: a soft orb on the horizon that breathes; faster while a reply streams.
+  function sceneChat(ctx, h, s) {
+    const g = h.g, cx = g.narrow ? g.w * .8 : g.w * .78, R = g.narrow ? 20 : 30;
+    if (!s.still) { const rate = h.busy ? 5.5 : 1.2; h.phase = (h.phase || 0) + (s.dt || 0) * rate; }
+    const b = s.still ? .5 : .5 + .5 * Math.sin(h.phase || 0), cy = h.arcY(cx) - R - 6;
+    const halo = ctx.createRadialGradient(cx, cy, R * .4, cx, cy, R * (3 + b * (h.busy ? 1.6 : .8)));
+    halo.addColorStop(0, colors.glow); halo.addColorStop(.5, colors.glow2); halo.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = halo; ctx.fillRect(cx - R * 5, cy - R * 5, R * 10, R * 10);
+    const orb = new Path2D(); orb.arc(cx, cy, R * (1 + .06 * b), 0, TAU);
+    const body = ctx.createRadialGradient(cx - R * .35, cy - R * .4, R * .1, cx, cy, R * 1.1);
+    body.addColorStop(0, colors.litA); body.addColorStop(.6, colors.litB); body.addColorStop(1, colors.litC);
+    ctx.fillStyle = body; ctx.fill(orb);
+    if (h.busy && !s.still) for (let i = 0; i < 3; i++) { const a = (h.phase || 0) * .6 + i * TAU / 3; ctx.fillStyle = colors.arc; ctx.globalAlpha = .7; ctx.beginPath(); ctx.arc(cx + Math.cos(a) * R * 1.6, cy + Math.sin(a) * R * .5, 2, 0, TAU); ctx.fill(); }
+    ctx.globalAlpha = 1;
+    return orb;
+  }
+
+  // Company pages: a quiet skyline of people, one bar per seat, initials on the ones in use.
+  function sceneSettings(ctx, h, s) {
+    const g = h.g, seats = h.bars.length ? h.bars : [{ lit: true }], n = seats.length, people = h.data.people || [];
+    const x0 = g.narrow ? g.w * .08 : g.w * .5, x1 = g.narrow ? g.w * .92 : g.w * .95, step = (x1 - x0) / n, r = Math.min(g.narrow ? 10 : 13, step * .36);
+    const lit = litGrad(ctx, g.horizon - 150, g.horizon), path = new Path2D(), hMax = g.narrow ? Math.min(40, g.h * .14) : Math.min(g.h * .3, 120);
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.font = `600 ${Math.round(r * .78)}px Geist, -apple-system, sans-serif`;
+    seats.forEach((st, i) => {
+      const x = x0 + step * (i + .5), base = h.arcY(x), rr = rng(i * 7 + 3), bh = (hMax * (.45 + rr() * .55)) * s.grow;
+      const bar = new Path2D(); roundTop(bar, x - r * .55, base - bh, r * 1.1, bh + 6, 3);
+      ctx.globalAlpha = st.lit ? .85 : .35; ctx.fillStyle = colors.bar; ctx.fill(bar);
+      const cy = base - bh - r - 3 + (s.still ? 0 : Math.sin(s.el * 1.1 + i) * 1.2), head = new Path2D(); head.arc(x, cy, r, 0, TAU);
+      if (st.lit) { ctx.globalAlpha = 1; ctx.fillStyle = lit; ctx.fill(head); path.addPath(head); if (people[i]) { ctx.fillStyle = colors.litC === '#2b2b2e' ? '#ffffff' : '#111113'; ctx.fillText(people[i], x, cy + .5); } }
+      else { ctx.globalAlpha = .6; ctx.setLineDash([2, 3]); ctx.strokeStyle = colors.arc; ctx.lineWidth = 1; ctx.stroke(head); ctx.setLineDash([]); }
+    });
+    ctx.globalAlpha = 1; ctx.textBaseline = 'alphabetic';
+    return path;
+  }
+
+  const SCENES = { home: sceneBars, report: sceneBars, welcome: sceneBars, help: sceneBars, inbox: sceneInbox, desk: sceneDesk, docs: sceneDocs,
+    knowledge: sceneKnowledge, meetings: sceneMeetings, growth: sceneGrowth, insights: sceneInsights, privacy: scenePrivacy, chat: sceneChat, settings: sceneSettings };
 
   class Hero {
-    constructor(canvas) {
-      this.c = canvas; this.ctx = canvas.getContext('2d', { alpha: false });
+    constructor(canvas, name) {
+      this.c = canvas; this.ctx = canvas.getContext('2d', { alpha: false }); this.name = name; this.draw = SCENES[name] || sceneBars;
       this.bars = [{ v: 24 }, { v: 38 }, { v: 54, lit: true }, { v: 36 }, { v: 22 }];
-      this.labels = null; this.grow = 1; this.growFrom = 1; this.growAt = 0;
-      this.visible = false; this.raf = 0; this.t0 = performance.now();
+      this.labels = null; this.data = {}; this.grow = 1; this.growFrom = 1; this.growAt = -1e9;
+      this.visible = false; this.raf = 0; this.t0 = performance.now(); this.last = 0;
+      this.px = .5; this.py = .5; this.tx = .5; this.ty = .5; this.hover = 0; this.hoverT = 0;
+      this.burstAt = -1e9; this.pulseAt = -1e9; this.busy = false;
       this.dust = Array.from({ length: 34 }, (_, i) => { const r = rng(i * 97 + 3); return { x: r(), y: r(), s: .6 + r() * 1.3, v: .15 + r() * .5, p: r() * 6.28 }; });
       this.io = new IntersectionObserver(es => { this.visible = es[0].isIntersecting; this.kick(); });
       this.io.observe(canvas);
       this.ro = new ResizeObserver(() => this.resize()); this.ro.observe(canvas);
+      // Pointer light + parallax: desktop pointers only, never under reduced motion.
+      const sec = canvas.parentElement;
+      sec.addEventListener('pointermove', e => {
+        if (!fine.matches || reduce.matches || e.pointerType !== 'mouse') return;
+        const r = canvas.getBoundingClientRect(); this.tx = clamp((e.clientX - r.left) / r.width); this.ty = clamp((e.clientY - r.top) / r.height); this.hoverT = 1; this.kick();
+      });
+      sec.addEventListener('pointerleave', () => { this.tx = .5; this.ty = .5; this.hoverT = 0; });
       this.resize();
     }
-    set(bars, labels) {
-      const key = JSON.stringify([bars, labels]);
+    set(bars, labels, data) {
+      const key = JSON.stringify([bars, labels, data]);
       if (key === this.key) return;
-      this.key = key; this.bars = bars.length ? bars : this.bars; this.labels = labels || null;
+      this.key = key; this.bars = bars && bars.length ? bars : this.bars; this.labels = labels || null; this.data = data || {};
       this.layout(); this.replay();
     }
-    replay() { this.growFrom = .55; this.grow = .55; this.growAt = performance.now(); if (reduce.matches) this.grow = 1; this.kick(); }
+    replay() { this.growFrom = .55; this.grow = .55; this.growAt = performance.now(); if (reduce.matches) { this.grow = 1; this.growAt = -1e9; } this.kick(); }
     resize() {
       const r = this.c.getBoundingClientRect();
       if (!r.width || !r.height) return;
       const dpr = Math.min(devicePixelRatio || 1, 2);
+      if (this.w === r.width && this.h === r.height && this.dpr === dpr) return;
       this.w = r.width; this.h = r.height; this.dpr = dpr;
       this.c.width = Math.round(r.width * dpr); this.c.height = Math.round(r.height * dpr);
-      this.paintStatic(); this.layout(); this.frame(performance.now(), true);
+      this.stars = null; this.layout(); this.frame(performance.now(), true);
     }
     geom() {
       const w = this.w, h = this.h, narrow = w < 720;
-      const horizon = h - (narrow ? 44 : 58);          // top of the arc
-      const R = Math.max(w * 1.5, 900);                 // a big, gentle circle
+      const horizon = h - (narrow ? 44 : 58);
+      const R = Math.max(w * 1.5, 900);
       return { w, h, narrow, horizon, R, cx: w / 2, cy: horizon + R };
     }
     arcY(x) { const g = this.g; return g.cy - Math.sqrt(Math.max(0, g.R * g.R - (x - g.cx) * (x - g.cx))); }
     layout() {
       if (!this.w) return;
       const g = this.g = this.geom();
-      const n = this.bars.length, max = Math.max(1e-6, ...this.bars.map(b => b.v));
+      const n = this.bars.length, max = Math.max(1e-6, ...this.bars.map(b => b.v || 0));
       const x0 = g.narrow ? g.w * .12 : g.w * .54, x1 = g.narrow ? g.w * .88 : g.w * .94;
       const span = x1 - x0, step = span / n, bw = Math.max(3, Math.min(26, step * .52));
       const hMax = g.narrow ? Math.min(56, g.h * .16) : Math.min(g.h * .34, 150);
       this.cols = this.bars.map((b, i) => {
         const x = x0 + step * i + step / 2;
-        return { x, w: bw, h: Math.max(4, b.v / max * hMax), base: this.arcY(x), lit: !!b.lit, label: this.labels ? this.labels[i] : null };
+        return { x, w: bw, h: Math.max(4, (b.v || 0) / max * hMax), base: this.arcY(x), lit: !!b.lit, label: this.labels ? this.labels[i] : null };
       });
       this.glowX = x0 + span / 2;
       this.paintStatic();
     }
+    /** Where an approved card lands (viewport coordinates). */
+    target() { const r = this.c.getBoundingClientRect(); return { x: r.left + (this.glowX || r.width * .7), y: r.top + (this.g ? this.g.horizon : r.height * .8) - 20 }; }
     paintStatic() {
       if (!this.w || !colors) return;
       const g = this.g || (this.g = this.geom());
@@ -1180,20 +1520,23 @@ window.ArkHero = (() => {
       const sky = x.createLinearGradient(0, 0, 0, g.horizon);
       sky.addColorStop(0, colors.skyTop); sky.addColorStop(1, colors.skyLow);
       x.fillStyle = sky; x.fillRect(0, 0, g.w, g.h);
-      // Light rising behind the horizon.
+      // Time of day: a tint low on the sky (dawn/dusk warm, night cool) plus a few stars at night.
+      if (tod !== 'day' && colors.todA) {
+        const t = x.createLinearGradient(0, 0, 0, g.horizon);
+        t.addColorStop(0, colors.todB || 'rgba(0,0,0,0)'); t.addColorStop(1, colors.todA);
+        x.fillStyle = t; x.fillRect(0, 0, g.w, g.horizon);
+        if (tod === 'night') { const r = rng(42); x.fillStyle = colors.arc; for (let i = 0; i < 46; i++) { x.globalAlpha = .15 + r() * .35; const sz = r() < .15 ? 1.6 : 1; x.fillRect(r() * g.w, r() * g.horizon * .7, sz, sz); } x.globalAlpha = 1; }
+      }
       const gx = this.glowX ?? g.w * .7;
       const glow = x.createRadialGradient(gx, g.horizon, 0, gx, g.horizon, Math.max(g.w * .55, 420));
       glow.addColorStop(0, colors.glow); glow.addColorStop(.45, colors.glow2); glow.addColorStop(1, 'rgba(0,0,0,0)');
       x.fillStyle = glow; x.fillRect(0, 0, g.w, g.h);
-      // Grain.
       x.globalAlpha = .9; x.fillStyle = x.createPattern(grainTile(), 'repeat'); x.fillRect(0, 0, g.w, g.h); x.globalAlpha = 1;
-      // Ground below the arc is the page itself: the stage rises out of the horizon.
       x.beginPath(); x.arc(g.cx, g.cy, g.R, 0, Math.PI * 2); x.fillStyle = colors.ground; x.fill();
-      this.glowLayer = null;
     }
     kick() {
       if (reduce.matches || document.hidden || !this.visible) { cancelAnimationFrame(this.raf); this.raf = 0; this.frame(performance.now(), true); return; }
-      if (!this.raf) this.raf = requestAnimationFrame(t => this.loop(t));
+      if (!this.raf) { this.last = 0; this.raf = requestAnimationFrame(t => this.loop(t)); }
     }
     loop(t) {
       this.raf = 0;
@@ -1202,82 +1545,104 @@ window.ArkHero = (() => {
       this.frame(t, false);
       const d = performance.now() - a;
       stats.frames++; stats.ms += d; stats.worst = Math.max(stats.worst, d);
+      const b = stats.by[this.name] || (stats.by[this.name] = { frames: 0, ms: 0, worst: 0 }); b.frames++; b.ms += d; b.worst = Math.max(b.worst, d);
       this.raf = requestAnimationFrame(tt => this.loop(tt));
     }
     frame(t, still) {
       if (!this.w || !this.stat || !this.cols) return;
-      const ctx = this.ctx, g = this.g, el = (t - this.t0) / 1000;
+      const ctx = this.ctx, g = this.g;
+      // A still frame is fully deterministic (reduced motion, hidden, off screen): fixed time, finished growth.
+      const el = still ? 0 : (t - this.t0) / 1000, dt = this.last ? Math.min(.1, (t - this.last) / 1000) : 0; this.last = t;
       ctx.setTransform(1, 0, 0, 1, 0, 0);
       ctx.drawImage(this.stat, 0, 0);
       ctx.setTransform(this.dpr, 0, 0, this.dpr, 0, 0);
-      // Grow towards the real numbers.
       if (this.grow < 1) { const k = Math.min(1, (t - this.growAt) / 1100); this.grow = this.growFrom + (1 - this.growFrom) * ease(k); }
-      const grow = still ? Math.max(this.grow, reduce.matches ? 1 : this.grow) : this.grow;
-      // Breathing glow on the horizon line.
+      const grow = still && (reduce.matches || this.grow >= 1) ? 1 : this.grow;
       const breath = still ? .8 : .65 + .35 * Math.sin(el * .9);
-      // Bars.
-      const lit = ctx.createLinearGradient(0, g.horizon - 200, 0, g.horizon);
-      lit.addColorStop(0, colors.litA); lit.addColorStop(.5, colors.litB); lit.addColorStop(1, colors.litC);
-      const path = new Path2D();
-      let tallest = null;
-      for (const c of this.cols) {
-        const h = c.h * grow, x = c.x - c.w / 2, y = c.base - h;
-        const p = new Path2D(); roundTop(p, x, y, c.w, h + 6, Math.min(3, c.w / 2));
-        ctx.fillStyle = c.lit ? lit : colors.bar; ctx.globalAlpha = c.lit ? 1 : .8; ctx.fill(p);
-        path.addPath(p);
-        if (!tallest || h > tallest.h) tallest = { x: c.x, y, h };
+      // Pointer light and parallax ease towards the pointer.
+      if (!still) { this.px += (this.tx - this.px) * .08; this.py += (this.ty - this.py) * .08; this.hover += (this.hoverT - this.hover) * .06; }
+      const ox = still ? 0 : (this.px - .5) * -10 * this.hover;
+      if (this.hover > .01 && !still) {
+        const lx = this.px * g.w, ly = this.py * g.h, pl = ctx.createRadialGradient(lx, ly, 0, lx, ly, 260);
+        pl.addColorStop(0, colors.glow); pl.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.globalAlpha = .35 * this.hover; ctx.fillStyle = pl; ctx.fillRect(lx - 260, Math.max(0, ly - 260), 520, Math.min(g.horizon, ly + 260) - Math.max(0, ly - 260)); ctx.globalAlpha = 1;
       }
-      ctx.globalAlpha = 1;
-      // Antenna on the tallest bar (from the mark).
-      if (tallest) { ctx.strokeStyle = colors.arc; ctx.lineWidth = 1.2; ctx.globalAlpha = .55; ctx.beginPath(); ctx.moveTo(tallest.x, tallest.y - 3); ctx.lineTo(tallest.x, tallest.y - 18); ctx.stroke();
-        ctx.beginPath(); ctx.arc(tallest.x, tallest.y - 20, 1.8, 0, 6.29); ctx.fillStyle = colors.arc; ctx.globalAlpha = .4 + .5 * breath; ctx.fill(); ctx.globalAlpha = 1; }
+      ctx.save(); ctx.translate(ox, 0);
+      const s = { t: still ? this.growAt + 1e6 : t, el, dt, still, grow, breath };
+      const path = this.draw(ctx, this, s) || new Path2D();
+      ctx.restore();
       // The horizon arc.
       const arc = new Path2D(); arc.arc(g.cx, g.cy, g.R, Math.PI * 1.05, Math.PI * 1.95);
       ctx.strokeStyle = colors.arc; ctx.lineWidth = 1.6; ctx.globalAlpha = .7; ctx.stroke(arc); ctx.globalAlpha = 1;
-      // Chrome sheen: a soft band sweeping across arc + bars every 9 s.
+      // Chrome sheen: a soft band sweeping across the arc and the scene every 9 s.
       const cyc = 9, ph = still ? .62 : (el % cyc) / cyc;
       if (ph < .75) {
         const sx = -200 + (g.w + 400) * (ph / .75);
         const band = ctx.createLinearGradient(sx - 120, 0, sx + 120, 0);
         band.addColorStop(0, 'rgba(255,255,255,0)'); band.addColorStop(.5, 'rgba(255,255,255,.75)'); band.addColorStop(1, 'rgba(255,255,255,0)');
         ctx.save(); ctx.lineWidth = 3.2; ctx.strokeStyle = band; ctx.stroke(arc);
-        ctx.clip(path); ctx.fillStyle = band; ctx.globalAlpha = .6; ctx.fillRect(sx - 120, 0, 240, g.h); ctx.restore();
+        ctx.translate(ox, 0); ctx.clip(path); ctx.fillStyle = band; ctx.globalAlpha = .6; ctx.fillRect(sx - 120 - ox, 0, 240, g.h); ctx.restore();
       }
       // Drifting dust rising out of the light.
       ctx.fillStyle = colors.dust;
       for (const d of this.dust) {
-        const y = (d.y - (still ? 0 : el * d.v * .03)) % 1, yy = (y < 0 ? y + 1 : y);
-        const px = (d.x * g.w + Math.sin(el * .3 + d.p) * 8), py = yy * g.horizon;
+        const y = (d.y - el * d.v * .03) % 1, yy = (y < 0 ? y + 1 : y);
+        const px = (d.x * g.w + Math.sin(el * .3 + d.p) * 8) + ox * .4, py = yy * g.horizon;
         ctx.globalAlpha = Math.min(1, yy * 1.4) * .7; ctx.fillRect(px, py, d.s, d.s);
       }
       ctx.globalAlpha = 1;
-      // Day labels under the bars (desktop only).
-      if (!g.narrow && this.cols[0].label) {
+      if (!g.narrow && this.draw === sceneBars && this.cols[0] && this.cols[0].label) {
         ctx.fillStyle = colors.fg3; ctx.font = '500 11px Geist, -apple-system, sans-serif'; ctx.textAlign = 'center';
-        for (const c of this.cols) ctx.fillText(c.label, c.x, c.base + 22);
+        for (const c of this.cols) ctx.fillText(c.label, c.x + ox, c.base + 22);
+      }
+      // Arrival pulse (an approved card landing) and the all-clear burst.
+      if (!still) {
+        const tg = { x: this.glowX || g.w * .7, y: g.horizon - 20 };
+        const kp = (t - this.pulseAt) / 700;
+        if (kp >= 0 && kp < 1) { ctx.strokeStyle = colors.arc; ctx.lineWidth = 2; ctx.globalAlpha = 1 - kp; ctx.beginPath(); ctx.ellipse(tg.x, tg.y + 20, 20 + 90 * ease(kp), 6 + 22 * ease(kp), 0, 0, TAU); ctx.stroke(); ctx.globalAlpha = 1; }
+        const kb = (t - this.burstAt) / 1500;
+        if (kb >= 0 && kb < 1) {
+          const e = ease(kb), R = 30 + Math.max(g.w, 600) * .6 * e;
+          const burst = ctx.createRadialGradient(tg.x, g.horizon, R * .6, tg.x, g.horizon, R);
+          burst.addColorStop(0, 'rgba(255,255,255,0)'); burst.addColorStop(.85, colors.glow); burst.addColorStop(1, 'rgba(255,255,255,0)');
+          ctx.globalAlpha = (1 - kb) * .9; ctx.fillStyle = burst; ctx.fillRect(0, 0, g.w, g.horizon + 4);
+          ctx.strokeStyle = colors.litB; ctx.lineWidth = 1.4;
+          for (let i = 0; i < 14; i++) { const a = Math.PI + Math.PI * (i + .5) / 14, r0 = 40 + 140 * e, r1 = r0 + 40 + 80 * (1 - kb);
+            ctx.beginPath(); ctx.moveTo(tg.x + Math.cos(a) * r0, g.horizon + Math.sin(a) * r0 * .7); ctx.lineTo(tg.x + Math.cos(a) * r1, g.horizon + Math.sin(a) * r1 * .7); ctx.stroke(); }
+          ctx.globalAlpha = 1;
+        }
       }
     }
   }
-  function roundTop(p, x, y, w, h, r) { p.moveTo(x, y + h); p.lineTo(x, y + r); p.quadraticCurveTo(x, y, x + r, y); p.lineTo(x + w - r, y); p.quadraticCurveTo(x + w, y, x + w, y + r); p.lineTo(x + w, y + h); p.closePath(); }
 
-  function retheme() { readColors(); heroes.forEach(h => { h.paintStatic(); h.frame(performance.now(), true); }); }
+  function retheme() { readColors(); heroes.forEach(h => { h.paintStatic(); h.frame(performance.now(), true); h.kick(); }); }
   matchMedia('(prefers-color-scheme: dark)').addEventListener('change', retheme);
-  new MutationObserver(retheme).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+  new MutationObserver(retheme).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme', 'data-tod'] });
   document.addEventListener('visibilitychange', () => heroes.forEach(h => h.kick()));
   reduce.addEventListener('change', () => heroes.forEach(h => { h.grow = 1; h.kick(); }));
+  const get = name => { const el = document.querySelector(`[data-hero="${name}"] > canvas.hz`); return el && heroes.get(el); };
 
   return {
-    /** Set a hero's skyline: bars = [{v, lit}], labels = optional text under each bar. */
-    set(name, bars, labels) {
+    /** Set a hero's scene data: bars = [{v, lit}], labels = optional text under each bar, data = scene extras. */
+    set(name, bars, labels, data) {
       const el = document.querySelector(`[data-hero="${name}"] > canvas.hz`);
       if (!el) return;
       if (!colors) readColors();
-      let h = heroes.get(el); if (!h) { h = new Hero(el); heroes.set(el, h); }
-      h.set(bars, labels);
+      let h = heroes.get(el); if (!h) { h = new Hero(el, name); heroes.set(el, h); }
+      h.set(bars, labels, data);
     },
-    replay(name) { const el = document.querySelector(`[data-hero="${name}"] > canvas.hz`); const h = el && heroes.get(el); if (h) { h.resize(); h.replay(); } },
-    stats() { return { frames: stats.frames, avg_ms: stats.frames ? stats.ms / stats.frames : 0, worst_ms: stats.worst }; },
-    resetStats() { stats.frames = 0; stats.ms = 0; stats.worst = 0; },
+    replay(name) { const h = get(name); if (h) { h.resize(); h.replay(); } },
+    /** Time of day: 'dawn' | 'day' | 'dusk' | 'night' (sets data-tod; colors come from CSS tokens). */
+    setTimeOfDay(t) { tod = t; document.documentElement.dataset.tod = t; },
+    target(name) { const h = get(name); return h ? h.target() : null; },
+    pulse(name) { const h = get(name); if (h && !reduce.matches) { h.pulseAt = performance.now(); h.kick(); } },
+    burst(name) { const h = get(name); if (h && !reduce.matches) { h.burstAt = performance.now(); h.kick(); } },
+    setBusy(name, b) { const h = get(name); if (h) { h.busy = !!b; h.kick(); } },
+    stats() {
+      const by = {}; for (const k in stats.by) { const b = stats.by[k]; by[k] = { frames: b.frames, avg_ms: b.frames ? b.ms / b.frames : 0, worst_ms: b.worst }; }
+      return { frames: stats.frames, avg_ms: stats.frames ? stats.ms / stats.frames : 0, worst_ms: stats.worst, by };
+    },
+    resetStats() { stats.frames = 0; stats.ms = 0; stats.worst = 0; stats.by = {}; },
     reducedMotion: () => reduce.matches,
   };
 })();
@@ -1341,11 +1706,15 @@ window.ArkHero = (() => {
   const openable = it => V && ((V.inbox && V.inbox.threads.some(t => t.item && t.item.id === it.id)) || (V.docs && V.docs.documents.some(d => d.item && d.item.id === it.id)) || (V.desk && V.desk.tickets.some(t => t.item && t.item.id === it.id)));
   function renderHome() {
     const n = V.needs_you, w = V.this_week;
-    if (V.viewer) $('hello').textContent = `Good morning, ${V.viewer.name.split(' ')[0]}.`;
     $('lede').textContent = n.total
       ? `${NUM[n.total] || n.total + ' things'} need${n.total === 1 ? 's' : ''} you today. Everything else is handled.`
       : 'Nothing needs you today. Everything else is handled.';
-    $('left').textContent = n.total ? n.total + ' left' : "You're all caught up";
+    if (!n.total) $('left').textContent = "You're all caught up";
+    else {
+      if (!$('left-n')) $('left').innerHTML = `<span id="left-n" data-n="${n.total}">${n.total}</span> left`;
+      if (!holdLeft) countUp($('left-n'), n.total); // during a fly-in the count changes when the card lands
+    }
+    $('needs').removeAttribute('aria-busy');
     $('needs').innerHTML = n.items.map(it => {
       const why = it.sources.length ? `<div class="why">Based on ${esc(it.sources.map(x => x.label).join(', '))}</div>` : '';
       const blocked = it.blocked ? `<div class="blocked">${esc(it.blocked)}</div>` : '';
@@ -1364,11 +1733,10 @@ window.ArkHero = (() => {
         <div class="acts">${look}${primary}<button class="link" type="button" data-dismiss="${it.id}" style="font-size:15px">Dismiss</button></div>
       </article>`;
     }).join('') || '<article class="card task" style="grid-template-columns:1fr"><p>Nothing is waiting for you. Arkhon will put new work here for you to check.</p></article>';
-    $('wk-hours').innerHTML = `${w.hours}<small> hours</small>`;
+    if (!$('wk-h-n')) $('wk-hours').innerHTML = `<span id="wk-h-n">0</span><small> hours</small>`;
+    countUp($('wk-h-n'), w.hours);
+    countUp($('wk-drafts'), w.totals.drafts); countUp($('wk-docs'), w.totals.documents); countUp($('wk-meetings'), w.totals.meetings);
     $('wk-line').innerHTML = `given back to ${w.scope === 'company' ? 'your team' : 'you'}. That's about <b style="color:var(--fg)">$${w.dollars.toLocaleString('en-US')}</b> of time.`;
-    $('wk-drafts').textContent = w.totals.drafts;
-    $('wk-docs').textContent = w.totals.documents;
-    $('wk-meetings').textContent = w.totals.meetings;
     drawSky(w.days);
   }
   document.getElementById('needs').addEventListener('click', async e => {
@@ -1383,7 +1751,8 @@ window.ArkHero = (() => {
       const it = V.needs_you.items.find(x => x.id === id);
       const text = d ? d.querySelector('textarea').value : null;
       const edited = it && it.draft != null && text != null && text.trim() !== it.draft.trim();
-      return run(edited ? { command: 'edit-and-approve', item: id, text } : { command: 'approve', item: id }, msg);
+      const card = ap.closest('.task'), from = card ? { rect: card.getBoundingClientRect(), label: it ? it.title : '' } : null;
+      return run(edited ? { command: 'edit-and-approve', item: id, text } : { command: 'approve', item: id }, msg, from);
     }
     const dis = e.target.closest('[data-dismiss]');
     if (dis) return run({ command: 'dismiss', item: +dis.dataset.dismiss }, msg);
@@ -1430,15 +1799,20 @@ window.ArkHero = (() => {
     }
     render();
   }
-  async function run(cmd, msgEl) {
+  let holdLeft = false;
+  async function run(cmd, msgEl, from) {
     activeMsg = msgEl;
     if (!live) return say('This is a preview. Run the Arkhon dev server on your computer to make changes.', false);
     try {
+      const before = V.needs_you.total;
       const r = await fetch('/api/command', { method: 'POST', headers: headers({ 'content-type': 'application/json' }), body: JSON.stringify(cmd) });
       const body = await r.json();
       if (!r.ok) { say(body.error || 'That didn’t work. Try again.', false); await load(); return false; }
-      V = body.view; render(); say(body.message, true); return true;
-    } catch (_) { say('Arkhon isn’t responding. Check that it’s running and try again.', false); return false; }
+      holdLeft = !!from && !reduceMotion();
+      V = body.view; render(); say(body.message, true);
+      holdLeft = false; afterCommand(before, cmd, from);
+      return true;
+    } catch (_) { holdLeft = false; say('Arkhon isn’t responding. Check that it’s running and try again.', false); return false; }
   }
 
   async function renderViewAs() {
@@ -2046,7 +2420,7 @@ window.ArkHero = (() => {
     const nav = V ? V.nav : [];
     const ws = nav.map(l => `<a class="ws" href="#${l.key}" data-dock="${l.key}">${svg(l.key)}<span class="lbl">${esc(l.label)}</span></a>`).join('');
     const me = V && V.viewer ? V.viewer : null;
-    $('dock').innerHTML = `<a class="home" href="#home" data-dock="home" aria-label="Home">${svg('home')}<span class="lbl">Home</span></a>
+    $('dock').innerHTML = `<span class="dock-ind" aria-hidden="true"></span><a class="home" href="#home" data-dock="home" aria-label="Home">${svg('home')}<span class="lbl">Home</span></a>
       ${ws}<button class="more" type="button" data-palette="pages" aria-label="Workspaces">${svg('more')}<span class="lbl">Workspaces</span></button>
       <span class="sep" aria-hidden="true"></span>
       <a href="#chat" data-dock="chat">${svg('chat')}<span class="lbl">Chat</span></a>
@@ -2058,19 +2432,51 @@ window.ArkHero = (() => {
     $('dock').querySelectorAll('a').forEach(a => a.setAttribute('aria-label', a.querySelector('.lbl').textContent));
     markDock();
   }
-  function markDock() {
-    const h = (location.hash || '#home').slice(1), top = topOf(h);
-    $('dock').querySelectorAll('[data-dock]').forEach(a => { if (a.dataset.dock === top) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
+  /* The active indicator glides between items (it is one element that moves). */
+  function placeInd(instant) {
+    const ind = $('dock').querySelector('.dock-ind'), cur = $('dock').querySelector('[aria-current="page"]');
+    if (!ind) return;
+    if (!cur || !cur.offsetWidth) { ind.style.opacity = 0; return; }
+    if (instant || reduceMotion()) { ind.style.transition = 'none'; requestAnimationFrame(() => { ind.style.transition = ''; }); }
+    ind.style.opacity = 1; ind.style.width = cur.offsetWidth + 'px'; ind.style.height = cur.offsetHeight + 'px'; ind.style.top = cur.offsetTop + 'px';
+    ind.style.transform = `translateX(${cur.offsetLeft}px)` + (cur.dataset.mag ? ` scale(${cur.dataset.mag})` : '');
+    ind.style.transformOrigin = '50% 100%';
   }
+  function markDock() {
+    const h = (location.hash || '#home').slice(1), top = topOf(h), ind = $('dock').querySelector('.dock-ind');
+    $('dock').querySelectorAll('[data-dock]').forEach(a => { if (a.dataset.dock === top) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
+    placeInd(!ind || ind.style.opacity === '' || ind.style.opacity === '0');
+  }
+  addEventListener('resize', () => placeInd(true));
   $('dock').addEventListener('click', e => {
     const p = e.target.closest('[data-palette]'); if (p) { openPalette(p.dataset.palette === 'pages' ? 'pages' : ''); return; }
     const g = e.target.closest('[data-go]'); if (g) { location.hash = '#' + g.dataset.go; return; }
     const a = e.target.closest('a[data-dock]'); if (a) titleFrom = a;
   });
+  /* Magnification (desktop pointers, not under reduced motion): items near the pointer grow. */
+  const fineHover = matchMedia('(hover: hover) and (pointer: fine)');
+  $('dock').addEventListener('pointermove', e => {
+    if (e.pointerType !== 'mouse' || !fineHover.matches || reduceMotion()) return;
+    const dock = $('dock'); dock.classList.add('mag');
+    dock.querySelectorAll('a, button').forEach(it => {
+      if (!it.offsetWidth) return;
+      const r = it.getBoundingClientRect(), d = Math.abs(e.clientX - (r.left + r.width / 2)), s = 1 + .2 * Math.max(0, 1 - d / 120);
+      it.dataset.mag = s.toFixed(3); it.style.transform = s > 1.001 ? `translateY(${(-(s - 1) * 18).toFixed(1)}px) scale(${s.toFixed(3)})` : '';
+    });
+    placeInd(true);
+  });
+  $('dock').addEventListener('pointerleave', () => {
+    const dock = $('dock'); dock.querySelectorAll('a, button').forEach(it => { it.style.transform = ''; delete it.dataset.mag; });
+    placeInd(); setTimeout(() => dock.classList.remove('mag'), 160);
+  });
 
-  /* ---------- Command palette (⌘K / Ctrl+K) ---------- */
+  /* ---------- Command palette (⌘K / Ctrl+K): fuzzy search, recent items, groups ---------- */
   const pal = $('pal'), palQ = $('pal-q'), palList = $('pal-list');
   let palItems = [], palSel = 0, palReturn = null;
+  const REC_KEY = 'arkhon-recent';
+  let recent = [];
+  try { recent = JSON.parse(localStorage.getItem(REC_KEY) || '[]'); if (!Array.isArray(recent)) recent = []; } catch (_) { recent = []; }
+  function remember(e) { recent = [e.group + '|' + e.label, ...recent.filter(k => k !== e.group + '|' + e.label)].slice(0, 5); try { localStorage.setItem(REC_KEY, JSON.stringify(recent)); } catch (_) {} }
   function paletteEntries() {
     const out = [];
     const page = (k, hint) => out.push({ group: 'Pages', icon: k, label: TITLES[k], hint, run: () => { location.hash = '#' + k; } });
@@ -2080,33 +2486,50 @@ window.ArkHero = (() => {
     page('privacy', 'What stayed on this computer'); page('welcome', 'Step by step'); page('help', 'Questions');
     ['people', 'roles', 'teams', 'connections'].forEach(t => out.push({ group: 'Pages', icon: t === 'people' ? 'people' : 'company', label: 'Company · ' + TITLES[t], hint: 'Settings', run: () => { location.hash = '#' + t; } }));
     if (V && V.can.view_activity) out.push({ group: 'Pages', icon: 'company', label: 'Company · Activity', hint: 'Settings', run: () => { location.hash = '#activity'; } });
+    (V ? V.people : []).forEach(p => out.push({ group: 'People', icon: 'people', label: p.name, hint: `${p.role} · ${p.email}`, run: () => { location.hash = '#people'; } }));
     out.push({ group: 'Actions', icon: 'plus', label: 'New chat', hint: 'Chat', run: () => { chatNew(); location.hash = '#chat'; setTimeout(() => $('chat-in').focus(), 50); } });
     const next = V && V.needs_you.items.find(i => i.can_approve && i.kind !== 'knowledge-gap');
     if (next) out.push({ group: 'Actions', icon: 'check', label: 'Approve next item', hint: next.title, run: () => { location.hash = '#home'; run({ command: 'approve', item: next.id }, $('home-msg')); } });
     out.push({ group: 'Actions', icon: 'knowledge', label: 'Ask the company a question', hint: 'Company answers', run: () => { location.hash = '#knowledge'; setTimeout(() => { const q = $('k-q'); if (q) q.focus(); }, 80); } });
     if (V && V.can.manage_people) out.push({ group: 'Actions', icon: 'people', label: 'Invite someone', hint: 'People', run: () => { location.hash = '#people'; setTimeout(() => $('inv-email').focus(), 80); } });
     out.push({ group: 'Actions', icon: 'theme', label: 'Switch light / dark', hint: 'Appearance', run: toggleTheme });
-    (V ? V.people : []).forEach(p => out.push({ group: 'People', icon: 'people', label: p.name, hint: `${p.role} · ${p.email}`, run: () => { location.hash = '#people'; } }));
     return out;
   }
+  /* Fuzzy match: every query letter in order; consecutive letters and word starts score higher. */
+  function fuzzy(q, text) {
+    const t = text.toLowerCase(); let qi = 0, score = 0, run = 0; const idx = [];
+    for (let i = 0; i < t.length && qi < q.length; i++) {
+      if (t[i] === q[qi]) { idx.push(i); run++; score += 1 + run * 2 + (i === 0 || /[\s·&/-]/.test(t[i - 1]) ? 6 : 0); qi++; } else run = 0;
+    }
+    return qi === q.length ? { score: score - t.length * .02, idx } : null;
+  }
+  function hl(text, idx) { if (!idx || !idx.length) return esc(text); const set = new Set(idx); return [...text].map((c, i) => set.has(i) ? `<mark>${esc(c)}</mark>` : esc(c)).join(''); }
   function openPalette(mode) {
     palReturn = document.activeElement;
     pal.hidden = false; palQ.value = ''; palQ.dataset.mode = mode || ''; palSel = 0; paintPalette(); palQ.focus();
   }
   function closePalette() { pal.hidden = true; if (palReturn && palReturn.focus) palReturn.focus(); }
+  const GROUPS = ['Recent', 'Pages', 'People', 'Actions'];
   function paintPalette() {
-    const q = palQ.value.trim().toLowerCase(), mode = palQ.dataset.mode;
-    palItems = paletteEntries().filter(e => (mode !== 'pages' || e.group === 'Pages') && (!q || (e.label + ' ' + e.hint + ' ' + e.group).toLowerCase().includes(q)));
+    const q = palQ.value.trim().toLowerCase().replace(/\s+/g, ' '), mode = palQ.dataset.mode;
+    const all = paletteEntries().filter(e => mode !== 'pages' || e.group === 'Pages');
+    if (!q) {
+      const rec = mode === 'pages' ? [] : recent.map(k => all.find(e => e.group + '|' + e.label === k)).filter(Boolean).map(e => Object.assign({}, e, { group: 'Recent', src: e }));
+      palItems = [...rec, ...all.filter(e => e.group !== 'People' || mode === 'pages')];
+    } else {
+      palItems = all.map(e => { const m = fuzzy(q, e.label), h = m ? null : fuzzy(q, e.hint || ''); return m ? Object.assign({ m: m.idx, s: m.score + 5 }, e) : h ? Object.assign({ s: h.score - 4 }, e) : null; })
+        .filter(Boolean).sort((a, b) => GROUPS.indexOf(a.group) - GROUPS.indexOf(b.group) || b.s - a.s);
+    }
     if (palSel >= palItems.length) palSel = Math.max(0, palItems.length - 1);
     let last = '';
     palList.innerHTML = palItems.map((e, i) => {
       const head = e.group !== last ? `<li class="pal-group" role="presentation">${esc(e.group)}</li>` : ''; last = e.group;
-      return `${head}<li class="pal-item" role="option" id="pal-${i}" data-i="${i}" aria-selected="${i === palSel}">${svg(e.icon)}<span>${esc(e.label)}</span><small>${esc(e.hint || '')}</small></li>`;
+      return `${head}<li class="pal-item" role="option" id="pal-${i}" data-i="${i}" aria-selected="${i === palSel}">${svg(e.icon)}<span class="lbl-p">${hl(e.label, e.m)}</span><small>${esc(e.hint || '')}</small></li>`;
     }).join('') || '<li class="pal-empty">Nothing matches. Try another word.</li>';
     palQ.setAttribute('aria-activedescendant', palItems.length ? 'pal-' + palSel : '');
     const cur = $('pal-' + palSel); if (cur) cur.scrollIntoView({ block: 'nearest' });
   }
-  function choosePalette(i) { const e = palItems[i]; if (!e) return; pal.hidden = true; e.run(); }
+  function choosePalette(i) { const e = palItems[i]; if (!e) return; pal.hidden = true; remember(e.src || e); e.run(); }
   palQ.addEventListener('input', () => { palSel = 0; paintPalette(); });
   palQ.addEventListener('keydown', e => {
     if (e.key === 'ArrowDown') { e.preventDefault(); palSel = Math.min(palItems.length - 1, palSel + 1); paintPalette(); }
@@ -2131,38 +2554,111 @@ window.ArkHero = (() => {
   /* ---------- Heroes: skylines from the page's real numbers ---------- */
   const MARK = [{ v: 24 }, { v: 38 }, { v: 54, lit: true }, { v: 36 }, { v: 22 }];
   const isDone = it => it && (it.status === 'approved' || it.status === 'edited');
-  function heroStat(id, html) { const el = $(id); if (!el) return; el.hidden = !html; el.innerHTML = html || ''; }
+  /* Numbers count up the first time they're shown (and from the old value when they change). */
+  function countUp(el, to, fmt) {
+    if (!el) return;
+    const f = fmt || (v => String(v)), dec = String(to).includes('.') ? 1 : 0;
+    const from = el.dataset.n != null ? +el.dataset.n : 0;
+    el.dataset.n = to;
+    if (reduceMotion() || from === +to) { el.textContent = f(to); return; }
+    const t0 = performance.now(), dur = 900;
+    const step = t => { const k = Math.min(1, Math.max(0, (t - t0) / dur)), e = 1 - Math.pow(1 - k, 3), v = from + (to - from) * e;
+      if (+el.dataset.n !== +to) return;
+      el.textContent = f(k < 1 ? (dec ? v.toFixed(dec) : Math.round(v)) : to); if (k < 1) requestAnimationFrame(step); };
+    requestAnimationFrame(step);
+  }
+  function heroStat(id, html, n) {
+    const el = $(id); if (!el) return; el.hidden = !html;
+    if (el.dataset.html === (html || '')) return;
+    const old = el.querySelector('b'), was = old && old.dataset.n != null ? old.dataset.n : 0;
+    el.dataset.html = html || ''; el.innerHTML = html || '';
+    const b = el.querySelector('b'); if (b && n != null) { b.dataset.n = was; countUp(b, n); }
+  }
+  /* Time of day: the local clock, except for the example company (a fixed demo time) or ?t=HH:MM,
+     so screenshots and tests are stable. */
+  function clockHour() {
+    const m = /[?&]t=(\d{1,2})(?::(\d{2}))?/.exec(location.search);
+    if (m) return Math.min(23, +m[1]) + (+(m[2] || 0)) / 60;
+    if (V && V.example) return 9.5;
+    const d = new Date(); return d.getHours() + d.getMinutes() / 60;
+  }
+  const todOf = h => h >= 5 && h < 8 ? 'dawn' : h >= 8 && h < 17 ? 'day' : h >= 17 && h < 20.5 ? 'dusk' : 'night';
+  const greetingOf = h => h >= 4 && h < 12 ? 'Good morning' : h >= 12 && h < 17 ? 'Good afternoon' : 'Good evening';
   function paintHeroes() {
     if (!V || !window.ArkHero) return;
-    const H = window.ArkHero, w = V.this_week;
+    const H = window.ArkHero, w = V.this_week, hr = clockHour();
+    H.setTimeOfDay(todOf(hr));
+    if (V.viewer) $('hello').textContent = `${greetingOf(hr)}, ${V.viewer.name.split(' ')[0]}.`;
     const days = w.days.slice(-7);
     H.set('home', days.map(d => ({ v: d.hours, lit: d.hours === Math.max(...days.map(x => x.hours)) })), days.map(d => d.label));
-    heroStat('home-stat', `<b>${w.hours}</b> hours given back this week`);
+    heroStat('home-stat', `<b>${w.hours}</b> hours given back this week`, w.hours);
     if (V.inbox) {
       const th = V.inbox.threads;
-      H.set('inbox', th.length ? th.map(t => ({ v: t.item && t.item.status === 'waiting' ? 2 : 1, lit: !!(t.item && t.item.status === 'waiting') })) : MARK);
-      heroStat('inbox-stat', `<b>${V.inbox.waiting}</b> ${V.inbox.waiting === 1 ? 'reply' : 'replies'} waiting for you`);
+      H.set('inbox', [], null, { count: V.inbox.waiting, total: th.length });
+      heroStat('inbox-stat', `<b>${V.inbox.waiting}</b> ${V.inbox.waiting === 1 ? 'reply' : 'replies'} waiting for you`, V.inbox.waiting);
     }
     if (V.docs) {
-      const ds = V.docs.documents;
-      H.set('docs', ds.length ? ds.map(d => ({ v: isDone(d.item) ? 2 : 1.3, lit: isDone(d.item) })) : MARK);
-      heroStat('docs-stat', `<b>${w.totals.documents}</b> documents filed this week`);
+      const ds = V.docs.documents, first = ds.find(d => d.item && d.item.status === 'waiting') || ds[0];
+      H.set('docs', [], null, { fields: first ? first.fields.length : 5 });
+      heroStat('docs-stat', `<b>${w.totals.documents}</b> documents filed this week`, w.totals.documents);
     }
-    if (V.desk) { const t = V.desk.tickets; H.set('desk', t.length ? t.map(x => ({ v: x.item && x.item.status === 'waiting' ? 2 : 1.2, lit: !!(x.item && x.item.status === 'waiting') })) : MARK); heroStat('desk-stat', `<b>${t.length}</b> customer ${t.length === 1 ? 'question' : 'questions'}`); }
-    if (V.meetings) { const m = V.meetings.meetings; H.set('meetings', m.length ? m.map((_, i) => ({ v: 1 + (i % 3) * .35, lit: i === 0 })) : MARK); heroStat('meetings-stat', `<b>${w.totals.meetings}</b> meetings written up this week`); }
-    if (V.knowledge) { heroStat('knowledge-stat', `<b>${w.totals.answers}</b> questions answered this week`); }
-    ['knowledge', 'growth', 'insights', 'privacy', 'welcome', 'help', 'chat'].forEach(k => H.set(k, MARK));
-    H.set('settings', Array.from({ length: V.seats }, (_, i) => ({ v: 1, lit: i < V.seats_used })));
-    heroStat('settings-stat', `<b>${V.seats_used}</b> of ${V.seats} seats in use`);
+    if (V.desk) { const t = V.desk.tickets; H.set('desk', t.map(x => ({ v: 1, lit: !!(x.item && x.item.status === 'waiting') }))); heroStat('desk-stat', `<b>${t.length}</b> customer ${t.length === 1 ? 'question' : 'questions'}`, t.length); }
+    if (V.meetings) { const m = V.meetings.meetings; H.set('meetings', [], null, { minutes: m.map(x => x.minutes) }); heroStat('meetings-stat', `<b>${w.totals.meetings}</b> meetings written up this week`, w.totals.meetings); }
+    if (V.knowledge) {
+      const cnt = {}; V.knowledge.answers.forEach(a => (a.sources || []).forEach(s => { cnt[s.label] = (cnt[s.label] || 0) + 1; }));
+      H.set('knowledge', [], null, { sources: Object.keys(cnt).map(k => ({ n: cnt[k] })) });
+      heroStat('knowledge-stat', `<b>${w.totals.answers}</b> questions answered this week`, w.totals.answers);
+    }
+    const qv = V.growth ? V.growth.quotes.flatMap(q => q.lines.map(l => ({ v: l.total_cents / 100 }))) : [];
+    H.set('growth', qv.length ? qv : MARK);
+    const ins = V.insights ? V.insights.insights : [], pick = ins.find(i => i.unit === 'count') || ins[0];
+    H.set('insights', [], null, { series: pick ? pick.bars.map(b => b.value) : [] });
+    H.set('privacy', [], null, { inside: V.privacy ? V.privacy.network.length : (V.connections || []).length });
+    ['welcome', 'help', 'chat'].forEach(k => H.set(k, MARK));
+    const used = V.people.filter(p => p.status !== 'suspended');
+    H.set('settings', Array.from({ length: V.seats }, (_, i) => ({ v: 1, lit: i < V.seats_used })), null, { people: used.slice(0, V.seats_used).map(p => initials(p.name)) });
+    heroStat('settings-stat', `<b>${V.seats_used}</b> of ${V.seats} seats in use`, V.seats_used);
     if (REP && REP.days) {
       const weeks = []; REP.days.forEach((d, i) => { const k = Math.floor(i / 7); weeks[k] = (weeks[k] || 0) + d.hours; });
       const top = Math.max(...weeks);
       H.set('report', weeks.map(v => ({ v: Math.max(v, .05), lit: v === top && v > 0 })), weeks.map((_, i) => 'Week ' + (i + 1)));
-      heroStat('report-stat', `<b>${REP.totals.hours}</b> hours given back in ${esc(monthName(REP.month))}`);
+      heroStat('report-stat', `<b>${REP.totals.hours}</b> hours given back in ${esc(monthName(REP.month))}`, REP.totals.hours);
     } else {
       H.set('report', days.map(d => ({ v: d.hours, lit: false })), days.map(d => d.label));
-      heroStat('report-stat', `<b>${w.hours}</b> hours given back this week`);
+      heroStat('report-stat', `<b>${w.hours}</b> hours given back this week`, w.hours);
     }
+  }
+
+  /* ---------- Delight: an approved card flies into the horizon; clearing "Needs you" lights it up ---------- */
+  function flyToHorizon(from, label) {
+    if (!from || reduceMotion() || !window.ArkHero || !Element.prototype.animate) return Promise.resolve();
+    const to = window.ArkHero.target('home'); if (!to) return Promise.resolve();
+    const hgt = Math.min(from.height, 96);
+    const f = document.createElement('div'); f.className = 'fly'; f.setAttribute('aria-hidden', 'true'); f.textContent = label;
+    f.style.cssText = `left:${from.left}px;top:${from.top}px;width:${from.width}px;height:${hgt}px`;
+    document.body.appendChild(f);
+    const dx = to.x - (from.left + from.width / 2), dy = to.y - (from.top + hgt / 2);
+    const a = f.animate([
+      { transform: 'translate(0,0) scale(1)', opacity: 1 },
+      { transform: `translate(${dx * .45}px,${dy * .55 - 60}px) scale(.5) rotate(-4deg)`, opacity: .95, offset: .55 },
+      { transform: `translate(${dx}px,${dy}px) scale(.06)`, opacity: 0 },
+    ], { duration: 820, easing: 'cubic-bezier(.55,0,.35,1)' });
+    return a.finished.catch(() => {}).then(() => { f.remove(); window.ArkHero.pulse('home'); });
+  }
+  function afterCommand(before, cmd, from) {
+    const now = V.needs_you.total;
+    const approve = cmd && (cmd.command === 'approve' || cmd.command === 'edit-and-approve');
+    const go = approve && from ? flyToHorizon(from.rect, from.label) : Promise.resolve();
+    go.then(() => {
+      countUp($('left-n'), now);
+      if (before > 0 && now === 0 && window.ArkHero && !reduceMotion()) {
+        const sec = $('needs'); if (sec) { sec.classList.remove('clear'); void sec.offsetWidth; sec.classList.add('clear'); }
+        // The burst happens in the hero: bring it into view first if the reader scrolled down.
+        const hero = document.querySelector('[data-hero="home"]'), off = hero && hero.getBoundingClientRect().bottom < 120;
+        if (off) scrollTo({ top: 0, behavior: 'smooth' });
+        setTimeout(() => window.ArkHero.burst('home'), off ? 650 : 0);
+      }
+    });
   }
 
   /* ---------- Route changes: horizon wipe + shared-element morphs (View Transitions) ---------- */
@@ -2173,7 +2669,7 @@ window.ArkHero = (() => {
     const v = [...document.querySelectorAll('main.view')].find(m => !m.hidden);
     if (!v) return;
     v.classList.remove('enter'); void v.offsetWidth; v.classList.add('enter');
-    paintHeroes();
+    paintHeroes(); checkBottom();
     const hero = v.querySelector('[data-hero]'); if (hero && window.ArkHero) window.ArkHero.replay(hero.dataset.hero);
   }
   function navigate() {
@@ -2248,6 +2744,31 @@ window.ArkHero = (() => {
     $('chat-demo').hidden = chatMode.mode !== 'demo';
   }
 
+  /* Lightweight syntax highlighting (no libraries): one tokenizer pass; every token is escaped. */
+  const KW = new Set(('if else for while do return function const let var class new this import from export default async await try catch finally throw '
+    + 'def elif lambda pass yield with as in is not and or None True False self fn pub struct enum impl match use mod mut where loop '
+    + 'select insert update delete create table where join on group by order limit into values null true false type interface extends public private static void int string bool').split(' '));
+  function hlCode(code, lang) {
+    if (/^(text|txt|plain)?$/i.test(lang || '') && !/[{};=()]/.test(code)) return esc(code);
+    const hash = /^(py|python|sh|bash|shell|zsh|yaml|yml|toml|rb|ruby|r)$/i.test(lang || '');
+    const re = new RegExp([
+      '(\\/\\*[\\s\\S]*?\\*\\/|\\/\\/[^\\n]*' + (hash ? '|#[^\\n]*' : '') + '|--[^\\n]*)',          // 1 comment
+      '("(?:[^"\\\\\\n]|\\\\.)*"?|\'(?:[^\'\\\\\\n]|\\\\.)*\'?|`(?:[^`\\\\]|\\\\.)*`?)',               // 2 string
+      '(\\b\\d+(?:\\.\\d+)?\\b)',                                                                        // 3 number
+      '([A-Za-z_$][\\w$]*)(?=\\s*\\()',                                                                 // 4 call
+      '([A-Za-z_$][\\w$]*)',                                                                            // 5 word
+    ].join('|'), 'g');
+    let out = '', last = 0;
+    code.replace(re, (m, c, s, n, f, w, i) => {
+      out += esc(code.slice(last, i)); last = i + m.length;
+      if (c && /^--/.test(c) && !/^(sql|psql|lua|hs|haskell)$/i.test(lang || '')) { out += esc(c); return m; }
+      out += c ? `<span class="tk-c">${esc(c)}</span>` : s ? `<span class="tk-s">${esc(s)}</span>` : n ? `<span class="tk-n">${esc(n)}</span>`
+        : f ? (KW.has(f) ? `<span class="tk-k">${esc(f)}</span>` : `<span class="tk-f">${esc(f)}</span>`) : KW.has(w) || KW.has(w.toLowerCase()) && /sql/i.test(lang || '') ? `<span class="tk-k">${esc(w)}</span>` : esc(w);
+      return m;
+    });
+    return out + esc(code.slice(last));
+  }
+
   /* Markdown, safely: escape everything first, then add a small set of formatting. */
   function md(src) {
     const blocks = [], text = String(src).replace(/```([\w+-]*)\n?([\s\S]*?)(```|$)/g, (_, lang, code) => { blocks.push({ lang, code }); return `\u0000${blocks.length - 1}\u0000`; });
@@ -2263,7 +2784,7 @@ window.ArkHero = (() => {
       const cb = line.match(/^\u0000(\d+)\u0000$/);
       const h = line.match(/^(#{1,4})\s+(.*)$/), ul = line.match(/^\s*[-*•]\s+(.*)$/), ol = line.match(/^\s*\d+[.)]\s+(.*)$/), bq = line.match(/^>\s?(.*)$/);
       if (cb) { flushP(); flushL(); const b = blocks[+cb[1]];
-        out.push(`<div class="codeblk"><div class="bar"><span>${esc(b.lang || 'text')}</span><button type="button" data-copycode>Copy</button></div><pre><code>${esc(b.code.replace(/\n$/, ''))}</code></pre></div>`); }
+        out.push(`<div class="codeblk"><div class="bar"><span>${esc(b.lang || 'text')}</span><button type="button" data-copycode>Copy</button></div><pre><code>${hlCode(b.code.replace(/\n$/, ''), b.lang)}</code></pre></div>`); }
       else if (h) { flushP(); flushL(); const n = h[1].length + 1; out.push(`<h${n}>${inline(h[2])}</h${n}>`); }
       else if (ul || ol) { flushP(); const t = ul ? 'ul' : 'ol'; if (list && list.t !== t) flushL(); list = list || { t, items: [] }; list.items.push((ul || ol)[1]); }
       else if (bq) { flushP(); flushL(); out.push(`<blockquote>${inline(bq[1])}</blockquote>`); }
@@ -2281,44 +2802,82 @@ window.ArkHero = (() => {
     ['Plan my Monday', 'turn a messy to-do list into a schedule'],
     ['Explain this in plain words', 'paste a contract clause or attach a file'],
   ];
+  let shown = { id: null, n: 0 }, convQ = '';
+  function convRow(x) {
+    return `<li class="conv" aria-current="${x.id === chatId}"><button type="button" data-conv="${x.id}" title="${esc(x.title)}">${esc(x.title)}</button>
+      <button class="mini${x.pinned ? ' pinned' : ''}" type="button" data-pin="${x.id}" aria-pressed="${!!x.pinned}" aria-label="${x.pinned ? 'Unpin' : 'Pin'} ${esc(x.title)}"><svg viewBox="0 0 24 24"><path d="M9 4h6l-1 5 4 3v2H6v-2l4-3z M12 14v6"/></svg></button>
+      <button class="mini" type="button" data-rename="${x.id}" aria-label="Rename ${esc(x.title)}"><svg viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16z"/></svg></button>
+      <button class="mini" type="button" data-del="${x.id}" aria-label="Delete ${esc(x.title)}"><svg viewBox="0 0 24 24"><path d="M5 7h14M10 7V4h4v3M7 7l1 13h8l1-13"/></svg></button></li>`;
+  }
+  function renderConvs() {
+    const q = convQ.trim().toLowerCase();
+    const hit = x => !q || x.title.toLowerCase().includes(q) || x.messages.some(m => String(m.shown != null ? m.shown : m.content).toLowerCase().includes(q));
+    const list = chats.filter(hit), pinned = list.filter(x => x.pinned), rest = list.filter(x => !x.pinned);
+    $('conv-list').innerHTML = (pinned.length ? '<li class="conv-group">Pinned</li>' + pinned.map(convRow).join('') + (rest.length ? '<li class="conv-group">Recent</li>' : '') : '')
+      + rest.map(convRow).join('')
+      || `<li class="conv-note">${q ? 'No chats match.' : 'No chats yet.'}</li>`;
+  }
   function renderChat() {
     if (!chatId || !curChat()) { if (chats[0]) chatId = chats[0].id; }
     const c = curChat();
-    $('conv-list').innerHTML = chats.map(x => `<li class="conv" aria-current="${x.id === chatId}"><button type="button" data-conv="${x.id}" title="${esc(x.title)}">${esc(x.title)}</button>
-      <button class="mini" type="button" data-rename="${x.id}" aria-label="Rename ${esc(x.title)}"><svg viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16z"/></svg></button>
-      <button class="mini" type="button" data-del="${x.id}" aria-label="Delete ${esc(x.title)}"><svg viewBox="0 0 24 24"><path d="M5 7h14M10 7V4h4v3M7 7l1 13h8l1-13"/></svg></button></li>`).join('')
-      || '<li class="conv-note">No chats yet.</li>';
+    renderConvs();
     const th = $('thread');
     if (!c || !c.messages.length) {
+      shown = { id: c ? c.id : null, n: 0 };
       th.innerHTML = `<div class="empty-chat"><h2>What can I help with?</h2><p class="meta" style="margin:0">Ask anything. Questions about your company are answered from your own files.</p>
         <div class="starters">${STARTERS.map(([a, b]) => `<button class="starter" type="button" data-start="${esc(a)}">${esc(a)}<span>${esc(b)}</span></button>`).join('')}</div></div>`;
-      return;
+      checkBottom(); return;
     }
-    th.innerHTML = c.messages.map((m, i) => msgHtml(m, i, i === c.messages.length - 1)).join('');
+    // Only messages that are new since the last paint of this chat get the entrance animation.
+    const from = shown.id === c.id ? shown.n : c.messages.length;
+    th.innerHTML = c.messages.map((m, i) => msgHtml(m, i, i === c.messages.length - 1, i >= from)).join('');
+    shown = { id: c.id, n: c.messages.length };
+    checkBottom();
   }
-  function msgHtml(m, i, last) {
+  function msgHtml(m, i, last, fresh) {
+    const cls = fresh ? ' in' : '';
     if (m.role === 'user') {
       const file = m.file ? `<span class="attach-chip"><span>${esc(m.file)}</span></span>` : '';
-      return `<div class="m user" data-m="${i}">${file}<div class="body">${esc(m.shown != null ? m.shown : m.content)}</div><div class="tools"><button type="button" data-copy="${i}">Copy</button></div></div>`;
+      return `<div class="m user${cls}" data-m="${i}">${file}<div class="body">${esc(m.shown != null ? m.shown : m.content)}</div><div class="tools"><button type="button" data-copy="${i}">Copy</button></div></div>`;
     }
     const streaming = chatBusy && last;
     const src = m.sources && m.sources.length ? `<p class="src">From ${esc(words(m.sources.map(s => s.label)))}</p>` : '';
     const err = m.error ? `<p class="msg err">${esc(m.error)}</p>` : '';
     const tools = streaming ? '' : `<div class="tools"><button type="button" data-copy="${i}">Copy</button>${last ? '<button type="button" data-regen>Regenerate</button>' : ''}</div>`;
-    return `<div class="m assistant" data-m="${i}"><svg class="av-m" viewBox="0 0 120 104" aria-hidden="true"><use href="#mark"/></svg>
-      <div class="body md" aria-live="${streaming ? 'polite' : 'off'}">${md(m.content)}${streaming ? '<span class="caret" aria-hidden="true"></span>' : ''}</div>${src}${err}${tools}</div>`;
+    const body = streaming && !m.content ? '<span class="thinking">Thinking…</span>' : md(m.content) + (streaming ? '<span class="caret" aria-hidden="true"></span>' : '');
+    return `<div class="m assistant${cls}" data-m="${i}"><svg class="av-m" viewBox="0 0 120 104" aria-hidden="true"><use href="#mark"/></svg>
+      <div class="body md" aria-live="${streaming ? 'polite' : 'off'}" aria-busy="${streaming ? 'true' : 'false'}">${body}</div>${src}${err}${tools}</div>`;
   }
   function paintLast() {
     const c = curChat(); if (!c) return;
     const i = c.messages.length - 1, el = $('thread').querySelector(`[data-m="${i}"]`);
-    if (el) el.outerHTML = msgHtml(c.messages[i], i, true); else renderChat();
+    if (el) el.outerHTML = msgHtml(c.messages[i], i, true, false); else renderChat();
+    checkBottom();
+  }
+  /* Scroll-to-bottom: shown when the end of the conversation is below the composer. */
+  function checkBottom() {
+    const b = $('to-bottom'); if (!b) return;
+    const v = $('v-chat'); if (!v || v.hidden) { b.hidden = true; return; }
+    const t = $('thread'), last = t.lastElementChild, comp = $('composer').getBoundingClientRect();
+    b.hidden = !last || last.getBoundingClientRect().bottom <= comp.top + 4;
+  }
+  addEventListener('scroll', () => { if (!$('v-chat').hidden) checkBottom(); }, { passive: true });
+  /* A short title from the first message: drop greetings and filler, keep the first clause. */
+  function autoTitle(text) {
+    let t = String(text || '').replace(/\s+/g, ' ').trim()
+      .replace(/^(hi|hey|hello|ok|okay)\b[,!.]?\s*/i, '')
+      .replace(/^(please|can you|could you|would you|i need you to|i want you to|help me)\s+/i, '')
+      .replace(/^(please)\s+/i, '');
+    t = t.split(/(?<=[.?!])\s/)[0].replace(/[.?!]+$/, '');
+    if (t.length > 42) { t = t.slice(0, 42); const sp = t.lastIndexOf(' '); if (sp > 20) t = t.slice(0, sp); t += '…'; }
+    return t ? t[0].toUpperCase() + t.slice(1) : 'New chat';
   }
   function setBusy(b) {
     chatBusy = b;
     $('chat-go').hidden = !!b; $('chat-stop').hidden = !b;
     $('chat-go').disabled = !$('chat-in').value.trim() && !attach;
+    if (window.ArkHero) window.ArkHero.setBusy('chat', !!b);
   }
-
   // The in-browser demo responder mirrors the dev server: company files first, else a labelled demo reply.
   const SKIP = ['the', 'a', 'an', 'do', 'we', 'our', 'is', 'are', 'what', 'how', 'of', 'to', 'for', 'you'];
   const kw = s => s.toLowerCase().split(/[^a-z0-9]+/).filter(w => w.length > 1 && !SKIP.includes(w));
@@ -2364,7 +2923,7 @@ window.ArkHero = (() => {
     let c = curChat() || chatNew();
     const content = file ? `${text}\n\nAttached file “${file.name}”:\n\`\`\`\n${file.text}\n\`\`\`` : text;
     c.messages.push({ role: 'user', content, shown: text, file: file ? file.name : null });
-    if (c.title === 'New chat') c.title = (text || (file && file.name) || 'New chat').replace(/\s+/g, ' ').slice(0, 48);
+    if (c.title === 'New chat') c.title = text && text !== 'Please read this file.' ? autoTitle(text) : (file ? file.name : 'New chat');
     return chatReply(c);
   }
   async function chatReply(c) {
@@ -2406,6 +2965,12 @@ window.ArkHero = (() => {
     chatSend(text || 'Please read this file.', f);
   });
   $('chat-stop').addEventListener('click', () => { if (chatBusy) chatBusy.abort(); });
+  $('conv-q').addEventListener('input', e => { convQ = e.target.value; renderConvs(); });
+  $('to-bottom').addEventListener('click', () => {
+    const t = $('thread'), last = t.lastElementChild; if (!last) return;
+    const comp = $('composer').getBoundingClientRect();
+    scrollBy({ top: last.getBoundingClientRect().bottom - comp.top + 24, behavior: reduceMotion() ? 'auto' : 'smooth' });
+  });
   $('chat-file').addEventListener('change', e => {
     const f = e.target.files[0]; e.target.value = ''; if (!f) return;
     if (f.size > 200 * 1024) { $('attach-chip').hidden = false; $('attach-chip').innerHTML = '<span>That file is too big. Attach a text file under 200 KB.</span><button type="button" data-unattach aria-label="Close">×</button>'; return; }
@@ -2421,6 +2986,8 @@ window.ArkHero = (() => {
     const o = e.target.closest('[data-conv]'); if (o) { if (chatBusy) chatBusy.abort(); chatId = o.dataset.conv; renderChat(); return; }
     const rn = e.target.closest('[data-rename]');
     if (rn) { const c = chats.find(x => x.id === rn.dataset.rename); const t = prompt('Name this chat', c.title); if (t && t.trim()) { c.title = t.trim().slice(0, 60); saveChats(); renderChat(); } return; }
+    const pn = e.target.closest('[data-pin]');
+    if (pn) { const c = chats.find(x => x.id === pn.dataset.pin); c.pinned = !c.pinned; saveChats(); renderConvs(); const again = $('conv-list').querySelector(`[data-pin="${c.id}"]`); if (again) again.focus(); return; }
     const d = e.target.closest('[data-del]');
     if (d) { if (!confirm('Delete this chat? It is removed from this computer.')) return; chats = chats.filter(x => x.id !== d.dataset.del); if (chatId === d.dataset.del) chatId = chats[0] ? chats[0].id : null; saveChats(); renderChat(); }
   });

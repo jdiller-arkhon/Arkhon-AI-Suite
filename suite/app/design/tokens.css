@@ -24,6 +24,10 @@
   /* Type (site stack: SF Pro / Geist) */
   --ark-font: "Geist", -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
   --ark-mono: "Geist Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  /* Horizon v2 motion (see README "Horizon v2") */
+  --ark-spring: cubic-bezier(.34,1.36,.64,1); --ark-spring-soft: cubic-bezier(.3,1.25,.5,1);
+  --ark-dur-press: 140ms; --ark-dur-quick: 220ms; --ark-dur-wipe: 760ms; --ark-dur-glide: 420ms;
+  --ark-dur-count: 900ms; --ark-dur-fly: 820ms; --ark-dur-burst: 1500ms;
   /* Chrome — the mark's brushed-metal gradient */
   --ark-chrome: linear-gradient(160deg, #f4f5f7 0%, #9aa0ab 38%, #3a3d44 62%, #c9ccd3 100%);
 }
