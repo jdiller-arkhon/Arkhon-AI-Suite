@@ -1,0 +1,91 @@
+# Arkhon engine registry — single source of truth for engines, bases, licenses, tiers, quants.
+# Phase 0: bases verified 2026-11-06 (see docs/decisions/0001-engine-selection.md).
+# `quants` are filled ONLY with measured values; `measured_on` must be a machine ID from
+# docs/hardware-matrix.md (hardware-neutral, ADR-0004). Tiers are memory-based, not GPU-model-based.
+schema_version: 1
+allowed_licenses: [Apache-2.0, MIT]
+
+engines:
+  lite:
+    role: Fast drafting, classification, triage, routing; S-tier fallback
+    tiers: [S, M, L]
+    base: {hf_repo: Qwen/Qwen3.5-4B, license: Apache-2.0, params_b: 4.66, context: 262144, verified: 2026-11-06}
+    gguf_source: unsloth/Qwen3.5-4B-GGUF
+    llama_cpp_arch: qwen35
+    fallback: null
+    quants: []
+  core:
+    role: Workhorse for Inbox, Desk, Growth, Knowledge (writing, grounded answers, JSON, tools)
+    tiers: [M, L]
+    base: {hf_repo: Qwen/Qwen3.5-9B, license: Apache-2.0, params_b: 9.65, context: 262144, verified: 2026-11-06}
+    gguf_source: unsloth/Qwen3.5-9B-GGUF
+    llama_cpp_arch: qwen35
+    fallback: lite
+    quants: []
+  vision:
+    role: Docs — OCR, forms, invoices, receipts, tables to strict JSON
+    tiers: [M, L]
+    # Same checkpoint as core (natively VL). Proposed in ADR-0001: ship as a LoRA on core weights.
+    base: {hf_repo: Qwen/Qwen3.5-9B, license: Apache-2.0, params_b: 9.65, context: 262144, verified: 2026-11-06}
+    gguf_source: unsloth/Qwen3.5-9B-GGUF
+    llama_cpp_arch: qwen35
+    fallback: lite
+    quants: []
+  reason:
+    role: Insights — calculation, logic, verification passes
+    tiers: [M, L]
+    base: {hf_repo: openai/gpt-oss-20b, license: Apache-2.0, params_b: 20.9, context: 131072, verified: 2026-11-06}
+    gguf_source: ggml-org/gpt-oss-20b-GGUF
+    llama_cpp_arch: gpt-oss
+    fallback: core
+    quants: []
+  pro:
+    role: Long documents, complex drafting, Insights, multi-step workflows
+    tiers: [L]
+    base: {hf_repo: Qwen/Qwen3.6-35B-A3B, license: Apache-2.0, params_b: 35.95, context: 262144, verified: 2026-11-06}
+    gguf_source: unsloth/Qwen3.6-35B-A3B-GGUF
+    llama_cpp_arch: qwen35moe
+    fallback: core
+    quants: []
+  code:
+    role: Dev workspace / Arkhon AI
+    tiers: [L]
+    base: {hf_repo: Qwen/Qwen3.6-27B, license: Apache-2.0, params_b: 27.78, context: 262144, verified: 2026-11-06}
+    gguf_source: unsloth/Qwen3.6-27B-GGUF
+    llama_cpp_arch: qwen35
+    fallback: core
+    quants: []
+  embed:
+    role: Retrieval embeddings for every workspace
+    tiers: [S, M, L]
+    base: {hf_repo: Qwen/Qwen3-Embedding-0.6B, license: Apache-2.0, params_b: 0.60, context: 32768, verified: 2026-11-06}
+    gguf_source: Qwen/Qwen3-Embedding-0.6B-GGUF
+    llama_cpp_arch: qwen3
+    fallback: null
+    quants: []
+  rerank:
+    role: Retrieval reranker
+    tiers: [S, M, L]
+    base: {hf_repo: Qwen/Qwen3-Reranker-0.6B, license: Apache-2.0, params_b: 0.60, context: 32768, verified: 2026-11-06}
+    gguf_source: null  # official GGUF not confirmed; convert in Phase 1
+    llama_cpp_arch: qwen3
+    fallback: null
+    quants: []
+  scribe:
+    role: Meetings — speech-to-text with timestamps
+    tiers: [M, L]
+    base: {hf_repo: openai/whisper-large-v3-turbo, license: MIT, params_b: 0.809, context: null, verified: 2026-11-06}
+    gguf_source: null  # whisper.cpp ggml conversion
+    llama_cpp_arch: null
+    runtime: whisper.cpp
+    fallback: scribe-small
+    quants: []
+  scribe-small:
+    role: Meetings on S tier (CPU)
+    tiers: [S, M, L]
+    base: {hf_repo: openai/whisper-small, license: Apache-2.0, params_b: 0.244, context: null, verified: 2026-11-06}
+    gguf_source: null
+    llama_cpp_arch: null
+    runtime: whisper.cpp
+    fallback: null
+    quants: []

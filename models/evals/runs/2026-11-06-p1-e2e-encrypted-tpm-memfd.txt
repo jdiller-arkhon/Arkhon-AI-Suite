@@ -1,0 +1,29 @@
+# Phase 1 end-to-end run, 2026-11-06T19:06:07Z
+# host: build container, 4 vCPU Xeon @2.1GHz, 15.7 GiB RAM, no swap (/proc/swaps empty), no GPU; TPM = swtpm 2.0 emulator
+# llama.cpp commit 6c01da6278ab6c69ed67d9124806b50d2b299ba7; model Qwen/Qwen3-0.6B-GGUF Q8_0 sha256 9465e63a22add5354d9bb4b99e90117043c7124007664907259bd16d043bb031 (Apache-2.0)
+# cmds: p1-e2e device --tcti swtpm:... ; p1-e2e vendor --model <gguf> --device device.bin --dir release ; (plaintext GGUF deleted) ; p1-e2e run --dir release --tcti swtpm:... --server llama-server
+## vendor
+{"step":"encrypted","ms":20710,"plaintext_bytes":639446688}
+license issued: 661 bytes, engine lite, binding TPM
+## run
+{"step":"license_verified_and_cek_unwrapped_via_tpm","ms":35}
+{"step":"decrypted_into_sealed_memfd","ms":1375,"bytes":639446688}
+{"step":"server_ready","ms":4073,"ok":true}
+{"step":"child_maps_model_from_memfd","ok":true}
+{"step":"completion","ms":772,"http_ok":true}
+{"choices":[{"finish_reason":"stop","index":0,"message":{"role":"assistant","content":"An HVAC technician installs, maintains, and repairs heating, ventilation, and air conditioning systems to ensure comfort and efficiency in homes and businesses."}}],"created":1793991025,"model":"/proc/self/fd/3","system_fingerprint":"b1-6c01da6","object":"chat.completion","usage":{"completion_tokens":32,"prompt_tokens":25,"total_tokens":57,"prompt_tokens_details":{"cached_tokens":0}},"id":"chatcmpl-wr6NPNjhgAnn5mIaP0VZJE9luYstAOug","timings":{"cache_n":0,"prompt_n":25,"prompt_ms":82.456,"prompt_per_token_ms":3.2982400000000003,"prompt_per_second":303.19200543320073,"predicted_n":32,"predicted_ms":683.479,"predicted_per_token_ms":22.047709677419356,"predicted_per_second":45.356185047382574}}
+{"step":"total","ms":6257}
+## plaintext scan (8 x 64-byte probes from the plaintext model, stored as hex only; plaintext deleted before run)
+probe offset 1000000
+probe offset 92063812
+probe offset 183127625
+probe offset 274191437
+probe offset 365255250
+probe offset 456319062
+probe offset 547382875
+probe offset 638446688
+scanned 321714 files, 25.61 GB on / in 407s; probe hits: 3
+HIT ('/tmp/claude-0/-home-user-Arkhon-AI-Suite/af8f1c1e-4ca6-5985-a922-6a5cf0f20fdc/scratchpad/p1/llama.cpp/models/ggml-vocab-llama-bpe.gguf', 0)
+HIT ('/tmp/claude-0/-home-user-Arkhon-AI-Suite/af8f1c1e-4ca6-5985-a922-6a5cf0f20fdc/scratchpad/p1/llama.cpp/models/ggml-vocab-qwen2.gguf', 0)
+HIT ('/tmp/claude-0/-home-user-Arkhon-AI-Suite/af8f1c1e-4ca6-5985-a922-6a5cf0f20fdc/scratchpad/p1/llama.cpp/models/ggml-vocab-qwen35.gguf', 0)
+# all 3 hits are probe 0 (offset 1000000 = tokenizer vocabulary strings), found only in llama.cpp's git-tracked, unmodified vocab test files models/ggml-vocab-*.gguf (mtime 17:47, before the run). 7/7 weight-region probes: 0 hits.

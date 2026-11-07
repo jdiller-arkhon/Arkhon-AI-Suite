@@ -1,0 +1,1222 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Arkhon Customer Portal</title>
+<style>
+/* Customer portal: the same calm language as the suite and the Operator Console.
+   One column, one task per view, plain words. Talks only to this server's /portal API
+   (CSP: connect-src 'self'); no external resources. */
+:root {
+  --bg: #f5f5f7; --card: #fff; --soft: #f0f0f2; --line: #e6e6e9;
+  --fg: #1d1d1f; --fg-2: #6e6e73; --fg-3: #a1a1a6;
+  --ink: #2b2b2e; --ink-fg: #fff; --focus: #0071e3;
+  --ok: #2f7a55; --ok-bg: #e8f3ed; --warn: #b45309; --warn-bg: #fdf1e3; --bad: #d92d20; --bad-bg: #fdecea;
+  --shadow: 0 1px 2px rgba(0,0,0,.04), 0 12px 32px -16px rgba(0,0,0,.12);
+  --font: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Geist", "Helvetica Neue", Arial, sans-serif;
+  --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root {
+  --bg: #000; --card: #141416; --soft: #1c1c1f; --line: #2a2a2e;
+  --fg: #f5f5f7; --fg-2: #a1a1a6; --fg-3: #6e6e73; --ink: #f5f5f7; --ink-fg: #111113; --focus: #2997ff;
+  --ok: #4fbf86; --ok-bg: rgba(79,191,134,.14); --warn: #f0a33a; --warn-bg: rgba(240,163,58,.14); --bad: #ff6b61; --bad-bg: rgba(255,107,97,.14);
+  --shadow: 0 0 0 1px var(--line); color-scheme: dark;
+} }
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html, body { overflow-x: hidden; }
+body { margin: 0; background: var(--bg); color: var(--fg); font: 16px/1.5 var(--font); -webkit-font-smoothing: antialiased; }
+button, input, select { font: inherit; color: inherit; }
+button { cursor: pointer; }
+a { color: var(--focus); }
+:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; border-radius: 10px; }
+.wrap { max-width: 980px; margin: 0 auto; padding-left: max(24px, env(safe-area-inset-left)); padding-right: max(24px, env(safe-area-inset-right)); }
+header { position: sticky; top: 0; z-index: 5; background: color-mix(in srgb, var(--bg) 85%, transparent); backdrop-filter: blur(20px); }
+.hdr { display: flex; align-items: center; gap: 20px; min-height: 60px; }
+.brand { font-weight: 700; letter-spacing: .14em; font-size: 14px; white-space: nowrap; }
+.brand small { font-weight: 500; letter-spacing: 0; color: var(--fg-3); margin-left: 8px; }
+nav { display: flex; gap: 20px; overflow-x: auto; scrollbar-width: none; min-width: 0; }
+nav::-webkit-scrollbar { display: none; }
+nav a { color: var(--fg-2); text-decoration: none; font-size: 15px; white-space: nowrap; padding: 6px 0; }
+nav a[aria-current="page"], nav a:hover { color: var(--fg); }
+.grow { flex: 1; }
+.who { color: var(--fg-3); font-size: 14px; white-space: nowrap; }
+#signout { white-space: nowrap; }
+header .wrap { max-width: 1180px; }
+@media (max-width: 1240px) { .who { display: none; } }
+main { padding-block: 40px 96px; display: grid; gap: 20px; }
+section { display: grid; gap: 20px; min-width: 0; }
+h1 { margin: 0; font-size: clamp(30px, 5vw, 42px); letter-spacing: -.03em; line-height: 1.1; }
+h2 { margin: 0; font-size: 21px; letter-spacing: -.02em; }
+h3 { margin: 0; font-size: 17px; }
+.lede { margin: 6px 0 0; color: var(--fg-2); font-size: 18px; }
+.card { background: var(--card); border-radius: 20px; box-shadow: var(--shadow); padding: 24px 28px; min-width: 0; }
+.stack { display: grid; gap: 16px; }
+.kpis { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 14px; }
+.kpi b { display: block; font-size: 34px; letter-spacing: -.03em; font-variant-numeric: tabular-nums; }
+.kpi span { color: var(--fg-2); font-size: 15px; }
+.hero { display: flex; gap: 16px; align-items: center; }
+.dot { width: 12px; height: 12px; border-radius: 50%; background: var(--ok); flex: none; }
+.dot.warn { background: var(--warn); } .dot.bad { background: var(--bad); }
+.hero p { margin: 0; font-size: 19px; font-weight: 500; }
+.btn { height: 42px; padding: 0 20px; border-radius: 999px; border: 0; background: var(--soft); font-weight: 500; font-size: 15px; white-space: nowrap; }
+.btn.primary { background: var(--ink); color: var(--ink-fg); }
+.btn.danger { color: var(--bad); }
+.btn:disabled { opacity: .4; cursor: default; }
+.row { display: flex; gap: 12px; align-items: end; flex-wrap: wrap; }
+label { display: grid; gap: 6px; font-size: 14px; color: var(--fg-2); flex: 1 1 200px; min-width: 0; }
+input, select { height: 44px; border-radius: 12px; border: 1px solid var(--line); background: var(--card); padding: 0 14px; font-size: 16px; color: var(--fg); width: 100%; }
+input[type=file] { padding: 9px 14px; }
+.msg { margin: 0; padding: 12px 16px; border-radius: 12px; font-size: 15px; overflow-wrap: anywhere; }
+.msg.ok { color: var(--ok); background: var(--ok-bg); }
+.msg.err { color: var(--bad); background: var(--bad-bg); }
+.msg.info { color: var(--fg-2); background: var(--soft); }
+.key { font: 600 20px var(--mono); letter-spacing: .04em; padding: 16px 18px; border-radius: 14px; background: var(--soft); user-select: all; overflow-wrap: anywhere; }
+.link-box { font: 13px var(--mono); padding: 12px 14px; border-radius: 12px; background: var(--soft); user-select: all; overflow-wrap: anywhere; }
+table { width: 100%; border-collapse: collapse; font-size: 15px; }
+th { text-align: left; font-weight: 500; color: var(--fg-3); font-size: 13px; padding: 0 12px 10px 0; }
+td { padding: 12px 12px 12px 0; border-top: 1px solid var(--line); vertical-align: top; }
+.mono { font-family: var(--mono); font-size: 13px; overflow-wrap: anywhere; }
+.pill { display: inline-block; font-size: 13px; font-weight: 500; border-radius: 999px; padding: 2px 10px; white-space: nowrap; }
+.pill.ok, .pill.active { color: var(--ok); background: var(--ok-bg); }
+.pill.ending-soon, .pill.paused, .pill.invited, .pill.warn { color: var(--warn); background: var(--warn-bg); }
+.pill.ended, .pill.deactivated, .pill.not-started { color: var(--fg-3); background: var(--soft); }
+.link { border: 0; background: none; color: var(--focus); padding: 0; font-size: 15px; text-align: left; }
+.narrow { max-width: 460px; width: 100%; margin: 6vh auto 0; }
+.muted { color: var(--fg-2); font-size: 14px; margin: 0; }
+.list { display: grid; gap: 0; }
+.item { display: flex; gap: 16px; align-items: center; padding: 16px 0; border-top: 1px solid var(--line); flex-wrap: wrap; }
+.item:first-child { border-top: 0; padding-top: 0; }
+.item .grow { min-width: 0; flex: 1 1 220px; }
+.item b { display: block; }
+.meter { height: 8px; border-radius: 999px; background: var(--soft); overflow: hidden; margin-top: 8px; max-width: 280px; }
+.meter i { display: block; height: 100%; background: var(--ink); border-radius: 999px; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { font-size: 13px; padding: 3px 10px; border-radius: 999px; background: var(--soft); color: var(--fg-2); }
+dl { display: grid; grid-template-columns: max-content 1fr; gap: 10px 24px; margin: 0; }
+dt { color: var(--fg-2); font-size: 15px; } dd { margin: 0; min-width: 0; }
+.steps { margin: 0; padding-left: 20px; color: var(--fg-2); display: grid; gap: 6px; }
+.empty { text-align: center; padding: 40px 20px; color: var(--fg-2); }
+.public-top { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+@media (max-width: 720px) {
+  .kpis { grid-template-columns: minmax(0,1fr) minmax(0,1fr); }
+  .wrap { padding-left: max(16px, env(safe-area-inset-left)); padding-right: max(16px, env(safe-area-inset-right)); }
+  .card { padding: 20px; }
+  .hdr { flex-wrap: wrap; gap: 4px 16px; padding-top: 10px; }
+  nav { order: 3; flex-basis: 100%; gap: 18px; padding-bottom: 6px; }
+  .who { display: none; }
+  main { padding-block: 24px 72px; }
+  dl { grid-template-columns: minmax(0,1fr); gap: 2px; } dd { margin-bottom: 10px; }
+  .hide-sm { display: none; }
+}
+/* ---------- Horizon (shared with the Arkhon Suite design system, v2) ----------
+   Same tokens, hero band, motion and type as suite/app/design (see its README "Horizon v2").
+   Everything is inline: this page is served with a strict CSP and loads nothing external. */
+:root {
+  --bg: #eceef2; --card: #ffffff; --soft: #e4e7ec; --line: #d9dde4;
+  --fg: #111113; --fg-2: #4d525b; --fg-3: #636873;
+  --ink: #2b2b2e; --ink-fg: #ffffff; --focus: #1f5fbf;
+  --ok: #24653f; --ok-bg: #dcefe4; --warn: #94430a; --warn-bg: #f8ead9; --bad: #b42318; --bad-bg: #fbe5e2;
+  --sky-top: #cfd5de; --sky-low: #f4f6f9; --glow: rgba(255,255,255,.95); --glow-2: rgba(47,122,85,.10);
+  --bar: #9aa1ad; --bar-lit-a: #fdfdfe; --bar-lit-b: #7b818c; --bar-lit-c: #2b2b2e; --arc: #2b2b2e; --dust: rgba(43,43,46,.32);
+  --nav-bg: rgba(255,255,255,.72); --nav-line: rgba(17,17,19,.08);
+  --shadow: 0 1px 0 rgba(255,255,255,.7) inset, 0 1px 2px rgba(17,17,19,.05), 0 18px 40px -24px rgba(17,17,19,.22);
+  --font: "Geist", -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
+  --ease: cubic-bezier(.22,1,.36,1); --spring: cubic-bezier(.34,1.36,.64,1); --spring-soft: cubic-bezier(.3,1.25,.5,1);
+  --dur-press: 140ms; --dur-quick: 220ms; --dur-enter: 560ms; --dur-wipe: 760ms; --dur-glide: 420ms; --dur-count: 900ms; --stagger: 55ms;
+}
+@media (prefers-color-scheme: dark) { :root {
+  --bg: #0c0e12; --card: #14171c; --soft: #1d2128; --line: #272c35;
+  --fg: #f2f3f6; --fg-2: #b4b9c4; --fg-3: #8e94a0;
+  --ink: #f2f3f6; --ink-fg: #111113; --focus: #6aa8ff;
+  --ok: #5cc994; --ok-bg: rgba(92,201,148,.13); --warn: #f0a640; --warn-bg: rgba(240,166,64,.13); --bad: #ff7b70; --bad-bg: rgba(255,123,112,.13);
+  --sky-top: #07080b; --sky-low: #1a1f27; --glow: rgba(214,220,232,.30); --glow-2: rgba(47,122,85,.20);
+  --bar: #3a404b; --bar-lit-a: #ffffff; --bar-lit-b: #9aa0ab; --bar-lit-c: #4a4e57; --arc: #c9ccd3; --dust: rgba(242,243,246,.42);
+  --nav-bg: rgba(20,23,28,.74); --nav-line: rgba(242,243,246,.10);
+  --shadow: 0 0 0 1px var(--line); color-scheme: dark;
+} }
+html { background: var(--bg); }
+html, body { overflow-x: hidden; }
+body { position: relative; letter-spacing: -.01em; }
+.card { border: 1px solid var(--line); }
+h1 { font-weight: 650; letter-spacing: -.04em; text-wrap: balance; }
+h2 { font-weight: 600; }
+.btn { transition: transform var(--dur-press) var(--spring), background-color var(--dur-quick) var(--ease), opacity var(--dur-quick); }
+.btn:active { transform: scale(.94); transition-duration: 90ms; }
+.btn:hover:not(:disabled) { opacity: .88; }
+.eyebrow { display: block; font-size: 12px; font-weight: 600; letter-spacing: .16em; text-transform: uppercase; color: var(--fg-2); margin-bottom: 10px; }
+
+/* Hero band: one canvas behind the top of the page, ending in the horizon under each page's title. */
+.hz-band { position: absolute; z-index: -1; top: 0; left: 0; right: 0; height: var(--hz-h, 360px); pointer-events: none; }
+.hz-band canvas { display: block; width: 100%; height: 100%; }
+body { isolation: isolate; }
+.stage { padding: 28px 0 92px; position: relative; }
+.stage h1 { font-size: clamp(34px, 5.4vw, 56px); line-height: 1.05; }
+.stage .lede { max-width: 40ch; }
+.hz-stat { margin: 18px 0 0; display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; color: var(--fg-2); font-size: 15px; }
+.hz-stat b { font-size: 32px; font-weight: 650; letter-spacing: -.04em; color: var(--fg); font-variant-numeric: tabular-nums; }
+
+/* Header: brand mark + a pill nav with a gliding indicator. */
+header { background: color-mix(in srgb, var(--bg) 55%, transparent) !important; -webkit-backdrop-filter: saturate(170%) blur(20px); backdrop-filter: saturate(170%) blur(20px); }
+.brand { display: inline-flex; align-items: center; gap: 10px; }
+.brand svg { width: 26px; height: 22px; flex: none; }
+.pillnav { position: relative; isolation: isolate; display: flex; gap: 2px; padding: 4px; border-radius: 999px; background: var(--nav-bg); border: 1px solid var(--nav-line); overflow-x: auto; scrollbar-width: none; }
+.pillnav::-webkit-scrollbar { display: none; }
+.pillnav a { position: relative; z-index: 1; padding: 7px 14px !important; border-radius: 999px; color: var(--fg-2); text-decoration: none; font-size: 14px; font-weight: 500; white-space: nowrap; transition: color var(--dur-quick) var(--ease); }
+.pillnav a:hover { color: var(--fg); }
+.pillnav a[aria-current="page"] { color: var(--ink-fg); }
+.pillnav .nav-ind { position: absolute; z-index: 0; top: 4px; left: 0; height: calc(100% - 8px); width: 0; border-radius: 999px; background: var(--ink); opacity: 0;
+  transition: transform var(--dur-glide) var(--spring-soft), width var(--dur-glide) var(--spring-soft), opacity var(--dur-quick); }
+
+/* Motion: staggered entrances and the "horizon wipe" between pages; all off under reduced motion. */
+@media (prefers-reduced-motion: no-preference) {
+  .enter .stage > * { animation: lift 700ms var(--ease) backwards; }
+  .enter .stage > :nth-child(2) { animation-delay: 60ms; } .enter .stage > :nth-child(n+3) { animation-delay: 120ms; }
+  .enter > .card, .enter .kpis > * , .enter .list > .item { animation: rise var(--dur-enter) var(--spring) backwards; }
+  .enter .kpis > :nth-child(2), .enter .list > .item:nth-child(2) { animation-delay: calc(var(--stagger) * 1); }
+  .enter .kpis > :nth-child(3), .enter .list > .item:nth-child(3) { animation-delay: calc(var(--stagger) * 2); }
+  .enter .kpis > :nth-child(n+4), .enter .list > .item:nth-child(n+4) { animation-delay: calc(var(--stagger) * 3); }
+  @keyframes lift { from { opacity: .001; transform: translateY(10px); } }
+  @keyframes rise { from { opacity: .001; transform: translateY(14px) scale(.985); } }
+  .msg:not([hidden]) { animation: rise 420ms var(--spring) backwards; }
+  ::view-transition-old(root) { animation: var(--dur-wipe) var(--ease) both vt-settle; }
+  ::view-transition-new(root) { animation: var(--dur-wipe) var(--ease) both vt-horizon; }
+  @keyframes vt-horizon { from { clip-path: ellipse(140% 0% at 50% 100%); } to { clip-path: ellipse(140% 160% at 50% 100%); } }
+  @keyframes vt-settle { to { opacity: .35; transform: translateY(-2%) scale(.985); filter: blur(2px); } }
+  header { view-transition-name: top; }
+  ::view-transition-group(top) { animation: none; }
+}
+@media (max-width: 720px) {
+  .stage { padding: 16px 0 64px; }
+  .hz-stat b { font-size: 26px; }
+}
+.stage + .card, .stage + .stack, .stage + p { margin-top: -8px; }
+#v-signin .narrow, #v-accept .narrow, #v-trial .narrow { margin-top: 3vh; }
+@media (max-width: 1320px) { .who { display: none; } }
+.pillnav a { padding: 7px 12px !important; }
+/* ark-v3-css:begin */
+/* Horizon v3 (lite): the suite's WebGL world behind the title band, glass cards with a
+   pointer-lit chrome hairline, display type and embossed numerals. Inline only (strict CSP). */
+:root { --glass: color-mix(in srgb, var(--card) 76%, transparent); --edge-a: rgba(255,255,255,.95); --edge-b: rgba(255,255,255,.28); --edge-c: rgba(17,17,19,.10);
+  --emboss: 0 1px 0 rgba(255,255,255,.85), 0 -1px 0 rgba(17,17,19,.10); --scrim: color-mix(in srgb, var(--bg) 66%, transparent); }
+@media (prefers-color-scheme: dark) { :root { --edge-a: rgba(255,255,255,.7); --edge-b: rgba(255,255,255,.13); --edge-c: rgba(255,255,255,.05);
+  --emboss: 0 1px 0 rgba(0,0,0,.6), 0 -1px 0 rgba(255,255,255,.12); --scrim: color-mix(in srgb, var(--bg) 60%, transparent); } }
+.hz-band { background: linear-gradient(to bottom, var(--sky-top), var(--sky-low) 80%, var(--bg)); }
+.hz-band .w3 { position: absolute; inset: 0; -webkit-mask: linear-gradient(#000 72%, transparent); mask: linear-gradient(#000 72%, transparent); }
+.hz-band.gl { background: none; }
+.hz-band.gl > canvas:not(.w3) { display: none; }
+.stage h1 { letter-spacing: -.046em; font-weight: 640; text-wrap: balance; }
+html.gl .stage > :first-child { position: relative; }
+html.gl .stage { isolation: isolate; }
+html.gl .stage::before { content: ""; position: absolute; z-index: -1; inset: -40px -14% -10px -18%; pointer-events: none;
+  background: radial-gradient(closest-side, var(--scrim) 45%, color-mix(in srgb, var(--bg) 28%, transparent) 75%, transparent 100%); }
+.kpi b, .hz-stat b { text-shadow: var(--emboss); }
+html.gl .card { background: var(--glass); backdrop-filter: blur(20px) saturate(160%); -webkit-backdrop-filter: blur(20px) saturate(160%); position: relative; }
+html.gl .card::after { content: ""; position: absolute; inset: 0; border-radius: inherit; padding: 1px; pointer-events: none;
+  background: radial-gradient(240px circle at var(--mx, 50%) var(--my, -60%), var(--edge-a), var(--edge-b) 42%, transparent 72%), linear-gradient(165deg, var(--edge-b), transparent 40%, var(--edge-c) 70%, var(--edge-b));
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0); }
+@media (prefers-reduced-transparency: reduce) { html.gl .card { background: var(--card); backdrop-filter: none; -webkit-backdrop-filter: none; }
+  html.gl .stage::before { background: radial-gradient(closest-side, var(--bg) 50%, transparent 100%); } }
+/* ark-v3-css:end */
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+  <linearGradient id="chrome" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#d6d8dd"/><stop offset=".45" stop-color="#5f636c"/><stop offset=".7" stop-color="#1d1f24"/><stop offset="1" stop-color="#d6d8dd"/></linearGradient>
+  <symbol id="mark" viewBox="0 0 120 104"><path d="M60 2 L4 98 L22 98 L58 34 Z" fill="url(#chrome)"/><path d="M68 20 L116 98 L98 98 L66 44 L66 24 Z" fill="url(#chrome)"/>
+    <g fill="url(#chrome)"><rect x="40" y="70" width="5" height="24"/><rect x="48" y="56" width="5" height="38"/><rect x="56" y="40" width="5" height="54"/><rect x="64" y="58" width="5" height="36"/><rect x="72" y="72" width="5" height="22"/></g>
+    <path d="M14 100 Q60 90 106 100" stroke="url(#chrome)" stroke-width="2.4" fill="none" stroke-linecap="round"/></symbol></defs></svg>
+<header hidden id="top">
+  <div class="wrap hdr">
+    <span class="brand"><svg viewBox="0 0 120 104" aria-hidden="true"><use href="#mark"/></svg>ARKHON<small>Portal</small></span>
+    <nav id="nav" class="pillnav" aria-label="Portal">
+      <a href="#overview">Overview</a><a href="#licenses">Licenses</a><a href="#computers">Computers</a><a href="#offline">Offline activation</a><a href="#downloads">Downloads</a><a href="#team">Team</a><a href="#billing">Billing</a>
+    </nav>
+    <span class="grow"></span>
+    <span class="who" id="who"></span>
+    <button class="link" id="signout" type="button">Sign out</button>
+  </div>
+</header>
+
+<main class="wrap">
+  <!-- Sign in -->
+  <section id="v-signin" hidden>
+    <form class="card narrow stack" id="signin-form">
+      <span class="brand"><svg viewBox="0 0 120 104" aria-hidden="true"><use href="#mark"/></svg>ARKHON</span>
+      <h1 style="font-size:30px">Sign in</h1>
+      <p class="muted">See your licenses, the computers using Arkhon, downloads and your team.</p>
+      <label>Work email<input id="si-email" type="email" autocomplete="username" required></label>
+      <label>Password<input id="si-pass" type="password" autocomplete="current-password" required></label>
+      <label id="si-code-wrap" hidden>6-digit code from your authenticator app<input id="si-code" inputmode="numeric" autocomplete="one-time-code" maxlength="6"></label>
+      <button class="btn primary" type="submit">Sign in</button>
+      <p class="msg err" id="si-msg" hidden></p>
+      <p class="muted">New to Arkhon? <a href="#trial">Start a free 14-day trial</a>. Forgot your password? Ask an owner on your team, or Arkhon, for a reset link.</p>
+    </form>
+  </section>
+
+  <!-- Accept invite / reset -->
+  <section id="v-accept" hidden>
+    <form class="card narrow stack" id="accept-form">
+      <span class="brand"><svg viewBox="0 0 120 104" aria-hidden="true"><use href="#mark"/></svg>ARKHON</span>
+      <h1 style="font-size:30px">Set your password</h1>
+      <p class="muted">You've been invited to your company's Arkhon account. Choose a password to finish.</p>
+      <label>Your name (optional)<input id="ac-name" autocomplete="name"></label>
+      <label>New password (at least 12 characters)<input id="ac-pass" type="password" autocomplete="new-password" minlength="12" required></label>
+      <label>Type it again<input id="ac-pass2" type="password" autocomplete="new-password" minlength="12" required></label>
+      <button class="btn primary" type="submit">Save password and continue</button>
+      <p class="msg err" id="ac-msg" hidden></p>
+    </form>
+  </section>
+
+  <!-- Trial (public) -->
+  <section id="v-trial" hidden>
+    <div class="narrow stack" style="max-width:560px">
+      <div class="public-top"><span class="brand"><svg viewBox="0 0 120 104" aria-hidden="true"><use href="#mark"/></svg>ARKHON</span><a href="#signin">Sign in</a></div>
+      <h1>Try Arkhon free for 14 days</h1>
+      <p class="lede">Private AI that runs on your own computers. Nothing you write leaves your office.</p>
+      <form class="card stack" id="trial-form">
+        <label>Company name<input id="tr-company" autocomplete="organization" required></label>
+        <label>Your name<input id="tr-name" autocomplete="name" required></label>
+        <label>Work email<input id="tr-email" type="email" autocomplete="email" required></label>
+        <button class="btn primary" type="submit">Start my free trial</button>
+        <p class="muted">No card needed. Up to 10 people and 2 computers.</p>
+        <p class="msg err" id="tr-msg" hidden></p>
+      </form>
+      <div class="card stack" id="tr-done" hidden>
+        <h2>Your trial is ready</h2>
+        <p class="muted">1. Copy your activation key. It's shown only once: you'll type it into Arkhon on each computer.</p>
+        <div class="key" id="tr-key"></div>
+        <p class="muted">2. Set your password to open your portal.</p>
+        <div class="row"><a class="btn primary" id="tr-go" href="#" style="display:inline-flex;align-items:center;text-decoration:none">Set my password</a></div>
+        <p class="msg info" id="tr-note"></p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Overview -->
+  <section id="v-overview" hidden>
+    <div class="stage"><span class="eyebrow">Overview</span><h1 id="ov-company">Overview</h1><p class="lede">Your Arkhon account at a glance.</p><p class="hz-stat" id="ov-stat" hidden></p></div>
+    <div class="card hero"><span class="dot" id="ov-dot"></span><p id="ov-headline">Loading…</p></div>
+    <div class="kpis">
+      <div class="card kpi"><b id="ov-seats">–</b><span>people can use Arkhon</span></div>
+      <div class="card kpi"><b id="ov-comp">–</b><span>computers in use</span></div>
+      <div class="card kpi"><b id="ov-renew">–</b><span>next renewal</span></div>
+    </div>
+    <div class="card"><h2 style="margin-bottom:16px">Licenses</h2><div class="list" id="ov-list"></div></div>
+  </section>
+
+  <!-- Licenses -->
+  <section id="v-licenses" hidden>
+    <div class="stage"><span class="eyebrow">Your plan</span><h1>Licenses</h1><p class="lede">What your company has, and until when.</p></div>
+    <div class="card"><div class="list" id="li-list"></div></div>
+  </section>
+
+  <!-- License detail -->
+  <section id="v-license" hidden>
+    <div><button class="link" type="button" data-go="#licenses">← All licenses</button></div>
+    <div id="ld"></div>
+  </section>
+
+  <!-- Computers -->
+  <section id="v-computers" hidden>
+    <div class="stage"><span class="eyebrow">Where Arkhon runs</span><h1>Computers</h1><p class="lede">Where Arkhon is activated. Got a new computer? Deactivate the old one here to free its slot.</p></div>
+    <p class="msg" id="co-msg" hidden></p>
+    <div class="card"><div class="list" id="co-list"></div></div>
+  </section>
+
+  <!-- Offline activation -->
+  <section id="v-offline" hidden>
+    <div class="stage"><span class="eyebrow">No internet needed</span><h1>Offline activation</h1><p class="lede">For a computer that can't reach the internet, such as on a ship or a secure site.</p></div>
+    <div class="card stack">
+      <ol class="steps">
+        <li>On the offline computer, open Arkhon → Settings → License → <b>Export renewal file</b>.</li>
+        <li>Bring that file to a computer with internet and choose it below.</li>
+        <li>Download the reply file and open it in Arkhon on the offline computer.</li>
+      </ol>
+      <form class="stack" id="off-form">
+        <label>Renewal file from Arkhon<input id="off-file" type="file" required></label>
+        <div class="row"><button class="btn primary" type="submit">Get reply file</button></div>
+      </form>
+      <p class="msg" id="off-msg" hidden></p>
+      <div class="row" id="off-dl" hidden><a class="btn primary" id="off-link" download="arkhon-renewal-response.bin" style="display:inline-flex;align-items:center;text-decoration:none">Download reply file</a></div>
+      <p class="muted">Each renewal file works once. If you need to try again, export a new one.</p>
+    </div>
+  </section>
+
+  <!-- Downloads -->
+  <section id="v-downloads" hidden>
+    <div class="stage"><span class="eyebrow">Engines</span><h1>Downloads</h1><p class="lede">Engine versions your licenses include. Arkhon installs and updates them for you.</p></div>
+    <div id="dl-list" class="stack"></div>
+    <p class="muted" id="dl-note"></p>
+  </section>
+
+  <!-- Team -->
+  <section id="v-team" hidden>
+    <div class="stage"><span class="eyebrow">People</span><h1>Team</h1><p class="lede">Who can sign in to this portal. Owners can change things; billing sees invoices; viewers can look.</p></div>
+    <form class="card stack" id="tm-form">
+      <h2>Invite someone</h2>
+      <div class="row">
+        <label>Work email<input id="tm-email" type="email" required></label>
+        <label style="flex:0 1 180px">Role<select id="tm-role"><option value="viewer">Viewer</option><option value="billing">Billing</option><option value="owner">Owner</option></select></label>
+        <button class="btn primary" type="submit">Create invite</button>
+      </div>
+      <p class="msg" id="tm-msg" hidden></p>
+      <div id="tm-link" hidden class="stack" style="gap:8px"><p class="muted">Send this link to them yourself (email from Arkhon is coming soon). It works once, for 7 days.</p><div class="link-box" id="tm-linktext"></div></div>
+    </form>
+    <div class="card"><div class="list" id="tm-list"></div></div>
+    <div class="card stack" id="tm-2fa">
+      <h2>Your sign-in</h2>
+      <p class="muted" id="tf-state"></p>
+      <div class="row"><button class="btn" type="button" id="tf-start">Turn on two-step sign-in</button></div>
+      <div id="tf-setup" hidden class="stack">
+        <p class="muted">In your authenticator app, add an account and type this key:</p>
+        <div class="link-box" id="tf-secret"></div>
+        <div class="row"><label style="flex:0 1 200px">6-digit code<input id="tf-code" inputmode="numeric" maxlength="6"></label><button class="btn primary" type="button" id="tf-confirm">Confirm</button></div>
+      </div>
+      <p class="msg" id="tf-msg" hidden></p>
+    </div>
+  </section>
+
+  <!-- Billing -->
+  <section id="v-billing" hidden>
+    <div class="stage"><span class="eyebrow">Account</span><h1>Billing</h1><p class="lede">Invoices and payment.</p></div>
+    <div class="card stack" id="bi-card"></div>
+  </section>
+</main>
+
+<script>/* ark-world:begin */
+/* =====================================================================================
+   Horizon v3 world: one hand-written WebGL shader scene (no libraries). WebGL2 first,
+   then WebGL1 (the shader is GLSL ES 1.00 so one source serves both); if neither is
+   available create() returns null and the page keeps its Canvas-2D heroes, whose CSS
+   gradient is the last, static fallback.
+   One full-screen triangle, one fragment pass:
+     sky        time-of-day gradient, sun/moon disc, scattering glow, stars (night), aurora (chat)
+     monument   the Arkhon mark extruded: two SDF polygons with fake depth (swept side faces),
+                bevel normals, sky-reflecting brushed chrome, rim light, slow idle turn
+     terrain    3-5 fbm ridge layers receding to a curved horizon, aerial haze, strata lines
+     data       towers / scan beam / waveform ridge / light trail / dome from the page's numbers
+     post       grain + chromatic vignette
+   Quality tiers (adaptive): 0 = DPR<=1.5, 5 octaves, 5 layers; 1 = 0.75x res, 4/4; 2 = 0.5x
+   res, 3/3, no haze; 3 = tier 2 at 30 fps. A tier drops when the median GPU time (timer query)
+   or the median frame interval says the budget is blown; it never climbs back (no flicker).
+   ===================================================================================== */
+window.ArkWorld = (() => {
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)');
+  const VS = 'attribute vec2 a;void main(){gl_Position=vec4(a,0.,1.);}';
+  const FS = `
+#ifdef GL_FRAGMENT_PRECISION_HIGH
+precision highp float;
+#else
+precision mediump float;
+#endif
+uniform vec2 uRes; uniform float uTime, uHy, uDolly, uDark, uMode, uNT, uNS, uLevel, uIntro, uOct, uLay, uHaze, uGrow, uAsp;
+uniform vec3 uSkyTop, uSkyLow, uGlow, uGround, uLand, uSage, uBar;
+uniform vec4 uSun; uniform vec4 uTw[16]; uniform float uSer[16];
+uniform vec3 uMon; uniform vec4 uEv; uniform vec2 uSpan; uniform float uPan, uDH;
+float h1(float n){return fract(sin(mod(n,4096.))*43758.5453);}
+float h2(vec2 p){return fract(sin(dot(mod(p,4096.),vec2(127.1,311.7)))*43758.5453);}
+float n1(float x){float i=floor(x),f=fract(x);f=f*f*(3.-2.*f);return mix(h1(i),h1(i+1.),f);}
+float n2(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);
+  return mix(mix(h2(i),h2(i+vec2(1,0)),f.x),mix(h2(i+vec2(0,1)),h2(i+vec2(1,1)),f.x),f.y);}
+float fbm(float x){float s=0.,a=.5;for(int i=0;i<5;i++){if(float(i)>=uOct)break;s+=a*n1(x);x=x*2.03+7.1;a*=.5;}return s;}
+float curv(float x){return x*x/(3.*uAsp);}
+// Mark polygons (viewBox 120x104, y down). Left: 4 points; right: 5.
+float sdSeg(vec2 p,vec2 a,vec2 b,inout float s){vec2 e=b-a,w=p-a;vec2 q=w-e*clamp(dot(w,e)/max(dot(e,e),1e-6),0.,1.);
+  bvec3 c=bvec3(p.y>=a.y,p.y<b.y,e.x*w.y>e.y*w.x);if(all(c)||all(not(c)))s=-s;return dot(q,q);}
+float sdL(vec2 p){float s=1.;float d=sdSeg(p,vec2(60,2),vec2(4,98),s);d=min(d,sdSeg(p,vec2(4,98),vec2(22,98),s));
+  d=min(d,sdSeg(p,vec2(22,98),vec2(58,34),s));d=min(d,sdSeg(p,vec2(58,34),vec2(60,2),s));return s*sqrt(d);}
+float sdR(vec2 p){float s=1.;float d=sdSeg(p,vec2(68,20),vec2(116,98),s);d=min(d,sdSeg(p,vec2(116,98),vec2(98,98),s));
+  d=min(d,sdSeg(p,vec2(98,98),vec2(66,44),s));d=min(d,sdSeg(p,vec2(66,44),vec2(66,24),s));d=min(d,sdSeg(p,vec2(66,24),vec2(68,20),s));return s*sqrt(d);}
+float sdMark(vec2 p){return min(sdL(p),sdR(p));}
+vec3 env(vec3 r){ // what the chrome reflects: the same sky, a bright horizon line, dark land
+  float y=r.y; vec3 up=mix(uSkyLow,uSkyTop,clamp(y*1.4,0.,1.));
+  vec3 dn=mix(uBar*.35,uBar*.8,clamp(-y*2.,0.,1.));
+  vec3 c=y>0.?up*1.05:dn; c+=uGlow*exp(-abs(y)*30.)*.9; c+=vec3(1.)*pow(max(0.,dot(r,normalize(vec3(uSun.x-uMon.x,uSun.y-uHy+.2,.6)))),24.)*uSun.z;
+  return c;}
+float ridge(float x,float k){
+  float z=1.+k*1.3, ze=max(.4,z-uDolly*.9), sc=z/ze;
+  float wx=(x/sc)*(2.6-k*.28)+uPan*(1.6/z)+k*17.31;
+  float base=mix(-.085,.03,k/4.), amp=mix(.075,.06,k/4.);
+  float h=(base+amp*(fbm(wx)-.42))*sc;
+  if(uMode>2.5&&uMode<3.5&&k<.5){ // meetings: the nearest ridge becomes the waveform of meeting lengths
+    float wv=0.;for(int i=0;i<16;i++){if(float(i)>=uNS)break;float xi=mix(uSpan.x,uSpan.y,(float(i)+.5)/max(uNS,1.));
+      wv+=uSer[i]*exp(-pow((x-xi)*26.,2.))*(.8+.2*sin(uTime*2.2+float(i)*1.7));}
+    h+=wv*.11*uGrow;}
+  return uHy+h-curv(x)*(1.+k*.1);}
+void main(){
+  vec2 p=(gl_FragCoord.xy-.5*uRes)/uRes.y; float t=uTime, I=uIntro;
+  float night=uSun.w, ty=clamp((p.y-uHy)/max(.5-uHy,.05),0.,1.);
+  // ---- sky
+  vec3 col=mix(uSkyLow,uSkyTop,smoothstep(0.,1.,pow(ty,.8)));
+  vec2 sp=uSun.xy; sp.y+=mix(-.22,0.,smoothstep(.15,.8,I));
+  float ds=length(p-sp);
+  col+=uGlow*(exp(-ds*3.2)*.42+exp(-ds*13.)*.5)*uSun.z;          // mie halo around the sun
+  col+=uGlow*exp(-max(p.y-uHy,0.)*8.)*.38;                          // rayleigh band low on the sky
+  vec3 sunC=mix(vec3(1.,.93,.82),vec3(.93,.95,1.),night);
+  float disc=smoothstep(.034,.03,ds); float limb=1.-.35*pow(clamp(ds/.034,0.,1.),2.);
+  if(night>.5){disc*=1.-smoothstep(.032,.028,length(p-sp-vec2(.014,.008)));}  // a crescent moon
+  col=mix(col,sunC*limb*(1.+uDark*.2),disc*uSun.z*(p.y>uHy?1.:0.));
+  if(night>0.){vec2 g=(p+vec2(uPan*.012,0.))*140.;vec2 c=floor(g);float r=h2(c);
+    if(r>.982){vec2 o=vec2(h2(c+3.1),h2(c+7.7));float d=length(fract(g)-o);
+      float tw=.6+.4*sin(t*(1.+r*3.)+r*40.);col+=vec3(.9,.94,1.)*smoothstep(.12,0.,d)*tw*night*mix(.25,1.,uDark)*smoothstep(.0,.25,ty);}}
+  if(uMode>4.5&&uMode<5.5){ // chat: an aurora that brightens while a reply streams
+    vec3 au=vec3(0.);for(int i=0;i<3;i++){float fi=float(i);
+      float y0=uHy+.15+fi*.07+.07*(fbm(p.x*1.1+t*.05+fi*3.)-.45);float dy=p.y-y0;
+      float shape=dy>0.?exp(-dy*(7.+fi*3.)):exp(dy*70.);
+      float rays=.45+.55*n1(p.x*48.+t*.5+fi*11.)*n1(p.x*13.-t*.2+fi*2.);
+      au+=mix(uSage*2.3+vec3(.02,.12,.06),vec3(.5,.45,.95),clamp(dy*5.,0.,1.))*shape*rays*(1.-fi*.28);}
+    col+=au*mix(.22,.6,uDark)*uLevel*smoothstep(0.,.04,p.y-uHy);}
+  // ---- monument: the mark, extruded; turns slowly on its axis
+  float ang=sin(t*.17)*.42+uMon.z, ca=cos(ang), sa=sin(ang);
+  vec2 q=(p-vec2(uMon.x,uHy-.004))/uMon.y; q.x/=max(ca,.2);
+  vec2 mk=vec2(60.+q.x*104.,98.-q.y*104.);
+  float mon=0.; vec3 monC=vec3(0.);
+  if(mk.x>-30.&&mk.x<150.&&mk.y>-10.&&mk.y<104.){
+    float br=1.+.006*sin(t*.8); mk=(mk-vec2(60,98))/br+vec2(60,98);
+    float d=sdMark(mk);
+    float dep=sa*16.; float side=1e3;
+    for(int i=1;i<=4;i++){side=min(side,sdMark(mk+vec2(dep*float(i)/4.,-abs(dep)*.06*float(i)/4.)));}
+    float dis=1.; // intro: the mark assembles from light
+    if(I<1.){float nn=n2(mk*.09)*.7+n2(mk*.31)*.3; float th=smoothstep(.4,.95,I)*1.15; dis=step(nn,th);
+      monC+=uGlow*3.*smoothstep(.06,0.,abs(nn-th))*step(d,0.)*(1.-step(1.,th));}
+    if(d<0.){
+      float e=.6; vec2 gr=vec2(sdMark(mk+vec2(e,0))-d,sdMark(mk+vec2(0,e))-d)/e;
+      float b=4.; float bev=clamp(1.+d/b,0.,1.); vec3 n=normalize(vec3(gr.x*ca, -gr.y, 1.)*vec3(bev*1.6,bev*1.6,1.)+vec3(sa*.7+(mk.x-60.)/220.,(mk.y-58.)/70.,0.));
+      vec3 r=reflect(vec3(0,0,-1),n); vec3 c=env(r);
+      float brush=.94+.06*h1(floor(mk.y*1.7)+floor(mk.x*.2)*31.);
+      float sheen=exp(-pow((mk.x+mk.y*.45)-mod(t*22.,260.)+40.,2.)/180.);
+      float gt=fract((mk.x*.55+mk.y)/150.+ang*.35);   // the brand's brushed-chrome ramp, swept by the turn
+      vec3 ch=gt<.38?mix(vec3(.957,.961,.969),vec3(.604,.627,.671),gt/.38):gt<.62?mix(vec3(.604,.627,.671),vec3(.227,.239,.267),(gt-.38)/.24):mix(vec3(.227,.239,.267),vec3(.788,.8,.827),(gt-.62)/.38);
+      c=mix(ch*mix(.92,.8,uDark),c,.38)*brush+vec3(1.)*sheen*.3;
+      c+=uGlow*smoothstep(-1.4,0.,d)*.9;                                   // rim light
+      monC+=c; mon=dis*smoothstep(.0,-.8,d);
+    } else if(side<0.){
+      float k=clamp(-side/6.,0.,1.); vec3 c=mix(uBar*.55,uBar*.9,k)*(.75+.25*abs(sa));
+      c+=uGlow*.25*smoothstep(-1.,0.,side);
+      monC+=c; mon=dis*smoothstep(0.,-.8,side);
+    }
+  }
+  // ---- terrain: nearest occluding ridge wins
+  float hit=-1.; float rk=0.;
+  for(int i=0;i<5;i++){float k=float(i);if(k>=uLay)break;float kk=k*4./max(uLay-1.,1.);float r=ridge(p.x,kk);if(p.y<r){hit=kk;rk=r;break;}}
+  // the monument stands behind the two nearest ridges
+  if(mon>0.&&(hit<0.||hit>1.6)){col=mix(col,monC,mon);}
+  if(hit>=0.){
+    float fk=hit/4.; vec3 hz=mix(uSkyLow,uGlow,.35);
+    vec3 lc=mix(uLand,hz,fk*.82*(.6+.4*uHaze));
+    float dd=rk-p.y;
+    lc+=uGlow*exp(-dd*uRes.y*.55)*(.55-.3*fk);                           // sunlit rim along every ridge
+    lc*=1.+.05*sin(dd*(180.+hit*60.)+hit*3.)*(1.-fk);                      // engraved strata
+    lc=mix(lc,uGround,smoothstep(.02,.22,uHy-p.y)*.85);                 // land fades into the page
+    col=(hit>1.6&&mon>0.)?mix(lc,monC,mon):lc;
+  }
+  // volumetric haze drifting along the horizon
+  if(uHaze>0.){float f=exp(-abs(p.y-uHy-.012)*13.)*(.55+.45*n2(vec2(p.x*2.5+t*.025+uPan*.2,p.y*7.)));col+=uGlow*f*.28*uHaze;}
+  // ---- data
+  float base=uHy-curv(p.x)+.002, nar=step(uAsp,1.);
+  vec3 ACC=mix(vec3(.12,.36,.24),vec3(.62,.95,.78),uDark), INK=mix(vec3(.15,.15,.17),vec3(.97),uDark); // data light reads on any sky
+  if(uMode<2.5){
+    float beam=uMode>1.5?mix(uSpan.x-.05,uSpan.y+.05,fract(t/4.2)):-9.;
+    for(int i=0;i<16;i++){if(float(i)>=uNT)break;vec4 w=uTw[i];
+      float g=smoothstep(w.w,w.w+.4,uGrow); float bx=uHy-curv(w.x)+.002; float hh=w.y*g;
+      float lit=w.z; if(uMode>1.5)lit=max(lit,step(w.x,beam)*.85);
+      float dx=abs(p.x-w.x), wd=.0028+lit*.0008;
+      if(dx<wd&&p.y>bx-.01&&p.y<bx+hh&&!(hit>=0.&&hit<.9)){
+        float v=(p.y-bx)/max(hh,.001); vec3 body=mix(uLand*1.4+.08,mix(vec3(.85),vec3(.35),v),lit*.0);
+        vec3 chrome=mix(vec3(.17,.17,.19),vec3(1.),.5+.5*sin((p.x-w.x)/wd*1.6+1.2))*(.75+.25*v)*mix(.55,1.,uDark);
+        vec3 c=mix(uBar*.9,chrome,lit);
+        c+=vec3(1.)*.35*exp(-pow(v*hh*30.-mod(t*.9+float(i)*.37,1.)*hh*30.,2.)*2.)*lit;
+        c*=mix(1.,.9+.1*step(.5,fract((p.y-bx)*90.)),1.-lit);           // window strips on unlit towers
+        col=mix(col,c,smoothstep(wd,wd*.6,dx));}
+      vec2 tip=vec2(w.x,bx+hh+.012*g); float dt=length(p-tip);
+      if(p.y>bx+hh&&p.y<tip.y&&dx<.0009&&!(hit>=0.&&hit<.9))col=mix(col,mix(uBar,vec3(.9),lit),.9);
+      float blink=lit>.5?(.65+.35*sin(t*2.4+float(i))):.45;
+      col=mix(col,lit>.5?ACC:INK,clamp(exp(-dt*(lit>.5?70.:150.))*blink*g*(lit*.9+.25),0.,1.));}
+    if(uMode>1.5&&uMode<2.5){float bd=abs(p.x-beam);
+      col=mix(col,ACC,clamp(exp(-bd*240.)*smoothstep(base-.01,base+.2,p.y)*smoothstep(base+.26-nar*.12,base+.03,p.y)*.75,0.,1.));
+      col=mix(col,INK,clamp(exp(-bd*900.)*exp(-abs(p.y-base)*120.),0.,1.));}
+  }
+  if(uMode>3.5&&uMode<4.5){ // reports: a light trail drawing the series across the land
+    float best=1e3,along=0.,tot=0.,at=0.; vec2 prev=vec2(0);
+    for(int i=0;i<16;i++){if(float(i)>=uNS)break;float xi=mix(uSpan.x,uSpan.y,float(i)/max(uNS-1.,1.));
+      vec2 cur=vec2(xi,uHy-curv(xi)+.03+uSer[i]*uDH);
+      if(i>0){vec2 e=cur-prev,w=p-prev;float hseg=clamp(dot(w,e)/dot(e,e),0.,1.);float d=length(w-e*hseg);
+        if(d<best){best=d;at=tot+hseg*length(e);} tot+=length(e);}
+      prev=cur;}
+    float prog=uLevel*tot; float on=step(at,prog);
+    col=mix(col,ACC,clamp((exp(-best*900.)*1.1+exp(-best*110.)*.3)*on*(.55+.45*smoothstep(prog-.6,prog,at)),0.,1.));
+    // the comet head
+    float hx=0.; vec2 hp=vec2(0); prev=vec2(0); tot=0.;
+    for(int i=0;i<16;i++){if(float(i)>=uNS)break;float xi=mix(uSpan.x,uSpan.y,float(i)/max(uNS-1.,1.));
+      vec2 cur=vec2(xi,uHy-curv(xi)+.03+uSer[i]*uDH); if(i>0){float l=length(cur-prev); if(prog>=tot&&prog<=tot+l+1e-4){hp=mix(prev,cur,(prog-tot)/max(l,1e-4));hx=1.;} tot+=l;} prev=cur;}
+    col=mix(col,INK,clamp(exp(-length(p-hp)*160.)*hx*1.2,0.,1.));
+  }
+  if(uMode>5.5){ // privacy: a translucent dome closes over the land; activity stays inside
+    vec2 c=vec2(mix(uSpan.x,uSpan.y,.5),base); vec2 rr=vec2((uSpan.y-uSpan.x)*mix(.58,.5,nar),uDH*1.25)*uLevel;
+    vec2 dq=(p-vec2(c.x,uHy-curv(c.x)))/max(rr,vec2(1e-3)); float d=length(dq)-1.;
+    if(p.y>uHy-curv(p.x)-.004&&rr.x>.01){
+      float fres=exp(-abs(d)*38.)*1.2+(d<0.?pow(clamp(1.+d,0.,1.),5.)*.35:0.);
+      float lat=d<0.?smoothstep(.02,0.,abs(fract(dq.y*5.)-.5)*.6)*.18+smoothstep(.03,0.,abs(fract(dq.x*4.+.5)-.5)*.5)*.12:0.;
+      col=mix(col,ACC,clamp((fres+lat*(1.+d))*.75,0.,1.)); if(d<0.)col=mix(col,ACC,.05);}
+    for(int i=0;i<16;i++){if(float(i)>=uNT)break;vec4 w=uTw[i];
+      vec2 dp=vec2(c.x+(w.x-.5)*rr.x*1.5,uHy-curv(c.x)+.01+abs(sin(t*(1.1+w.z*.6)+float(i)*1.3))*rr.y*.62*w.y);
+      col=mix(col,ACC,clamp(exp(-length(p-dp)*150.)*uLevel*1.2,0.,1.));}
+  }
+  // ---- the horizon line, drawn from the centre outward during the intro
+  float hl=exp(-abs(p.y-(uHy-curv(p.x)))*uRes.y*.9)*smoothstep(I*1.2*uAsp,I*1.2*uAsp-.1,abs(p.x-uMon.x*.4));
+  col+=uGlow*hl*(.35+.65*(1.-smoothstep(.85,1.,I)));
+  // ---- events: an approved card landing (ring) and the all-clear burst
+  if(uEv.x>=0.&&uEv.x<1.){vec2 e=(p-vec2(uEv.z,base+.004))/vec2(1.,.28);float r=.03+.16*(1.-pow(1.-uEv.x,3.));
+    col=mix(col,INK,clamp(exp(-abs(length(e)-r)*200.)*(1.-uEv.x)*1.2,0.,1.));}
+  if(uEv.y>=0.&&uEv.y<1.){float r=length((p-vec2(uEv.z,base))*vec2(1.,1.4));float R=.05+uAsp*.7*(1.-pow(1.-uEv.y,3.));
+    col+=uGlow*exp(-abs(r-R)*14.)*(1.-uEv.y)*.9+uSage*exp(-abs(r-R*.8)*30.)*(1.-uEv.y)*.5;}
+  // ---- intro exposure (pre-dawn to day)
+  if(I<1.){float ex=smoothstep(.0,.55,I);col=mix(col*.18+uSkyTop*.06*uDark,col,ex);}
+  // ---- post: grain + chromatic vignette
+  vec2 uv=gl_FragCoord.xy/uRes; float v=smoothstep(.45,1.25,length((uv-.5)*vec2(uAsp*.75,1.))*1.35);
+  col*=1.-v*mix(.07,.22,uDark); col.r*=1.-v*.025; col.b*=1.+v*.02;
+  col+=(h2(gl_FragCoord.xy+fract(t*.37)*311.)-.5)*mix(.022,.03,uDark);
+  gl_FragColor=vec4(clamp(col,0.,1.),1.);
+}`;
+
+  function parse(c) { // any CSS colour -> [r,g,b] 0..1 (alpha composited over white/black)
+    const m = /rgba?\(([^)]+)\)/.exec(c);
+    if (m) { const v = m[1].split(/[ ,/]+/).filter(Boolean).map(Number); const a = v[3] == null ? 1 : v[3]; return [v[0], v[1], v[2]].map(x => x / 255 * a); }
+    const h = (c || '').replace('#', ''); if (h.length >= 6) return [0, 2, 4].map(i => parseInt(h.slice(i, i + 2), 16) / 255);
+    return [.5, .5, .5];
+  }
+  const TOD = { // sun position (x rel. monument side, y above horizon), intensity, night
+    dawn: { x: -.35, y: .06, k: 1.05, n: 0, top: [.42, .44, .58], low: [1, .82, .66], glow: [1, .78, .55] },
+    day: { x: .3, y: .36, k: .6, n: 0 },
+    dusk: { x: .55, y: .05, k: 1.1, n: 0, top: [.30, .27, .45], low: [1, .66, .48], glow: [1, .62, .40] },
+    night: { x: -.45, y: .27, k: .7, n: 1, top: [.04, .05, .10], low: [.12, .15, .24], glow: [.55, .62, .85] },
+  };
+
+  function create(canvas, opts) {
+    opts = opts || {};
+    let gl = null, v2 = false;
+    try {
+      const a = { antialias: false, alpha: false, depth: false, stencil: false, preserveDrawingBuffer: false, powerPreference: 'default' };
+      gl = canvas.getContext('webgl2', a); v2 = !!gl;
+      if (!gl) gl = canvas.getContext('webgl', a) || canvas.getContext('experimental-webgl', a);
+    } catch (_) { gl = null; }
+    if (!gl) return null;
+    const sh = (type, src) => { const s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s); if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) { console.warn('ArkWorld shader:', gl.getShaderInfoLog(s)); return null; } return s; };
+    const vs = sh(gl.VERTEX_SHADER, VS), fs = sh(gl.FRAGMENT_SHADER, FS);
+    if (!vs || !fs) return null;
+    const pr = gl.createProgram(); gl.attachShader(pr, vs); gl.attachShader(pr, fs); gl.bindAttribLocation(pr, 0, 'a'); gl.linkProgram(pr);
+    if (!gl.getProgramParameter(pr, gl.LINK_STATUS)) { console.warn('ArkWorld link:', gl.getProgramInfoLog(pr)); return null; }
+    gl.useProgram(pr);
+    const buf = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
+    gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
+    const U = {}; ['uRes', 'uTime', 'uHy', 'uDolly', 'uDark', 'uMode', 'uNT', 'uNS', 'uLevel', 'uIntro', 'uOct', 'uLay', 'uHaze', 'uGrow', 'uAsp', 'uSkyTop', 'uSkyLow', 'uGlow', 'uBar', 'uGround', 'uLand', 'uSage', 'uSun', 'uTw', 'uSer', 'uMon', 'uEv', 'uSpan', 'uPan', 'uDH']
+      .forEach(n => { U[n] = gl.getUniformLocation(pr, n); });
+    const dbg = gl.getExtension('WEBGL_debug_renderer_info');
+    const renderer = String(dbg ? gl.getParameter(dbg.UNMASKED_RENDERER_WEBGL) : gl.getParameter(gl.RENDERER));
+    const soft = /swiftshader|llvmpipe|software|basic render/i.test(renderer);
+    if (soft && !/[?&]gl=force\b/.test(location.search)) { const lc = gl.getExtension('WEBGL_lose_context'); if (lc) lc.loseContext(); return null; }
+    const tq = v2 ? gl.getExtension('EXT_disjoint_timer_query_webgl2') : gl.getExtension('EXT_disjoint_timer_query');
+    const TIERS = [{ s: 1, oct: 5, lay: 5, haze: 1, fps: 60 }, { s: .75, oct: 4, lay: 4, haze: 1, fps: 60 }, { s: .5, oct: 3, lay: 3, haze: 0, fps: 60 }, { s: .5, oct: 3, lay: 3, haze: 0, fps: 30 }];
+    const S = {
+      tier: soft ? 2 : 0, W: 0, H: 0, dpr: 1, raf: 0, t0: performance.now(), last: 0, running: false, visible: true, lost: false,
+      mode: 0, tw: new Float32Array(64), nt: 0, ser: new Float32Array(16), ns: 0, level: 1, levelT: 1, grow: 1, growAt: -1e9,
+      pan: 0, panT: 0, hy: .1, hyPx: null, dolly: 0, mon: [.3, .22, 0], intro: 1, introAt: -1, introDur: 2500, onIntroEnd: null,
+      ev: [-1, -1, .3, 0], pulseAt: -1e9, burstAt: -1e9, busy: false, colors: null, tod: 'day', ptr: 0, ptrT: 0,
+      frames: [], gpu: [], pending: [], cpu: [], tierLog: [], frameN: 0, data: { towers: [], series: [] },
+    };
+    const span = () => { const a = S.W / S.H; return a < 1 ? [-.42 * a, .42 * a] : (opts.lite ? [.02 * a, .46 * a] : [-.02 * a, .46 * a]); };
+
+    function readColors() {
+      const cs = getComputedStyle(document.documentElement), v = k => cs.getPropertyValue(k).trim();
+      const dark = parse(v('--bg'))[0] < .3;
+      const T = TOD[S.tod] || TOD.day;
+      let top = parse(v('--sky-top')), low = parse(v('--sky-low')), glow = dark ? [.84, .86, .91] : [1, 1, 1];
+      if (T.top) { const k = dark ? .55 : .32; const mix = (a, b) => a.map((x, i) => x + (b[i] - x) * k); top = mix(top, T.top); low = mix(low, dark ? T.low.map(x => x * .45) : T.low); glow = mix(glow, T.glow); }
+      if (S.tod === 'night' && !dark) { top = [.74, .78, .86]; low = [.90, .91, .95]; }
+      const ground = parse(v('--bg'));
+      const land = dark ? [.055, .062, .08] : [.70, .73, .78];
+      S.colors = { top, low, glow: glow.map(x => x * (dark ? .5 : .42)), ground, land, bar: parse(v('--bar')), sage: [.184, .478, .333], dark: dark ? 1 : 0, T };
+    }
+
+    function resize() {
+      const r = canvas.getBoundingClientRect(); if (!r.width || !r.height) return false;
+      const dpr = Math.min(devicePixelRatio || 1, 1.5) * TIERS[S.tier].s;
+      const W = Math.max(2, Math.round(r.width * dpr)), H = Math.max(2, Math.round(r.height * dpr));
+      if (W !== canvas.width || H !== canvas.height) { canvas.width = W; canvas.height = H; }
+      S.W = W; S.H = H; S.dpr = dpr; S.cssH = r.height; S.cssW = r.width; return true;
+    }
+
+    function layoutTowers() {
+      const [x0, x1] = span(), list = S.data.towers, n = Math.min(16, list.length), max = Math.max(1e-6, ...list.map(b => b.v || 0));
+      const narrow = S.W / S.H < 1, hMax = narrow ? .09 : .2;
+      S.nt = n;
+      for (let i = 0; i < n; i++) {
+        const b = list[i], x = n === 1 ? (x0 + x1) / 2 : x0 + (x1 - x0) * (i + .5) / n;
+        S.tw[i * 4] = x; S.tw[i * 4 + 1] = S.mode === 6 ? .3 + ((i * 37) % 10) / 14 : Math.max(.012, (b.v || 0) / max * hMax);
+        S.tw[i * 4 + 2] = b.lit ? 1 : 0; S.tw[i * 4 + 3] = (i / Math.max(1, n)) * .35;
+        if (S.mode === 6) S.tw[i * 4] = (i + .5) / n;
+      }
+      const ser = S.data.series, m = Math.min(16, ser.length), smax = Math.max(1e-6, ...ser.map(Math.abs));
+      S.ns = m; for (let i = 0; i < m; i++) S.ser[i] = ser[i] / smax;
+    }
+
+    function draw(t, still) {
+      if (S.lost || !S.W) return;
+      if (!S.colors) readColors();
+      const C = S.colors, T = C.T, tier = TIERS[S.tier], a = S.W / S.H;
+      const time = still ? 12 : (t - S.t0) / 1000;
+      // camera: pan eases towards the page's place; the pointer adds a little parallax
+      S.prevGap = S.prevT && !still ? t - S.prevT : 0;
+      const dt = S.prevT ? Math.min(.1, (t - S.prevT) / 1000) : .016; S.prevT = still ? 0 : t;
+      const k = r => 1 - Math.exp(-dt * r); // frame-rate independent easing
+      if (!still) { S.pan += (S.panT - S.pan) * k(3.4); S.ptr += (S.ptrT - S.ptr) * k(3.6); } else { S.pan = S.panT; }
+      const pan = S.pan + (still ? 0 : S.ptr * .35);
+      const fly = S.panT - S.pan; // towers ride with the land while flying
+      let grow = 1; if (!still && S.growAt > 0) grow = Math.min(1, (t - S.growAt) / 1200); if (still) grow = 1;
+      // The intro clock starts on the first frame actually drawn, and a stalled frame (page load,
+      // a busy main thread) doesn't eat into it.
+      if (S.introPending && !still) { S.introPending = false; S.introAt = t; }
+      if (S.introAt > 0 && !still && S.prevGap > 300) S.introAt += S.prevGap - 16;
+      let intro = S.introPending ? 0 : 1; if (S.introAt > 0 && !still) { intro = Math.min(1, (t - S.introAt) / S.introDur); if (intro >= 1) { S.introAt = -1; const f = S.onIntroEnd; S.onIntroEnd = null; if (f) f(); } }
+      if (S.introAt > 0 || S.introPending) grow = Math.min(grow, Math.max(0, (intro - .3) / .5));
+      if (!still) S.level += (S.levelT - S.level) * k(S.mode === 4 ? 1.4 : 2.6); else S.level = S.levelT;
+      const ex = S.mode === 4 && still ? 1 : S.level;
+      gl.viewport(0, 0, S.W, S.H);
+      gl.uniform2f(U.uRes, S.W, S.H); gl.uniform1f(U.uTime, time); gl.uniform1f(U.uAsp, a);
+      const hyPx = S.hyPx == null ? S.cssH * .72 : S.hyPx; // horizon, CSS px from the top of the canvas
+      gl.uniform1f(U.uHy, .5 - hyPx / S.cssH); gl.uniform1f(U.uDolly, still ? 0 : S.dolly);
+      gl.uniform1f(U.uDark, C.dark); gl.uniform1f(U.uMode, S.mode); gl.uniform1f(U.uLevel, ex);
+      gl.uniform1f(U.uIntro, intro); gl.uniform1f(U.uOct, tier.oct); gl.uniform1f(U.uLay, tier.lay); gl.uniform1f(U.uHaze, tier.haze); gl.uniform1f(U.uGrow, grow);
+      gl.uniform3fv(U.uSkyTop, C.top); gl.uniform3fv(U.uSkyLow, C.low); gl.uniform3fv(U.uGlow, C.glow); gl.uniform3fv(U.uGround, C.ground); gl.uniform3fv(U.uLand, C.land); gl.uniform3fv(U.uBar, C.bar); gl.uniform3fv(U.uSage, C.sage);
+      const narrow = a < 1, monX = narrow ? .22 * a : (opts.lite ? .3 * a : .22 * a), monS = narrow ? .14 : (opts.lite ? .2 : .26);
+      gl.uniform4f(U.uSun, monX + T.x * a * .5 - pan * .01, .5 - hyPx / S.cssH + T.y, T.k, T.n);
+      gl.uniform3f(U.uMon, monX - pan * .004, monS, 0);
+      // Data never climbs into the title: its height scales with the room between the top and the horizon.
+      const room = Math.max(.45, Math.min(1, hyPx / S.cssH / .72)), dh = (a < 1 ? .06 : .2) * room; gl.uniform1f(U.uDH, dh);
+      const tw = S.tw.slice(0, Math.max(4, S.nt * 4));
+      if (S.mode !== 6) for (let i = 0; i < S.nt; i++) tw[i * 4 + 1] *= dh / (a < 1 ? .09 : .2);
+      const fx = Math.max(-1.4 * a, Math.min(1.4 * a, fly * .55));
+      if (fx && S.mode !== 6) for (let i = 0; i < S.nt; i++) tw[i * 4] -= fx;
+      gl.uniform4fv(U.uTw, new Float32Array(64).map((_, i) => tw[i] || 0)); gl.uniform1f(U.uNT, S.nt);
+      gl.uniform1fv(U.uSer, S.ser); gl.uniform1f(U.uNS, S.ns);
+      const [x0, x1] = span(); gl.uniform2f(U.uSpan, x0 - (S.mode === 6 ? 0 : fx), x1 - (S.mode === 6 ? 0 : fx)); gl.uniform1f(U.uPan, pan);
+      const kp = still ? -1 : (t - S.pulseAt) / 700, kb = still ? -1 : (t - S.burstAt) / 1500;
+      gl.uniform4f(U.uEv, kp >= 0 && kp < 1 ? kp : -1, kb >= 0 && kb < 1 ? kb : -1, (x0 + x1) / 2, 0);
+      let q = null;
+      if (tq && !still && S.pending.length < 3) { q = v2 ? gl.createQuery() : tq.createQueryEXT(); v2 ? gl.beginQuery(tq.TIME_ELAPSED_EXT, q) : tq.beginQueryEXT(tq.TIME_ELAPSED_EXT, q); }
+      gl.drawArrays(gl.TRIANGLES, 0, 3);
+      if (q) { v2 ? gl.endQuery(tq.TIME_ELAPSED_EXT) : tq.endQueryEXT(tq.TIME_ELAPSED_EXT); S.pending.push(q); }
+      pollQueries();
+    }
+    function pollQueries() {
+      if (!tq) return;
+      while (S.pending.length) {
+        const q = S.pending[0];
+        const ok = v2 ? gl.getQueryParameter(q, gl.QUERY_RESULT_AVAILABLE) : tq.getQueryObjectEXT(q, tq.QUERY_RESULT_AVAILABLE_EXT);
+        const dis = gl.getParameter(tq.GPU_DISJOINT_EXT);
+        if (!ok) break;
+        const ns = v2 ? gl.getQueryParameter(q, gl.QUERY_RESULT) : tq.getQueryObjectEXT(q, tq.QUERY_RESULT_EXT);
+        if (!dis) { S.gpu.push(ns / 1e6); if (S.gpu.length > 240) S.gpu.shift(); }
+        v2 ? gl.deleteQuery(q) : tq.deleteQueryEXT(q); S.pending.shift();
+      }
+    }
+    const med = a => { if (!a.length) return 0; const s = [...a].sort((x, y) => x - y); return s[Math.floor(s.length / 2)]; };
+    const pct = (a, p) => { if (!a.length) return 0; const s = [...a].sort((x, y) => x - y); return s[Math.min(s.length - 1, Math.floor(s.length * p))]; };
+    function adapt() {
+      // Budget: 12 ms of GPU per frame (timer query) or, without one, a 60 fps cadence.
+      if (S.frameN % 45 || S.locked) return;
+      if (S.tier >= 3) {
+        const r = S.frames.slice(-30);
+        if (r.length >= 20 && med(r) > 45 && opts.onLost) { S.lost = true; opts.onLost(); }
+        return;
+      }
+      const recent = S.frames.slice(-40), g = S.gpu.slice(-40);
+      const slow = (g.length >= 20 && med(g) > 12) || (recent.length >= 30 && med(recent) > 19);
+      if (slow) { S.tier++; S.tierLog.push({ at: Math.round(performance.now()), tier: S.tier, gpu_ms: +med(g).toFixed(2), interval_ms: +med(recent).toFixed(2) }); S.frames = []; S.gpu = []; resize(); }
+    }
+    function loop(t) {
+      S.raf = 0;
+      if (!S.running || reduce.matches || document.hidden || !S.visible || S.lost) return;
+      const fps = TIERS[S.tier].fps;
+      if (fps < 60 && S.last && t - S.last < 1000 / fps - 2) { S.raf = requestAnimationFrame(loop); return; }
+      if (S.last) { S.frames.push(t - S.last); if (S.frames.length > 240) S.frames.shift(); }
+      S.last = t; S.frameN++;
+      const a = performance.now(); draw(t, false); S.cpu.push(performance.now() - a); if (S.cpu.length > 240) S.cpu.shift();
+      adapt();
+      S.raf = requestAnimationFrame(loop);
+    }
+    function kick() {
+      if (S.lost) return;
+      if (!S.W) resize();
+      if (reduce.matches || document.hidden || !S.visible || !S.running) { cancelAnimationFrame(S.raf); S.raf = 0; S.last = 0; draw(performance.now(), true); return; }
+      if (!S.raf) { S.last = 0; S.raf = requestAnimationFrame(loop); }
+    }
+    canvas.addEventListener('webglcontextlost', e => { e.preventDefault(); S.lost = true; if (opts.onLost) opts.onLost(); });
+    new ResizeObserver(() => { if (resize()) kick(); }).observe(canvas);
+    document.addEventListener('visibilitychange', kick);
+    reduce.addEventListener('change', kick);
+    resize(); readColors();
+    S.running = true;
+
+    return {
+      gl: v2 ? 'webgl2' : 'webgl', renderer, soft,
+      /** mode: 0 towers, 1 inbox, 2 docs scan, 3 meetings waveform, 4 reports trail, 5 chat aurora, 6 privacy dome */
+      scene(mode, towers, series, opts2) {
+        const key = JSON.stringify([mode, towers, series]);
+        if (key === S.key) return; S.key = key;
+        const changed = mode !== S.mode; S.mode = mode; S.data = { towers: towers || [], series: series || [] };
+        layoutTowers(); S.growAt = reduce.matches ? -1e9 : performance.now();
+        if (mode === 4 || mode === 6) { if (changed && !reduce.matches) S.level = 0; S.levelT = 1; } else if (mode === 5) S.levelT = S.busy ? 1 : .35; else S.levelT = 1;
+        kick();
+      },
+      place(x) { S.panT = x; kick(); },
+      horizon(px) { if (S.hyPx !== px) { S.hyPx = px; if (!S.raf) kick(); } },
+      dolly(d) { if (Math.abs(S.dolly - d) > .002) { S.dolly = d; if (!S.raf) kick(); } },
+      pointer(x) { S.ptrT = reduce.matches ? 0 : x; },
+      tod(name) { S.tod = name; readColors(); kick(); },
+      retheme() { readColors(); kick(); },
+      busy(b) { S.busy = !!b; if (S.mode === 5) S.levelT = b ? 1 : .35; kick(); },
+      pulse() { if (!reduce.matches) { S.pulseAt = performance.now(); kick(); } },
+      burst() { if (!reduce.matches) { S.burstAt = performance.now(); kick(); } },
+      /** Play the sunrise intro; resolves when it ends (or at once under reduced motion). */
+      intro(dur) { return new Promise(res => { if (reduce.matches) return res(); S.introDur = dur || 2500; S.introAt = -1; S.introPending = true; S.onIntroEnd = res; kick();
+        setTimeout(() => { if (S.onIntroEnd === res) this.skipIntro(); }, S.introDur * 4); /* never strand the page behind an intro */ }); },
+      skipIntro() { S.introPending = false; S.introAt = -1; const f = S.onIntroEnd; S.onIntroEnd = null; if (f) f(); kick(); },
+      setVisible(v) { if (S.visible !== v) { S.visible = v; kick(); } },
+      stop() { S.running = false; kick(); }, start() { S.running = true; kick(); },
+      target() { const [x0, x1] = span(); const r = canvas.getBoundingClientRect(); const hy = S.hyPx == null ? S.cssH * .72 : S.hyPx;
+        return { x: r.left + ((x0 + x1) / 2 / (S.W / S.H) + .5) * r.width, y: r.top + hy - 20 }; },
+      stats() {
+        const f = S.frames, g = S.gpu;
+        return { api: v2 ? 'webgl2' : 'webgl', renderer, tier: S.tier, tiers: S.tierLog.slice(), res: [S.W, S.H], frames: f.length,
+          interval_median_ms: +med(f).toFixed(2), interval_p95_ms: +pct(f, .95).toFixed(2),
+          gpu_median_ms: g.length ? +med(g).toFixed(2) : null, gpu_p95_ms: g.length ? +pct(g, .95).toFixed(2) : null,
+          cpu_median_ms: +med(S.cpu).toFixed(3), timer_query: !!tq };
+      },
+      resetStats() { S.frames = []; S.gpu = []; S.cpu = []; },
+      setTier(n) { S.locked = true; S.tier = Math.max(0, Math.min(3, n)); S.tierLog.push({ at: Math.round(performance.now()), tier: S.tier, forced: true }); resize(); kick(); },
+      kick,
+    };
+  }
+  return { create };
+})();
+/* ark-world:end */</script>
+<script>
+/* Horizon hero (lite): the suite's hero engine reduced to one skyline scene, inline for the
+   strict CSP. Sky + light behind the horizon + grain (cached), then per frame: skyline bars
+   from the page's real numbers, the horizon arc, a chrome sheen, dust and a soft pointer
+   light (desktop only). Pauses off screen / hidden; one still frame under reduced motion. */
+window.ArkHz = (() => {
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)'), fine = matchMedia('(hover: hover) and (pointer: fine)');
+  const ease = t => 1 - Math.pow(1 - t, 3), clamp = (v, a = 0, b = 1) => Math.max(a, Math.min(b, v)), TAU = Math.PI * 2;
+  const stats = { frames: 0, ms: 0, worst: 0 };
+  let C = null, band = null, cv = null, ctx = null, stat = null, w = 0, h = 0, dpr = 1, g = null, cols = [], bars = [], key = '';
+  let W3 = null, grow = 1, growAt = -1e9, raf = 0, visible = true, t0 = performance.now(), px = .5, py = .5, tx = .5, ty = .5, hov = 0, hovT = 0, stageEl = null;
+  function rng(seed) { let s = seed >>> 0 || 1; return () => (s = (s * 1664525 + 1013904223) >>> 0) / 4294967296; }
+  const dust = Array.from({ length: 30 }, (_, i) => { const r = rng(i * 97 + 3); return { x: r(), y: r(), s: .6 + r() * 1.3, v: .15 + r() * .5, p: r() * TAU }; });
+  function colors() {
+    const s = getComputedStyle(document.documentElement), v = k => s.getPropertyValue(k).trim();
+    C = { skyTop: v('--sky-top'), skyLow: v('--sky-low'), glow: v('--glow'), glow2: v('--glow-2'), ground: v('--bg'), bar: v('--bar'), litA: v('--bar-lit-a'), litB: v('--bar-lit-b'), litC: v('--bar-lit-c'), arc: v('--arc'), dust: v('--dust') };
+  }
+  function arcY(x) { return g.cy - Math.sqrt(Math.max(0, g.R * g.R - (x - g.cx) * (x - g.cx))); }
+  function roundTop(p, x, y, bw, bh, r) { p.moveTo(x, y + bh); p.lineTo(x, y + r); p.quadraticCurveTo(x, y, x + r, y); p.lineTo(x + bw - r, y); p.quadraticCurveTo(x + bw, y, x + bw, y + r); p.lineTo(x + bw, y + bh); p.closePath(); }
+  function layout() {
+    if (!w) return;
+    const narrow = w < 720, horizon = h - (narrow ? 40 : 54), R = Math.max(w * 1.5, 900);
+    g = { narrow, horizon, R, cx: w / 2, cy: horizon + R };
+    if (W3) W3.horizon(horizon);
+    const n = bars.length || 1, max = Math.max(1e-6, ...bars.map(b => b.v));
+    const x0 = narrow ? w * .12 : w * .56, x1 = narrow ? w * .88 : w * .94, step = (x1 - x0) / n, bw = Math.max(3, Math.min(24, step * .52));
+    const hMax = narrow ? Math.min(46, h * .15) : Math.min(h * .34, 140);
+    cols = bars.map((b, i) => { const x = x0 + step * (i + .5); return { x, w: bw, h: Math.max(4, b.v / max * hMax), base: arcY(x), lit: !!b.lit }; });
+    g.glowX = x0 + (x1 - x0) / 2;
+    paintStatic();
+  }
+  function paintStatic() {
+    if (!w || !C) return;
+    stat = stat || document.createElement('canvas'); stat.width = cv.width; stat.height = cv.height;
+    const x = stat.getContext('2d'); x.setTransform(dpr, 0, 0, dpr, 0, 0);
+    const sky = x.createLinearGradient(0, 0, 0, g.horizon); sky.addColorStop(0, C.skyTop); sky.addColorStop(1, C.skyLow); x.fillStyle = sky; x.fillRect(0, 0, w, h);
+    const gl = x.createRadialGradient(g.glowX, g.horizon, 0, g.glowX, g.horizon, Math.max(w * .55, 420)); gl.addColorStop(0, C.glow); gl.addColorStop(.45, C.glow2); gl.addColorStop(1, 'rgba(0,0,0,0)');
+    x.fillStyle = gl; x.fillRect(0, 0, w, h);
+    const r = rng(7); x.fillStyle = C.dust; for (let i = 0; i < 900; i++) { x.globalAlpha = r() * .12; x.fillRect(r() * w, r() * g.horizon, 1, 1); } x.globalAlpha = 1;
+    x.beginPath(); x.arc(g.cx, g.cy, g.R, 0, TAU); x.fillStyle = C.ground; x.fill();
+  }
+  function frame(t, still) {
+    if (!w || !stat) return;
+    const el = still ? 0 : (t - t0) / 1000;
+    ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.drawImage(stat, 0, 0); ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    if (grow < 1) grow = .55 + .45 * ease(clamp((t - growAt) / 1100));
+    const gr = still && (reduce.matches || grow >= 1) ? 1 : grow;
+    if (!still) { px += (tx - px) * .08; py += (ty - py) * .08; hov += (hovT - hov) * .06; }
+    const ox = still ? 0 : (px - .5) * -10 * hov;
+    if (hov > .01 && !still) { const lx = px * w, ly = py * h, pl = ctx.createRadialGradient(lx, ly, 0, lx, ly, 240); pl.addColorStop(0, C.glow); pl.addColorStop(1, 'rgba(0,0,0,0)'); ctx.globalAlpha = .35 * hov; ctx.fillStyle = pl; ctx.fillRect(lx - 240, 0, 480, g.horizon); ctx.globalAlpha = 1; }
+    const lit = ctx.createLinearGradient(0, g.horizon - 180, 0, g.horizon); lit.addColorStop(0, C.litA); lit.addColorStop(.5, C.litB); lit.addColorStop(1, C.litC);
+    const path = new Path2D(); let tall = null;
+    cols.forEach(c => { const bh = c.h * gr, p = new Path2D(); roundTop(p, c.x - c.w / 2 + ox, c.base - bh, c.w, bh + 6, Math.min(3, c.w / 2));
+      ctx.fillStyle = c.lit ? lit : C.bar; ctx.globalAlpha = c.lit ? 1 : .8; ctx.fill(p); path.addPath(p); if (!tall || bh > tall.h) tall = { x: c.x + ox, y: c.base - bh, h: bh }; });
+    ctx.globalAlpha = 1;
+    if (tall) { ctx.strokeStyle = C.arc; ctx.lineWidth = 1.2; ctx.globalAlpha = .55; ctx.beginPath(); ctx.moveTo(tall.x, tall.y - 3); ctx.lineTo(tall.x, tall.y - 16); ctx.stroke(); ctx.globalAlpha = 1; }
+    const arc = new Path2D(); arc.arc(g.cx, g.cy, g.R, Math.PI * 1.05, Math.PI * 1.95);
+    ctx.strokeStyle = C.arc; ctx.lineWidth = 1.6; ctx.globalAlpha = .7; ctx.stroke(arc); ctx.globalAlpha = 1;
+    const ph = still ? .62 : (el % 9) / 9;
+    if (ph < .75) { const sx = -200 + (w + 400) * (ph / .75), b = ctx.createLinearGradient(sx - 120, 0, sx + 120, 0);
+      b.addColorStop(0, 'rgba(255,255,255,0)'); b.addColorStop(.5, 'rgba(255,255,255,.75)'); b.addColorStop(1, 'rgba(255,255,255,0)');
+      ctx.save(); ctx.lineWidth = 3.2; ctx.strokeStyle = b; ctx.stroke(arc); ctx.clip(path); ctx.fillStyle = b; ctx.globalAlpha = .6; ctx.fillRect(sx - 120, 0, 240, h); ctx.restore(); }
+    ctx.fillStyle = C.dust;
+    for (const d of dust) { const y = (d.y - el * d.v * .03) % 1, yy = y < 0 ? y + 1 : y; ctx.globalAlpha = Math.min(1, yy * 1.4) * .7; ctx.fillRect(d.x * w + Math.sin(el * .3 + d.p) * 8, yy * g.horizon, d.s, d.s); }
+    ctx.globalAlpha = 1;
+  }
+  function loop(t) {
+    raf = 0; if (reduce.matches || document.hidden || !visible) return;
+    const a = performance.now(); frame(t, false); const d = performance.now() - a;
+    stats.frames++; stats.ms += d; stats.worst = Math.max(stats.worst, d);
+    raf = requestAnimationFrame(loop);
+  }
+  function kick() {
+    if (!cv) return;
+    if (W3) { W3.setVisible(visible); return; } // the WebGL world draws instead
+    if (reduce.matches || document.hidden || !visible) { cancelAnimationFrame(raf); raf = 0; frame(performance.now(), true); return; }
+    if (!raf) raf = requestAnimationFrame(loop);
+  }
+  function size() {
+    if (!band) return;
+    // The band ends where the active page's title block (.stage) ends: that's the horizon.
+    const top = stageEl && stageEl.offsetParent ? stageEl.getBoundingClientRect().bottom + scrollY : 0;
+    band.style.setProperty('--hz-h', Math.max(260, Math.round(top)) + 'px');
+    const r = band.getBoundingClientRect(), nd = Math.min(devicePixelRatio || 1, 2);
+    if (!r.width || !r.height) return;
+    if (r.width === w && r.height === h && nd === dpr && stat) return;
+    w = r.width; h = r.height; dpr = nd; cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr);
+    layout(); frame(performance.now(), true);
+  }
+  function init() {
+    band = document.createElement('div'); band.className = 'hz-band'; band.setAttribute('aria-hidden', 'true');
+    cv = document.createElement('canvas'); band.appendChild(cv); document.body.prepend(band);
+    ctx = cv.getContext('2d', { alpha: false }); colors();
+    // Horizon v3: the WebGL world when it can run (WebGL2, then WebGL1); otherwise this 2D hero.
+    if (window.ArkWorld && !/[?&]gl=0\b/.test(location.search)) {
+      const gc = document.createElement('canvas'); gc.className = 'w3'; band.appendChild(gc);
+      W3 = window.ArkWorld.create(gc, { lite: true, onLost: () => { band.classList.remove('gl'); document.documentElement.classList.remove('gl'); W3 = null; kick(); } });
+      if (W3) { band.classList.add('gl'); document.documentElement.classList.add('gl'); window.ArkWorldLite = W3; } else gc.remove();
+    }
+    new IntersectionObserver(es => { visible = es[0].isIntersecting; kick(); }).observe(band);
+    new ResizeObserver(size).observe(document.body);
+    document.addEventListener('visibilitychange', kick);
+    reduce.addEventListener('change', () => { grow = 1; kick(); });
+    matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => { if (W3) W3.retheme(); colors(); paintStatic(); frame(performance.now(), true); kick(); });
+    addEventListener('pointermove', e => {
+      const cd = e.target.closest && e.target.closest('.card'); if (cd && e.pointerType === 'mouse') { const r = cd.getBoundingClientRect(); cd.style.setProperty('--mx', (e.clientX - r.left) + 'px'); cd.style.setProperty('--my', (e.clientY - r.top) + 'px'); }
+      if (W3 && e.pointerType === 'mouse' && fine.matches) W3.pointer((e.clientX / innerWidth - .5) * 2);
+      if (e.pointerType !== 'mouse' || !fine.matches || reduce.matches || !h) return; tx = clamp(e.clientX / w); ty = clamp((e.clientY + scrollY) / h); hovT = e.clientY + scrollY < h ? 1 : 0; kick(); }, { passive: true });
+    document.addEventListener('pointerleave', () => { hovT = 0; tx = ty = .5; });
+  }
+  const MARK = [{ v: 24 }, { v: 38 }, { v: 54, lit: true }, { v: 36 }, { v: 22 }];
+  return {
+    MARK,
+    /** Point the band at this page's title block and set its skyline: bars = [{v, lit}]. */
+    show(stage, list) {
+      if (!band) init();
+      stageEl = stage; band.hidden = !stage;
+      const next = list && list.length ? list : MARK, k = JSON.stringify(next);
+      if (k !== key) { key = k; bars = next; if (w) layout(); grow = reduce.matches ? 1 : .55; growAt = performance.now(); }
+      if (W3) { W3.scene(0, next.slice(0, 16), []); const hs = (location.hash || '#').slice(1); let n = 0; for (const c of hs) n = (n * 31 + c.charCodeAt(0)) % 997; W3.place((n % 9) * 2.4); }
+      w = 0; size(); kick();
+    },
+    stats: () => ({ frames: stats.frames, avg_ms: stats.frames ? stats.ms / stats.frames : 0, worst_ms: stats.worst }),
+    resetStats() { stats.frames = 0; stats.ms = 0; stats.worst = 0; },
+  };
+})();
+/* Shared Horizon helpers: count-up numbers, the gliding nav indicator and the horizon wipe. */
+window.ArkUi = (() => {
+  const reduce = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
+  function countUp(el, to) {
+    if (!el) return; const n = +to;
+    if (!Number.isFinite(n)) { el.textContent = to; delete el.dataset.n; return; }
+    const from = el.dataset.n != null ? +el.dataset.n : 0; el.dataset.n = n;
+    if (reduce() || from === n) { el.textContent = String(to); return; }
+    const t0 = performance.now();
+    const step = t => { if (+el.dataset.n !== n) return; const k = Math.min(1, Math.max(0, (t - t0) / 900)); el.textContent = k < 1 ? String(Math.round(from + (n - from) * (1 - Math.pow(1 - k, 3)))) : String(to); if (k < 1) requestAnimationFrame(step); };
+    requestAnimationFrame(step);
+  }
+  function glide(nav, instant) {
+    if (!nav) return; let ind = nav.querySelector('.nav-ind');
+    if (!ind) { ind = document.createElement('span'); ind.className = 'nav-ind'; ind.setAttribute('aria-hidden', 'true'); nav.prepend(ind); }
+    const cur = nav.querySelector('a[aria-current="page"]:not([hidden])');
+    if (!cur || !cur.offsetWidth) { ind.style.opacity = 0; return; }
+    if (instant || reduce() || ind.style.opacity !== '1') { ind.style.transition = 'none'; requestAnimationFrame(() => requestAnimationFrame(() => { ind.style.transition = ''; })); }
+    ind.style.opacity = 1; ind.style.width = cur.offsetWidth + 'px'; ind.style.transform = `translateX(${cur.offsetLeft}px)`;
+  }
+  /* Route changes get the horizon wipe (View Transitions) where supported; the new page has up to
+     150 ms to load its data first, so the wipe reveals content, not a blank page. */
+  function wipe(update) {
+    if (!document.startViewTransition || reduce()) return update();
+    let p;
+    try { document.startViewTransition(() => { p = Promise.resolve(update()); return Promise.race([p, new Promise(r => setTimeout(r, 150))]); }); }
+    catch (_) { return update(); }
+    return p;
+  }
+  function enter(section) { if (!section || reduce()) return; section.classList.remove('enter'); void section.offsetWidth; section.classList.add('enter'); }
+  return { countUp, glide, wipe, enter };
+})();
+</script>
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const day = t => t ? new Date(t * 1000).toLocaleDateString([], { year: 'numeric', month: 'short', day: 'numeric' }) : '–';
+  const ago = t => { const d = Math.floor((Date.now() / 1000 - t) / 86400); return d <= 0 ? 'today' : d === 1 ? 'yesterday' : `${d} days ago`; };
+  const size = n => n >= 1e9 ? (n / 1e9).toFixed(1) + ' GB' : n >= 1e6 ? (n / 1e6).toFixed(1) + ' MB' : n >= 1e3 ? (n / 1e3).toFixed(0) + ' KB' : n + ' bytes';
+  const stateWord = { ok: 'Working', 'ending-soon': 'Ends soon', paused: 'Paused', ended: 'Ended', 'not-started': 'Not started' };
+  const roleWord = { owner: 'Owner', billing: 'Billing', viewer: 'Viewer' };
+  let token = null, me = null;
+  try { token = sessionStorage.getItem('arkhon-portal'); } catch (_) {}
+
+  function show(el, text, kind) { el.hidden = false; el.className = 'msg ' + (kind === true ? 'ok' : kind === false || !kind ? 'err' : kind); el.textContent = text; }
+  async function api(method, path, body, raw) {
+    const headers = Object.assign(raw ? { 'content-type': 'application/octet-stream' } : { 'content-type': 'application/json' }, token ? { authorization: 'Bearer ' + token } : {});
+    const r = await fetch(path, { method, headers, body: raw ? body : body ? JSON.stringify(body) : undefined });
+    if (raw && r.ok) return r.blob();
+    const data = await r.json().catch(() => ({}));
+    if (r.status === 401 && token && !data.totp_required) { signOut(); throw new Error(data.error || 'Sign in again.'); }
+    if (!r.ok) { const e = new Error(data.error || 'That didn’t work. Try again.'); e.data = data; throw e; }
+    return data;
+  }
+  function setToken(t) { token = t; try { t ? sessionStorage.setItem('arkhon-portal', t) : sessionStorage.removeItem('arkhon-portal'); } catch (_) {} }
+  function signOut() { if (token) fetch('/portal/logout', { method: 'POST', headers: { authorization: 'Bearer ' + token } }).catch(() => {}); setToken(null); me = null; location.hash = '#signin'; route(); }
+  $('signout').addEventListener('click', signOut);
+  document.addEventListener('click', e => { const g = e.target.closest('[data-go]'); if (g) location.hash = g.dataset.go; });
+
+  // ------------------------------------------------------------- public views
+  $('signin-form').addEventListener('submit', async e => {
+    e.preventDefault();
+    try {
+      const d = await api('POST', '/portal/login', { email: $('si-email').value, password: $('si-pass').value, code: $('si-code').value || undefined });
+      setToken(d.token); $('si-pass').value = ''; $('si-code').value = ''; $('si-msg').hidden = true; $('si-code-wrap').hidden = true;
+      location.hash = '#overview'; route();
+    } catch (err) {
+      if (err.data && err.data.totp_required) { $('si-code-wrap').hidden = false; $('si-code').focus(); }
+      show($('si-msg'), err.message, false);
+    }
+  });
+
+  let acceptToken = '';
+  $('accept-form').addEventListener('submit', async e => {
+    e.preventDefault();
+    if ($('ac-pass').value !== $('ac-pass2').value) return show($('ac-msg'), 'The two passwords don’t match.', false);
+    try {
+      const d = await api('POST', '/portal/invites/accept', { token: acceptToken, password: $('ac-pass').value, name: $('ac-name').value });
+      setToken(d.token); $('ac-pass').value = $('ac-pass2').value = '';
+      history.replaceState(null, '', '#overview'); route();
+    } catch (err) { show($('ac-msg'), err.message, false); }
+  });
+
+  $('trial-form').addEventListener('submit', async e => {
+    e.preventDefault();
+    try {
+      const d = await api('POST', '/portal/trial', { company: $('tr-company').value, name: $('tr-name').value, email: $('tr-email').value });
+      $('trial-form').hidden = true; $('tr-done').hidden = false;
+      $('tr-key').textContent = d.activation_key; $('tr-go').href = d.invite_link;
+      $('tr-note').textContent = `Your trial runs until ${day(d.trial_ends_at)}. We'll email you links like this once email is set up; for now, keep this page open until you've set your password.`;
+    } catch (err) { show($('tr-msg'), err.message, false); }
+  });
+
+  // ------------------------------------------------------------- router
+  const priv = ['overview', 'licenses', 'license', 'computers', 'offline', 'downloads', 'team', 'billing'];
+  const all = ['signin', 'accept', 'trial', ...priv];
+  async function route() {
+    const h = location.hash.slice(1);
+    let [v, arg] = h.split(/[=/]/);
+    if (v === 'accept') { acceptToken = h.slice(7); }
+    if (!all.includes(v)) v = token ? 'overview' : 'signin';
+    if (priv.includes(v) && !token) v = 'signin';
+    if (v === 'signin' && token) v = 'overview';
+    all.forEach(n => { $('v-' + n).hidden = n !== v; });
+    $('top').hidden = !priv.includes(v);
+    const navv = v === 'license' ? 'licenses' : v;
+    document.querySelectorAll('#nav a').forEach(a => { if (a.getAttribute('href') === '#' + navv) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
+    window.scrollTo(0, 0);
+    const sec = $('v-' + v), stage = () => sec.querySelector('.stage') || sec.querySelector('.narrow');
+    ArkHz.show(stage(), skyline[v] || skyline.overview);
+    ArkUi.glide($('nav')); ArkUi.enter(sec);
+    if (!priv.includes(v)) return;
+    try {
+      if (!me) { me = await api('GET', '/portal/me'); $('who').textContent = `${me.company} · ${roleWord[me.role]}`; }
+      document.querySelector('#nav a[href="#billing"]').hidden = me.role === 'viewer';
+      ArkUi.glide($('nav'));
+      await ({ overview: loadOverview, licenses: loadLicenses, license: () => loadLicense(decodeURIComponent(arg || '')), computers: loadComputers, offline: async () => {}, downloads: loadDownloads, team: loadTeam, billing: loadBilling })[v]();
+    } catch (err) { console.warn(err.message); }
+    ArkHz.show(stage(), skyline[v] || skyline.overview);
+  }
+  addEventListener('hashchange', () => ArkUi.wipe(route));
+  addEventListener('resize', () => ArkUi.glide($('nav'), true));
+  /* Hero skylines from real numbers: computer slots per license on Overview (in use = lit),
+     seats per license, computers by how recently they checked in, the team by role. */
+  const skyline = {};
+  const slots = ls => ls.flatMap(l => Array.from({ length: Math.min(l.max_computers, 12) }, (_, i) => ({ v: .7 + Math.min(l.seats, 50) / 50 + (i % 3) * .15, lit: i < l.computers_in_use }))).slice(0, 36);
+
+  // ------------------------------------------------------------- overview & licenses
+  function licenseItem(l) {
+    const pct = l.max_computers ? Math.min(100, Math.round(100 * l.computers_in_use / l.max_computers)) : 0;
+    return `<div class="item"><div class="grow"><b>${esc(l.plan_label)} <span class="pill ${esc(l.state)}">${esc(stateWord[l.state] || l.state)}</span></b>
+      <span class="muted">${esc(l.status_text)}</span>
+      <div class="muted" style="margin-top:6px">${l.seats} people · ${l.computers_in_use} of ${l.max_computers} computers · ${l.state === 'ended' ? 'ended' : 'until'} ${day(l.expires_at)}</div>
+      <div class="meter" aria-hidden="true"><i style="width:${pct}%"></i></div></div>
+      <button class="btn" type="button" data-go="#license/${esc(l.id)}">Details</button></div>`;
+  }
+  async function loadOverview() {
+    const o = await api('GET', '/portal/overview');
+    $('ov-company').textContent = o.company; $('ov-headline').textContent = o.headline;
+    const states = o.licenses.map(l => l.state);
+    $('ov-dot').className = 'dot' + (states.includes('paused') || (states.length && states.every(s => s === 'ended')) ? ' bad' : states.includes('ending-soon') || !states.length ? ' warn' : '');
+    ArkUi.countUp($('ov-seats'), o.seats); $('ov-comp').textContent = `${o.computers_in_use} of ${o.max_computers}`;
+    skyline.overview = o.licenses.length ? slots(o.licenses) : null;
+    const st = $('ov-stat'); st.hidden = false; st.innerHTML = `<b>0</b> of ${o.max_computers} ${o.max_computers === 1 ? 'computer' : 'computers'} in use`; ArkUi.countUp(st.querySelector('b'), o.computers_in_use);
+    $('ov-renew').textContent = o.next_renewal ? day(o.next_renewal) : '–';
+    $('ov-list').innerHTML = o.licenses.map(licenseItem).join('') || '<div class="empty">No licenses yet. <a href="#trial">Start a free trial</a> or contact Arkhon.</div>';
+  }
+  async function loadLicenses() {
+    const list = await api('GET', '/portal/licenses');
+    skyline.licenses = list.length ? list.map(l => ({ v: l.seats, lit: l.state === 'ok' || l.state === 'active' })) : null;
+    $('li-list').innerHTML = list.map(licenseItem).join('') || '<div class="empty">No licenses yet.</div>';
+  }
+  function computerItem(c, owner) {
+    const active = c.status === 'active';
+    return `<div class="item"><div class="grow"><b>Computer #${c.id} <span class="pill ${esc(c.status)}">${active ? 'In use' : 'Deactivated'}</span>${c.not_seen_30_days ? ' <span class="pill warn">Not seen for 30+ days</span>' : ''}</b>
+      <span class="muted">${esc(c.security)} · activated ${day(c.activated_at)} · ${active ? 'last seen ' + ago(c.last_seen_at) : 'deactivated ' + day(c.deactivated_at)}</span></div>
+      ${active && owner ? `<button class="btn danger" type="button" data-free="${c.id}">Deactivate</button>` : ''}</div>`;
+  }
+  async function loadLicense(id) {
+    const l = await api('GET', '/portal/licenses/' + encodeURIComponent(id));
+    skyline.license = l.computers.length ? l.computers.map(c => ({ v: c.status === 'active' ? 2 : 1, lit: c.status === 'active' })) : slots([l]);
+    const owner = me.role === 'owner';
+    $('ld').innerHTML = `<div class="stack">
+      <div class="stage"><span class="eyebrow">License</span><h1>${esc(l.plan_label)}</h1><p class="lede">${esc(l.status_text)}</p></div>
+      <div class="card"><dl>
+        <dt>Status</dt><dd><span class="pill ${esc(l.state)}">${esc(stateWord[l.state] || l.state)}</span></dd>
+        <dt>People</dt><dd>${l.seats}</dd>
+        <dt>Computers</dt><dd>${l.computers_in_use} of ${l.max_computers} in use</dd>
+        <dt>Valid</dt><dd>${day(l.starts_at)} – ${day(l.expires_at)}</dd>
+        <dt>Updates included until</dt><dd>${day(l.update_window_end)}</dd>
+        <dt>Works offline for</dt><dd>${l.offline_grace_days} days between check-ins</dd>
+        <dt>Workspaces</dt><dd><div class="chips">${l.workspaces.map(w => `<span class="chip">${esc(w)}</span>`).join('')}</div></dd>
+        <dt>Engines</dt><dd><div class="chips">${l.engines.map(w => `<span class="chip">${esc(w)}</span>`).join('')}</div></dd>
+        <dt>License id</dt><dd class="mono">${esc(l.id)}</dd>
+      </dl></div>
+      <div class="card stack"><h2>Activation key</h2>
+        <p class="muted">${esc(l.activation_key_note)}</p>
+        ${owner ? `<p class="muted">A new key lets you activate more computers if the old one is lost. Computers already running Arkhon keep working; the old key stops activating new ones.</p>
+        <div class="row"><button class="btn" type="button" id="ld-newkey">Request a new activation key</button></div>` : '<p class="muted">Ask an owner on your team if you need a new key.</p>'}
+        <p class="msg" id="ld-msg" hidden></p><div class="key" id="ld-key" hidden></div></div>
+      <div class="card"><h2 style="margin-bottom:16px">Computers on this license</h2><div class="list" id="ld-comps">${l.computers.map(c => computerItem(c, owner)).join('') || '<div class="empty">Not activated on any computer yet. Install Arkhon and type your activation key.</div>'}</div></div>
+    </div>`;
+    const nk = $('ld-newkey');
+    if (nk) nk.addEventListener('click', async () => {
+      if (nk.dataset.confirm !== '1') { nk.dataset.confirm = '1'; nk.textContent = 'Click again to create a new key'; return; }
+      try { const d = await api('POST', `/portal/licenses/${encodeURIComponent(id)}/new-key`); $('ld-key').hidden = false; $('ld-key').textContent = d.activation_key; show($('ld-msg'), d.note, true); nk.disabled = true; nk.textContent = 'New key created'; }
+      catch (err) { show($('ld-msg'), err.message, false); }
+    });
+  }
+
+  // ------------------------------------------------------------- computers
+  async function freeComputer(btn, after) {
+    if (btn.dataset.confirm !== '1') { btn.dataset.confirm = '1'; btn.textContent = 'Click again to deactivate'; return null; }
+    const d = await api('POST', `/portal/computers/${btn.dataset.free}/deactivate`);
+    await after(); return d;
+  }
+  async function loadComputers() {
+    const list = await api('GET', '/portal/computers');
+    const nowS = Date.now() / 1000;
+    skyline.computers = list.length ? list.slice(0, 36).map(c => ({ v: c.status === 'active' ? Math.max(.4, 3 - (nowS - c.last_seen_at) / 86400 / 10) : .3, lit: c.status === 'active' && !c.not_seen_30_days })) : null;
+    const owner = me.role === 'owner';
+    const active = list.filter(c => c.status === 'active'), old = list.filter(c => c.status !== 'active').slice(0, 10);
+    $('co-list').innerHTML = (active.map(c => computerItem(c, owner)).join('') || '<div class="empty">No computers are using Arkhon yet.</div>')
+      + (old.length ? `<h3 style="margin:24px 0 4px">Recently deactivated</h3>` + old.map(c => computerItem(c, owner)).join('') : '');
+  }
+  document.addEventListener('click', async e => {
+    const b = e.target.closest('[data-free]'); if (!b) return;
+    const inDetail = !!b.closest('#ld');
+    try {
+      const d = await freeComputer(b, inDetail ? () => loadLicense(decodeURIComponent(location.hash.split('/')[1] || '')) : loadComputers);
+      if (d) { if (inDetail) show($('ld-msg'), d.message, true); else show($('co-msg'), d.message, true); }
+    } catch (err) { show(inDetail ? $('ld-msg') : $('co-msg'), err.message, false); }
+  });
+
+  // ------------------------------------------------------------- offline activation
+  let lastBlobUrl = null;
+  $('off-form').addEventListener('submit', async e => {
+    e.preventDefault(); $('off-dl').hidden = true;
+    const f = $('off-file').files[0]; if (!f) return;
+    try {
+      const blob = await api('POST', '/portal/offline/renew', await f.arrayBuffer(), true);
+      if (lastBlobUrl) URL.revokeObjectURL(lastBlobUrl);
+      lastBlobUrl = URL.createObjectURL(blob);
+      $('off-link').href = lastBlobUrl; $('off-dl').hidden = false;
+      show($('off-msg'), 'Done. Download the reply file and open it in Arkhon on the offline computer.', true);
+    } catch (err) { show($('off-msg'), err.message, false); }
+  });
+
+  // ------------------------------------------------------------- downloads
+  async function loadDownloads() {
+    const d = await api('GET', '/portal/downloads');
+    $('dl-note').textContent = d.note;
+    $('dl-list').innerHTML = d.licenses.map(l => `<div class="card"><h2>${esc(l.plan_label)}</h2><p class="muted" style="margin:4px 0 16px">Updates included until ${day(l.update_window_end)}</p>
+      <div class="list">${l.releases.map(r => `<div class="item"><div class="grow"><b>${esc(r.engine)} <span class="muted">version ${esc(r.version)}</span></b><span class="muted">Released ${day(r.released_at)}</span>
+        ${r.files.map(f => `<div class="muted" style="margin-top:6px">${esc(f.name)} · ${size(f.size)}<div class="mono" style="color:var(--fg-3)">SHA-256 ${esc(f.sha256)}</div></div>`).join('')}</div></div>`).join('') || '<div class="empty">No releases yet.</div>'}</div></div>`).join('')
+      || '<div class="card empty">No licenses yet.</div>';
+  }
+
+  // ------------------------------------------------------------- team
+  async function loadTeam() {
+    const list = await api('GET', '/portal/team');
+    skyline.team = list.map(p => ({ v: p.role === 'owner' ? 3 : p.role === 'billing' ? 2 : 1.4, lit: p.role === 'owner' }));
+    const owner = me.role === 'owner';
+    $('tm-form').hidden = !owner;
+    $('tm-list').innerHTML = list.map(p => `<div class="item"><div class="grow"><b>${esc(p.name || p.email)}${p.you ? ' <span class="muted">(you)</span>' : ''}</b>
+      <span class="muted">${esc(p.email)} · ${roleWord[p.role]}${p.two_step ? ' · two-step on' : ''}</span></div>
+      ${p.status === 'invited' ? '<span class="pill invited">Invited</span>' : ''}
+      ${owner && !p.you ? `<button class="link" type="button" data-reset="${esc(p.id)}">${p.status === 'invited' ? 'New invite link' : 'Password reset link'}</button><button class="btn danger" type="button" data-remove="${esc(p.id)}">Remove</button>` : ''}</div>`).join('');
+    $('tf-state').textContent = me.two_step ? 'Two-step sign-in is on: you enter a code from your authenticator app when you sign in.' : 'Add a second step to sign-in with an authenticator app. Recommended for owners.';
+    $('tf-start').hidden = me.two_step;
+  }
+  $('tm-form').addEventListener('submit', async e => {
+    e.preventDefault(); $('tm-link').hidden = true;
+    try { const d = await api('POST', '/portal/team', { email: $('tm-email').value, role: $('tm-role').value });
+      show($('tm-msg'), `Invite created for ${d.email}.`, true); $('tm-linktext').textContent = location.origin + d.invite_link; $('tm-link').hidden = false; $('tm-email').value = ''; loadTeam();
+    } catch (err) { show($('tm-msg'), err.message, false); }
+  });
+  $('tm-list').addEventListener('click', async e => {
+    const rm = e.target.closest('[data-remove]'), rs = e.target.closest('[data-reset]');
+    try {
+      if (rm) { if (rm.dataset.confirm !== '1') { rm.dataset.confirm = '1'; rm.textContent = 'Click again to remove'; return; }
+        await api('POST', `/portal/team/${encodeURIComponent(rm.dataset.remove)}/remove`); show($('tm-msg'), 'Removed. They can no longer sign in.', true); $('tm-link').hidden = true; loadTeam(); }
+      else if (rs) { const d = await api('POST', `/portal/team/${encodeURIComponent(rs.dataset.reset)}/reset-link`);
+        show($('tm-msg'), `New link for ${d.email}.`, true); $('tm-linktext').textContent = location.origin + d.invite_link; $('tm-link').hidden = false; }
+    } catch (err) { show($('tm-msg'), err.message, false); }
+  });
+  $('tf-start').addEventListener('click', async () => {
+    try { const d = await api('POST', '/portal/me/totp'); $('tf-secret').textContent = d.secret.replace(/(.{4})/g, '$1 ').trim(); $('tf-setup').hidden = false; }
+    catch (err) { show($('tf-msg'), err.message, false); }
+  });
+  $('tf-confirm').addEventListener('click', async () => {
+    try { await api('POST', '/portal/me/totp/confirm', { code: $('tf-code').value }); me.two_step = true; $('tf-setup').hidden = true; show($('tf-msg'), 'Two-step sign-in is on.', true); loadTeam(); }
+    catch (err) { show($('tf-msg'), err.message, false); }
+  });
+
+  // ------------------------------------------------------------- billing
+  async function loadBilling() {
+    try {
+      const b = await api('GET', '/portal/invoices');
+      $('bi-card').innerHTML = `<div class="hero"><span class="dot warn"></span><p>${esc(b.title)}</p></div><p class="muted">${esc(b.message)}</p>
+        <div class="empty" style="padding:24px 0 8px">No invoices to show here yet.</div>`;
+    } catch (err) { $('bi-card').innerHTML = `<p class="muted">${esc(err.message)}</p>`; }
+  }
+
+  route();
+})();
+</script>
+</body>
+</html>

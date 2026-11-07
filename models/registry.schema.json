@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": ["schema_version", "allowed_licenses", "engines"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "allowed_licenses": {"type": "array", "items": {"enum": ["Apache-2.0", "MIT"]}},
+    "engines": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "required": ["role", "tiers", "base", "fallback", "quants"],
+        "properties": {
+          "role": {"type": "string", "minLength": 5},
+          "tiers": {"type": "array", "minItems": 1, "items": {"enum": ["S", "M", "L"]}},
+          "base": {
+            "type": "object",
+            "required": ["hf_repo", "license", "params_b", "verified"],
+            "properties": {
+              "hf_repo": {"type": "string", "pattern": "^[\\w.-]+/[\\w.-]+$"},
+              "license": {"enum": ["Apache-2.0", "MIT"]},
+              "params_b": {"type": "number", "exclusiveMinimum": 0},
+              "verified": {"type": "string", "format": "date"}
+            }
+          },
+          "fallback": {"type": ["string", "null"]},
+          "quants": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["name", "file_sha256", "vram_mib", "ram_mib", "tok_s", "measured_on", "run_log"],
+              "properties": {"run_log": {"type": "string", "description": "path to saved raw benchmark output"}}
+            }
+          }
+        }
+      }
+    }
+  }
+}

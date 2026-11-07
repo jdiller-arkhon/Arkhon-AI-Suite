@@ -1,0 +1,256 @@
+openapi: 3.1.0
+info:
+  title: Arkhon License Manager
+  version: 0.1.0
+  description: |
+    License and activation METADATA only. No customer content is ever sent here (N1).
+    Binary fields are base64 in JSON. Errors are `{"error": "<plain sentence>"}`.
+    Rate limit: 60 requests/minute per client IP (429 when exceeded).
+    Customer portal API under /portal/...: every response is scoped to the signed-in person's company;
+    other companies' ids answer 404. Roles: owner (changes), billing (reads + billing), viewer (reads).
+paths:
+  /healthz:
+    get: { summary: Liveness, responses: { "200": { description: ok } } }
+  /v1/activate:
+    post:
+      summary: Activate a computer with an activation key
+      requestBody: { required: true, content: { application/json: { schema: { $ref: "#/components/schemas/ActivateRequest" } } } }
+      responses:
+        "200": { description: Signed license, content: { application/json: { schema: { $ref: "#/components/schemas/LicenseResponse" } } } }
+        "403": { description: License paused/expired/revoked, or software binding not allowed }
+        "404": { description: Unknown activation key }
+        "409": { description: All device slots in use }
+  /v1/checkin:
+    post:
+      summary: Renew this computer's license and fetch the revocation list
+      requestBody: { required: true, content: { application/json: { schema: { $ref: "#/components/schemas/CheckinRequest" } } } }
+      responses:
+        "200": { description: Renewed license, content: { application/json: { schema: { $ref: "#/components/schemas/LicenseResponse" } } } }
+        "403": { description: Not activated, hardware changed too much, or license not usable }
+  /v1/deactivate:
+    post:
+      summary: Free this computer's slot (transfer = deactivate + activate elsewhere)
+      requestBody: { required: true, content: { application/json: { schema: { type: object, required: [license_id, device_public_key], properties: { license_id: { type: string }, device_public_key: { type: string, format: byte } } } } } }
+      responses: { "200": { description: Deactivated }, "404": { description: Not activated } }
+  /v1/offline/renew:
+    post:
+      summary: Offline renewal by file exchange (air-gapped sites)
+      requestBody: { required: true, content: { application/octet-stream: { schema: { type: string, format: binary, description: RenewalRequest bytes } } } }
+      responses:
+        "200": { description: RenewalResponse bytes, content: { application/octet-stream: { schema: { type: string, format: binary } } } }
+        "400": { description: Not a renewal request }
+        "409": { description: Request already used }
+  /v1/releases:
+    get:
+      summary: Signed release manifests the license may install (within its update window)
+      parameters: [ { name: license_id, in: query, required: true, schema: { type: string } } ]
+      responses: { "200": { description: Releases }, "404": { description: Unknown license } }
+  /admin/login:
+    post:
+      summary: Sign in with password + authenticator code; returns an 8-hour bearer token
+      requestBody: { required: true, content: { application/json: { schema: { type: object, required: [email, password, code], properties: { email: { type: string }, password: { type: string }, code: { type: string } } } } } }
+      responses: { "200": { description: "{token, expires_at}" }, "403": { description: Wrong credentials } }
+  /admin/overview:
+    get: { summary: Counts for the operator dashboard, security: [ { bearer: [] } ], responses: { "200": { description: Overview } } }
+  /admin/plans:
+    get: { summary: Plan presets (what each plan includes by default), security: [ { bearer: [] } ], responses: { "200": { description: Presets } } }
+  /admin/customers:
+    get: { summary: List customers, security: [ { bearer: [] } ], responses: { "200": { description: Customers } } }
+    post:
+      summary: Create a customer
+      security: [ { bearer: [] } ]
+      requestBody: { required: true, content: { application/json: { schema: { type: object, required: [name, email], properties: { name: { type: string }, email: { type: string } } } } } }
+      responses: { "200": { description: "{id}" } }
+  /admin/licenses:
+    get:
+      summary: List licenses
+      security: [ { bearer: [] } ]
+      parameters: [ { name: customer_id, in: query, schema: { type: string } } ]
+      responses: { "200": { description: Licenses } }
+    post:
+      summary: Create a license; the activation key is returned once and only its hash is stored
+      security: [ { bearer: [] } ]
+      requestBody: { required: true, content: { application/json: { schema: { $ref: "#/components/schemas/NewLicense" } } } }
+      responses: { "200": { description: "{license_id, activation_key}" } }
+  /admin/licenses/{id}:
+    get: { summary: License with its devices, security: [ { bearer: [] } ], parameters: [ { name: id, in: path, required: true, schema: { type: string } } ], responses: { "200": { description: License } } }
+  /admin/licenses/{id}/status:
+    post:
+      summary: Set active / suspended / revoked (revoked is final)
+      security: [ { bearer: [] } ]
+      parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+      requestBody: { required: true, content: { application/json: { schema: { type: object, required: [status], properties: { status: { enum: [active, suspended, revoked] }, reason: { type: string } } } } } }
+      responses: { "200": { description: Updated }, "409": { description: Revoked licenses can't be reactivated } }
+  /admin/licenses/{id}/renew:
+    post:
+      summary: Extend expiry and update window
+      security: [ { bearer: [] } ]
+      parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+      requestBody: { required: true, content: { application/json: { schema: { type: object, required: [days, update_window_days], properties: { days: { type: integer }, update_window_days: { type: integer } } } } } }
+      responses: { "200": { description: Renewed } }
+  /admin/activations/{id}/deactivate:
+    post: { summary: Free a device slot for a customer, security: [ { bearer: [] } ], parameters: [ { name: id, in: path, required: true, schema: { type: integer } } ], responses: { "200": { description: Deactivated } } }
+  /admin/releases:
+    post:
+      summary: Publish a release (manifest signed by the issuing key; CEK sealed at rest)
+      security: [ { bearer: [] } ]
+      requestBody: { required: true, content: { application/json: { schema: { type: object, required: [engine, version, files, cek], properties: { engine: { type: string }, version: { type: string }, cek: { type: string, format: byte }, files: { type: object, additionalProperties: { type: object, properties: { size: { type: integer }, sha256: { type: string } } } } } } } } }
+      responses: { "200": { description: "{release_id, manifest}" }, "409": { description: Version exists } }
+  /admin/revocations:
+    post:
+      summary: Upload a newer root-signed issuing-key revocation list
+      security: [ { bearer: [] } ]
+      requestBody: { required: true, content: { application/json: { schema: { type: object, required: [list], properties: { list: { type: string, format: byte } } } } } }
+      responses: { "200": { description: Stored }, "403": { description: Not root-signed }, "409": { description: Not newer } }
+  /admin/audit:
+    get:
+      summary: Audit log, newest first
+      security: [ { bearer: [] } ]
+      parameters: [ { name: target, in: query, schema: { type: string } }, { name: limit, in: query, schema: { type: integer } } ]
+      responses: { "200": { description: Entries } }
+  /admin/customers/{id}/portal-invite:
+    post:
+      summary: Invite a person (usually the customer's first owner) to the customer portal; returns a one-time link (email isn't wired yet)
+      security: [ { bearer: [] } ]
+      parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+      requestBody: { required: true, content: { application/json: { schema: { type: object, required: [email], properties: { email: { type: string }, role: { enum: [owner, billing, viewer], default: owner } } } } } }
+      responses:
+        "200": { description: Invite, content: { application/json: { schema: { $ref: "#/components/schemas/Invite" } } } }
+        "404": { description: Unknown customer }
+        "409": { description: Email already has a portal account }
+  /portal/trial:
+    post:
+      summary: Start a 14-day trial (public). Creates the company, a trial license and an owner invite. Limited to 5 sign-ups per hour per IP.
+      requestBody: { required: true, content: { application/json: { schema: { type: object, required: [company, name, email], properties: { company: { type: string }, name: { type: string }, email: { type: string } } } } } }
+      responses:
+        "200": { description: "Invite plus {customer_id, license_id, activation_key (shown once), trial_ends_at}" }
+        "400": { description: Missing or invalid fields }
+        "409": { description: Email already has an account }
+        "429": { description: Too many trial sign-ups from this address }
+  /portal/login:
+    post:
+      summary: Customer sign-in with email + password (+ 6-digit code once two-step sign-in is on); returns a 2-hour bearer session
+      requestBody: { required: true, content: { application/json: { schema: { type: object, required: [email, password], properties: { email: { type: string }, password: { type: string }, code: { type: string } } } } } }
+      responses:
+        "200": { description: "{token, expires_at}" }
+        "401": { description: "Code needed: {error, totp_required: true}" }
+        "403": { description: Wrong credentials }
+  /portal/logout:
+    post: { summary: End this portal session, security: [ { portal: [] } ], responses: { "200": { description: Signed out } } }
+  /portal/invites/accept:
+    post:
+      summary: Accept an invite or reset link and set a password (12+ characters); returns a session. Each link works once, for 7 days.
+      requestBody: { required: true, content: { application/json: { schema: { type: object, required: [token, password], properties: { token: { type: string }, password: { type: string }, name: { type: string } } } } } }
+      responses: { "200": { description: "{token, expires_at}" }, "400": { description: Password too short }, "404": { description: Link expired or already used } }
+  /portal/me:
+    get: { summary: "The signed-in person: email, name, role, company, two_step", security: [ { portal: [] } ], responses: { "200": { description: Me } } }
+  /portal/me/totp:
+    post: { summary: Start two-step sign-in; returns an otpauth URL for an authenticator app, security: [ { portal: [] } ], responses: { "200": { description: "{otpauth_url, secret}" } } }
+  /portal/me/totp/confirm:
+    post:
+      summary: Confirm two-step sign-in with a 6-digit code
+      security: [ { portal: [] } ]
+      requestBody: { required: true, content: { application/json: { schema: { type: object, required: [code], properties: { code: { type: string } } } } } }
+      responses: { "200": { description: On }, "400": { description: Wrong code } }
+  /portal/overview:
+    get: { summary: "Company overview: licenses, seats, computers in use, next renewal and a plain-language headline", security: [ { portal: [] } ], responses: { "200": { description: Overview } } }
+  /portal/licenses:
+    get: { summary: This company's licenses with plain-language status, security: [ { portal: [] } ], responses: { "200": { description: Licenses } } }
+  /portal/licenses/{id}:
+    get:
+      summary: One license with its computers. The activation key is never included.
+      security: [ { portal: [] } ]
+      parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+      responses: { "200": { description: License }, "404": { description: Not this company's license } }
+  /portal/licenses/{id}/new-key:
+    post:
+      summary: "Owner only: issue a fresh activation key (shown once). The old key stops activating new computers; running computers are unaffected. Audited."
+      security: [ { portal: [] } ]
+      parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+      responses: { "200": { description: "{license_id, activation_key}" }, "403": { description: Not an owner }, "404": { description: Not this company's license } }
+  /portal/computers:
+    get: { summary: Computers using this company's licenses (active first), security: [ { portal: [] } ], responses: { "200": { description: Computers } } }
+  /portal/computers/{id}/deactivate:
+    post:
+      summary: "Owner only: deactivate a computer and free its slot. Audited."
+      security: [ { portal: [] } ]
+      parameters: [ { name: id, in: path, required: true, schema: { type: integer } } ]
+      responses: { "200": { description: Deactivated }, "403": { description: Not an owner }, "404": { description: Not an active computer of this company } }
+  /portal/offline/renew:
+    post:
+      summary: "Owner only: offline activation. Upload a RenewalRequest file, download the RenewalResponse file. Each request works once."
+      security: [ { portal: [] } ]
+      requestBody: { required: true, content: { application/octet-stream: { schema: { type: string, format: binary } } } }
+      responses:
+        "200": { description: RenewalResponse bytes, content: { application/octet-stream: { schema: { type: string, format: binary } } } }
+        "400": { description: Not a renewal request }
+        "403": { description: Not an owner, or computer not activated }
+        "404": { description: License isn't this company's }
+        "409": { description: Request already used }
+  /portal/downloads:
+    get: { summary: Releases each license may install (inside its update window) with file sizes and SHA-256, security: [ { portal: [] } ], responses: { "200": { description: Downloads } } }
+  /portal/team:
+    get: { summary: People on this company's portal account, security: [ { portal: [] } ], responses: { "200": { description: Team } } }
+    post:
+      summary: "Owner only: invite a person; returns a one-time link"
+      security: [ { portal: [] } ]
+      requestBody: { required: true, content: { application/json: { schema: { type: object, required: [email, role], properties: { email: { type: string }, role: { enum: [owner, billing, viewer] } } } } } }
+      responses: { "200": { description: Invite, content: { application/json: { schema: { $ref: "#/components/schemas/Invite" } } } }, "403": { description: Not an owner }, "409": { description: Email in use } }
+  /portal/team/{id}/remove:
+    post:
+      summary: "Owner only: remove a person (ends their sessions). You can't remove yourself or the last owner."
+      security: [ { portal: [] } ]
+      parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+      responses: { "200": { description: Removed }, "403": { description: Not an owner }, "404": { description: Not on this team }, "409": { description: Last owner } }
+  /portal/team/{id}/reset-link:
+    post:
+      summary: "Owner only: a fresh one-time link to set a password (re-sends an invite, or resets a password)"
+      security: [ { portal: [] } ]
+      parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+      responses: { "200": { description: Invite, content: { application/json: { schema: { $ref: "#/components/schemas/Invite" } } } } }
+  /portal/invoices:
+    get: { summary: "Owner/billing: placeholder until online billing exists ({status: not-set-up, title, message, invoices: []})", security: [ { portal: [] } ], responses: { "200": { description: Placeholder }, "403": { description: Viewer } } }
+components:
+  securitySchemes:
+    bearer: { type: http, scheme: bearer, description: Admin session (Arkhon staff) }
+    portal: { type: http, scheme: bearer, description: Customer portal session (2 hours), separate from admin sessions }
+  schemas:
+    Device:
+      type: object
+      required: [device_public_key, fingerprint, binding]
+      properties:
+        device_public_key: { type: string, format: byte, description: 65-byte uncompressed P-256 key }
+        fingerprint: { type: string, format: byte, description: 160 bytes of salted component hashes (no raw serials) }
+        binding: { enum: [tpm, secure-enclave, software] }
+    ActivateRequest:
+      allOf: [ { $ref: "#/components/schemas/Device" }, { type: object, required: [activation_key], properties: { activation_key: { type: string } } } ]
+    CheckinRequest:
+      allOf: [ { $ref: "#/components/schemas/Device" }, { type: object, required: [license_id], properties: { license_id: { type: string } } } ]
+    LicenseResponse:
+      type: object
+      properties: { license_id: { type: string }, license: { type: string, format: byte }, revocation_list: { type: string, format: byte } }
+    NewLicense:
+      type: object
+      required: [customer_id, plan]
+      description: Only customer_id and plan are required; everything else defaults from the plan preset (GET /admin/plans).
+      properties:
+        customer_id: { type: string }
+        plan: { enum: [starter, business, pro, trial] }
+        seats: { type: integer }
+        max_devices: { type: integer, default: 1 }
+        workspaces: { type: array, items: { type: string } }
+        engines: { type: array, items: { type: string } }
+        packs: { type: array, items: { type: string } }
+        allow_software_binding: { type: boolean, default: false }
+        days: { type: integer }
+        update_window_days: { type: integer }
+        offline_grace_days: { type: integer, default: 30 }
+        license_term_days: { type: integer, default: 30 }
+    Invite:
+      type: object
+      properties:
+        user_id: { type: string }
+        email: { type: string }
+        invite_token: { type: string, description: One-time token (only its hash is stored) }
+        invite_link: { type: string, description: "/portal#accept=<token>" }
+        note: { type: string }

@@ -1,0 +1,21 @@
+# gitleaks config — extends the default ruleset with Arkhon-specific rules.
+title = "arkhon-gitleaks"
+
+[extend]
+useDefault = true
+
+[[rules]]
+id = "arkhon-ed25519-private-key-hex"
+description = "Raw Ed25519 private/seed key material in hex labelled as a signing key"
+regex = '''(?i)(root|issuing|signing)[_-]?(private[_-]?)?key\s*[:=]\s*["']?[0-9a-f]{64}'''
+tags = ["key", "arkhon"]
+
+[[rules]]
+id = "arkhon-cek-hex"
+description = "Model content-encryption key (CEK) material"
+regex = '''(?i)\bcek\s*[:=]\s*["']?[0-9a-f]{64}'''
+tags = ["key", "arkhon"]
+
+[allowlist]
+description = "Published test vectors are deliberately non-secret"
+paths = ['''crates/.*/test-vectors/.*''']

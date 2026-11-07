@@ -1,0 +1,13 @@
+Arkhon Suite
+Copyright (c) 2026 Arkhon Industries. All rights reserved.
+
+Arkhon engines are fine-tuned from third-party open-weight models. Each is used under its license,
+as verified in docs/decisions/0001-engine-selection.md:
+
+- Qwen3.5 / Qwen3.6 / Qwen3-Embedding / Qwen3-Reranker — Copyright Alibaba Cloud (Qwen team),
+  Apache License 2.0.
+- gpt-oss-20b — Copyright OpenAI, Apache License 2.0, subject to the gpt-oss usage policy
+  (https://huggingface.co/openai/gpt-oss-20b/blob/main/USAGE_POLICY).
+- Whisper — Copyright OpenAI, MIT License.
+
+The full license texts ship in licenses/ in every release (added at packaging time, Phase 7).

@@ -1,0 +1,16 @@
+# Arkhon License Manager. Build from the repo root:
+#   docker build -f deploy/Dockerfile.license-server -t arkhon/license-server .
+FROM rust:1.99.1-bookworm AS build
+WORKDIR /src
+COPY . .
+RUN cargo build --release -p arkhon-license-server
+
+FROM debian:bookworm-slim
+RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates && rm -rf /var/lib/apt/lists/* \
+ && useradd --system --uid 10001 arkhon
+COPY --from=build /src/target/release/arkhon-license-server /usr/local/bin/arkhon-license-server
+USER arkhon
+ENV ARKHON_BIND=0.0.0.0:8443
+EXPOSE 8443
+ENTRYPOINT ["arkhon-license-server"]
+CMD ["serve"]

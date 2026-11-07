@@ -1,0 +1,72 @@
+# --- Build output ---
+/target/
+**/node_modules/
+**/.next/
+**/dist/
+**/build/
+**/.turbo/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.venv/
+*.egg-info/
+
+# --- Secrets: NEVER commit (see SECURITY.md) ---
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+*.jks
+*.keystore
+**/secrets/
+**/keys/
+*-signing-key*
+*root-key*
+*issuing-key*
+*.age
+credentials.json
+token.json
+service-account*.json
+
+# --- Model weights & customer data: never in git ---
+*.gguf
+*.safetensors
+*.bin
+*.pt
+*.onnx
+*.arkm
+models/data/raw/
+models/data/cache/
+models/train/runs/
+models/package/out/
+customer-data/
+**/design-partner-data/
+
+# --- Local env reports may contain host identifiers ---
+tools/env-check/reports/*.json
+
+# --- OS / editor ---
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
+*.swp
+.arkhon-dev/
+
+# Local agent worktrees
+.claude/worktrees/
+# Fuzzing outputs
+fuzz/target/
+fuzz/corpus/
+fuzz/artifacts/
+fuzz/coverage/
+
+# Deployment secrets
+deploy/secrets/
+*.hex.key
+cek-kek.hex
